@@ -1,26 +1,237 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #111412;
+  --foreground: #f3f1ea;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: Arial, Helvetica, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
 }
 
 body {
+  margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: rgba(111, 132, 111, 0.4);
+  color: #f7f5ef;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: #111412;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid #111412;
+  border-radius: 999px;
+  background: #333a34;
+}
+
+.property-image {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-color: #282d29;
+}
+
+.property-image::before,
+.property-image::after,
+.property-building,
+.property-building::before,
+.property-building::after {
+  content: "";
+  position: absolute;
+}
+
+.property-image::before {
+  inset: 0;
+  z-index: -2;
+  background: linear-gradient(150deg, #667069 0%, #343b36 48%, #1e2320 100%);
+}
+
+.property-image::after {
+  inset: auto 0 0;
+  z-index: 3;
+  height: 22%;
+  background: rgba(13, 16, 14, 0.42);
+}
+
+.property-building {
+  right: 9%;
+  bottom: 15%;
+  left: 18%;
+  z-index: 1;
+  height: 54%;
+  background: #afb1a8;
+  box-shadow: -11px 4px 0 #858c85;
+}
+
+.property-building::before {
+  top: 22%;
+  right: 12%;
+  width: 16%;
+  height: 31%;
+  background: #35403a;
+  box-shadow: -14px 0 0 #35403a, -28px 0 0 #35403a;
+}
+
+.property-building::after {
+  top: -25%;
+  right: -1px;
+  border-right: 24px solid #7a817b;
+  border-top: 9px solid transparent;
+  border-left: 23px solid transparent;
+}
+
+.property-image-coast::before {
+  background: linear-gradient(155deg, #87918a 0%, #4d5751 49%, #252b27 50%, #303732 100%);
+}
+
+.property-image-coast .property-building {
+  right: 14%;
+  left: 13%;
+  height: 43%;
+  background: #c1c0b7;
+  box-shadow: none;
+}
+
+.property-image-city::before {
+  background: linear-gradient(145deg, #727b75 0%, #4d5650 48%, #242925 49%, #343a35 100%);
+}
+
+.property-image-city .property-building {
+  right: 8%;
+  left: 27%;
+  height: 63%;
+  background: #a7aaa3;
+  box-shadow: -13px 7px 0 #747d76;
+}
+
+.property-image-flat::before {
+  background: #4d5650;
+}
+
+.seller-property-image {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: #4c5650;
+}
+
+.seller-property-image::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 24%;
+  background: #29302b;
+}
+
+.seller-property-image::after {
+  content: "";
+  position: absolute;
+  left: 6%;
+  top: 12%;
+  width: 22%;
+  height: 38%;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #667069;
+}
+
+.seller-building {
+  position: absolute;
+  right: 7%;
+  bottom: 16%;
+  left: 23%;
+  height: 61%;
+  background: #a5a8a0;
+  box-shadow: -24px 13px 0 #737c75;
+}
+
+.seller-building::before {
+  content: "";
+  position: absolute;
+  top: -13%;
+  right: 0;
+  left: 0;
+  height: 13%;
+  background: #858c85;
+  clip-path: polygon(9% 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.seller-building::after {
+  content: "";
+  position: absolute;
+  right: 9%;
+  bottom: 0;
+  width: 17%;
+  height: 42%;
+  background: #414a44;
+}
+
+.seller-windows {
+  position: absolute;
+  top: 20%;
+  left: 12%;
+  width: 13%;
+  height: 25%;
+  background: #3c4943;
+  box-shadow: 58px 0 0 #3c4943, 116px 0 0 #3c4943, 0 52px 0 #3c4943, 58px 52px 0 #3c4943;
+}
+
+.property-image-stone::before {
+  background: linear-gradient(145deg, #515b55 0%, #343c37 51%, #202521 52%, #2b322d 100%);
+}
+
+.property-image-stone .property-building {
+  right: 12%;
+  left: 12%;
+  height: 47%;
+  background: #888d86;
+  box-shadow: none;
+}
+
+.property-image.property-image-flat::before {
+  background: #4d5650;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

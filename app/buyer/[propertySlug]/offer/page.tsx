@@ -1,0 +1,7 @@
+import { redirect } from "next/navigation";
+import { CustomerShell } from "@/app/components/CustomerShell";
+import { PortalAccessDenied } from "@/app/components/PortalAccessDenied";
+import { customerInitials,getBuyerPropertySummary,getCustomerDestinationBySlug } from "@/lib/portal/customer";
+import { createClient } from "@/lib/supabase/server";
+import { OfferForm } from "./OfferForm";
+export default async function NewBuyerOfferPage({params}:{params:Promise<{propertySlug:string}>}){const{propertySlug}=await params;const supabase=await createClient();const{data:{user}}=await supabase.auth.getUser();if(!user)redirect(`/customer/login?next=/buyer/${propertySlug}/offer`);const destination=await getCustomerDestinationBySlug(propertySlug,"buyer",supabase);if(!destination.data)return <PortalAccessDenied/>;const summary=await getBuyerPropertySummary(destination.data.transactionId);if(!summary.data)return <PortalAccessDenied/>;return <CustomerShell customerName={summary.data.customer.name} customerInitials={customerInitials(summary.data.customer.name)} customerRole="Kaupandi" homeHref={`/buyer/${propertySlug}`} portalLabel="Kaupendagátt"><main className="mx-auto max-w-[720px] px-4 py-10 sm:px-6"><p className="text-[11px] uppercase tracking-[0.13em] text-[#819181]">Tilboð</p><h1 className="mt-3 text-[27px] font-semibold">Tilboð í {summary.data.property.address}</h1><OfferForm transactionId={destination.data.transactionId} propertySlug={propertySlug} askingPrice={summary.data.askingPriceIsk}/></main></CustomerShell>}

@@ -1,36 +1,124 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mó real-estate OS
 
-## Getting Started
+Mó is a Next.js App Router prototype backed incrementally by Supabase. Phases 1–5 connect the internal organization and transaction foundation, viewing management, the controlled offer workflow, authenticated transaction-scoped seller/buyer portal access, and private tasks/documents.
 
-First, run the development server:
+## Requirements
+
+- Node.js 20.19+ or 22.13+
+- A Supabase project, or the Supabase CLI plus Docker for local development
+- npm
+
+## Environment
+
+Copy `.env.example` to `.env.local` and set:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Older Supabase projects can use `NEXT_PUBLIC_SUPABASE_ANON_KEY` instead of the publishable key. Both are browser-safe public keys whose access is constrained by RLS.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Never put `SUPABASE_SERVICE_ROLE_KEY` in a `NEXT_PUBLIC_*` variable or import it into application browser code. This phase does not require a service-role key in the Next.js application.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Install and run
 
-## Learn More
+```bash
+npm install
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Internal routes use `/login`. Seller and buyer routes use the customer-facing `/customer/login` screen and require an active transaction-scoped portal grant.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Database setup
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The migrations currently implemented are:
 
-## Deploy on Vercel
+```text
+supabase/migrations/20261003000100_phase1_foundation.sql
+supabase/migrations/20261003000200_phase2_viewings.sql
+supabase/migrations/20261003000300_phase3_offers.sql
+supabase/migrations/20261004000100_phase4_customer_portal_access.sql
+supabase/migrations/20261004000200_customer_portal_destinations.sql
+supabase/migrations/20261004000300_phase5_tasks_documents.sql
+supabase/migrations/20261005000100_customer_offer_list.sql
+supabase/migrations/20261005000200_storage_document_policy_hardening.sql
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Apply migrations through the Supabase CLI rather than making schema changes manually in the dashboard:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+supabase link --project-ref YOUR_PROJECT_REF
+supabase db push
+```
+
+For local Supabase, initialize/start the project as appropriate and use `supabase db reset` to apply migrations. RLS is enabled on every Phase 1 application table. Authenticated users receive only tenant-scoped reads; sensitive writes go through guarded RPCs.
+
+## Create the development users and demo data
+
+The seed never creates an Auth password and contains no secret.
+
+1. Create these Auth users in local Studio or a hosted development project, each with a development-only password:
+   - `sara@demo.is` — internal agent
+   - `anna@demo.is` — seller
+   - `jon@demo.is` — buyer
+2. Confirm the users if email confirmation is enabled. Do not put passwords in migrations or `seed.sql`. The Auth trigger creates profiles; the seed assigns the correct display names, Sara's organization membership, and Anna/Jón's explicit transaction grants.
+3. Run `supabase/seed.sql` after the Auth user exists. For a local database, one option is:
+
+   ```bash
+   psql "$LOCAL_SUPABASE_DB_URL" -f supabase/seed.sql
+   ```
+
+   For a hosted development project, run that version-controlled file using a trusted database connection or the SQL editor. Do not copy the schema into ad hoc dashboard changes.
+
+The idempotent seed associates Sara with **Mó Demo Fasteignasala**, grants Anna seller access and Jón buyer access only to Laugavegur 120, and creates the current fictional transaction, viewing, guests, offer, tasks, and document metadata. Missing customer Auth users are reported and their grants are skipped; rerun the seed after creating them. Seeded documents are metadata examples only, so no corresponding downloadable files are created.
+
+To invite a production customer later, create or invite the Auth identity through the application/admin onboarding workflow, then call `grant_portal_access(transaction_id, user_id, contact_id, role)` as an authorized internal user. Revocation uses `revoke_portal_access(grant_id)` and takes effect immediately. V1 does not require production email delivery yet.
+
+## Security model
+
+- One organization is one real-estate agency/company; offices and branches are not modeled.
+- Profiles map one-to-one to `auth.users`; organization roles live only on memberships.
+- Properties, transactions, contacts, assignments, parties, histories, and activity carry explicit organization scope.
+- Browser-provided organization and actor identities are never accepted without server/database validation. `created_by` comes from `auth.uid()` inside the RPC.
+- `create_property_transaction(...)` atomically creates the seller contact, property, transaction, seller party, primary assignment, initial stage history, and activity event.
+- `advance_transaction_stage(...)` checks membership/assignment, permits only conservative transitions, and atomically updates current state plus history and activity.
+- A deferred database constraint requires `transactions.assigned_agent_id` to match exactly one `primary_agent` assignment.
+- Kennitala shown in prototype fields is not submitted or persisted.
+- Internal organization membership never grants customer portal access automatically.
+- Customer access requires an authenticated profile plus an active `portal_access_grant` for one transaction.
+- Seller and buyer routes consume guarded safe RPC projections; customer users do not receive direct offer, review, viewing-guest, party, or activity table access.
+- Customer offer lists are transaction-scoped: sellers see only offers deliberately sent to them, while buyers see only offers tied to their own authenticated identity.
+- Revoked grants fail authorization immediately.
+- Viewing and guest rows are readable only inside an active organization membership. Mutations use guarded RPCs; `internal_notes` is never exposed through a customer projection.
+- Tasks and document metadata remain explicitly organization/transaction scoped. Customers use guarded projections which filter by both active portal grant and visibility; they do not receive direct base-table access.
+- The migration creates the private `transaction-documents` Storage bucket. Object paths follow `organizations/{organization_id}/transactions/{transaction_id}/{document_id}/{filename}`. The application authorizes the document record before requesting a 60-second signed URL, and Storage RLS separately enforces the same membership/grant and visibility rules.
+- Document uploads are limited to 25 MiB by the bucket. No public bucket or permanent public URL is used.
+
+## Validation commands
+
+```bash
+npm run lint
+npx tsc --noEmit
+npm run build
+```
+
+Before production use, run the migrations against a disposable Supabase project and test at least these sessions:
+
+- anonymous: no rows from any Phase 1 application table;
+- active demo member: demo organization rows are readable;
+- active user in another organization: no demo rows are readable;
+- viewer: reads are allowed but `create_property_transaction` is rejected;
+- assigned agent: allowed stage transition writes the transaction, one history row, and one activity row together;
+- failed property creation: no contact, property, transaction, party, assignment, history, or activity row remains.
+- seller: only seller-safe projections for explicitly granted transactions;
+- buyer: only buyer-safe property data and the buyer's own offer;
+- unrelated authenticated user and revoked grant: all portal projections denied;
+- internal agent without a portal grant: internal access remains available, but customer projections are denied.
+- seller/buyer: internal tasks and documents remain absent; only role-visible/shared records are returned;
+- revoked customer grant: safe projections and document authorization fail immediately;
+- document download: a signed URL is generated only after database authorization, and Storage remains private.
+
+## Architecture
+
+See [PRODUCT_V1.md](./PRODUCT_V1.md). It remains the architecture source of truth; the current migrations implement the Phase 1–5 subset through private tasks and documents.
