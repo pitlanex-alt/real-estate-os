@@ -36,13 +36,31 @@ begin
   where lower(auth_user.email) = 'jon@demo.is'
   order by auth_user.created_at limit 1;
 
-  insert into public.profiles (id, display_name)
-  values (v_sara_id, 'Sara Guðmundsdóttir')
-  on conflict (id) do update set display_name = excluded.display_name;
+  insert into public.profiles (id, display_name, professional_title, phone, email, account_type)
+  values (v_sara_id, 'Sara Guðmundsdóttir', 'Fasteignasali', '555 0120', 'sara@demo.is', 'internal')
+  on conflict (id) do update set
+    display_name = excluded.display_name,
+    professional_title = excluded.professional_title,
+    phone = excluded.phone,
+    email = excluded.email,
+    account_type = excluded.account_type;
 
-  insert into public.organizations (id, name)
-  values (v_org_id, 'Mó Demo Fasteignasala')
-  on conflict (id) do update set name = excluded.name;
+  insert into public.organizations (
+    id, name, public_email, phone, website, address,
+    default_contact_name, default_contact_email, default_contact_phone
+  ) values (
+    v_org_id, 'Mó Demo Fasteignasala', 'mottaka@demo.is', '555 0100',
+    'https://demo.is', 'Laugavegur 1, 101 Reykjavík',
+    'Sara Guðmundsdóttir', 'sara@demo.is', '555 0120'
+  ) on conflict (id) do update set
+    name = excluded.name,
+    public_email = excluded.public_email,
+    phone = excluded.phone,
+    website = excluded.website,
+    address = excluded.address,
+    default_contact_name = excluded.default_contact_name,
+    default_contact_email = excluded.default_contact_email,
+    default_contact_phone = excluded.default_contact_phone;
 
   insert into public.organization_memberships (organization_id, user_id, role, is_active)
   values (v_org_id, v_sara_id, 'admin', true)
@@ -50,13 +68,13 @@ begin
   set role = excluded.role, is_active = true;
 
   insert into public.properties (
-    id, organization_id, address_line, postal_code, municipality,
+    id, organization_id, slug, address_line, postal_code, municipality,
     registry_number, size_sqm, room_count, bedroom_count, year_built
   ) values
-    ('20000000-0000-4000-8000-000000000001', v_org_id, 'Laugavegur 120', '101', 'Reykjavík', 'F1234567', 112, 4, 3, 2018),
-    ('20000000-0000-4000-8000-000000000002', v_org_id, 'Álfheimar 14', '104', 'Reykjavík', null, null, null, null, null),
-    ('20000000-0000-4000-8000-000000000003', v_org_id, 'Hringbraut 76', '107', 'Reykjavík', null, null, null, null, null),
-    ('20000000-0000-4000-8000-000000000004', v_org_id, 'Sólvallagata 42', '101', 'Reykjavík', null, null, null, null, null)
+    ('20000000-0000-4000-8000-000000000001', v_org_id, 'laugavegur-120', 'Laugavegur 120', '101', 'Reykjavík', 'F1234567', 112, 4, 3, 2018),
+    ('20000000-0000-4000-8000-000000000002', v_org_id, 'alfheimar-14', 'Álfheimar 14', '104', 'Reykjavík', null, null, null, null, null),
+    ('20000000-0000-4000-8000-000000000003', v_org_id, 'hringbraut-76', 'Hringbraut 76', '107', 'Reykjavík', null, null, null, null, null),
+    ('20000000-0000-4000-8000-000000000004', v_org_id, 'solvallagata-42', 'Sólvallagata 42', '101', 'Reykjavík', null, null, null, null, null)
   on conflict (id) do update set
     address_line = excluded.address_line,
     postal_code = excluded.postal_code,
@@ -282,9 +300,9 @@ begin
     file_name=excluded.file_name,mime_type=excluded.mime_type,description=excluded.description;
 
   if v_anna_id is not null then
-    insert into public.profiles (id, display_name)
-    values (v_anna_id, 'Anna Jónsdóttir')
-    on conflict (id) do update set display_name = excluded.display_name;
+    insert into public.profiles (id, display_name, email, account_type)
+    values (v_anna_id, 'Anna Jónsdóttir', 'anna@demo.is', 'customer')
+    on conflict (id) do update set display_name = excluded.display_name, email = excluded.email, account_type = excluded.account_type;
 
     insert into public.portal_access_grants (
       id, organization_id, transaction_id, user_id, contact_id, role,
@@ -304,9 +322,9 @@ begin
   end if;
 
   if v_jon_id is not null then
-    insert into public.profiles (id, display_name)
-    values (v_jon_id, 'Jón Jónsson')
-    on conflict (id) do update set display_name = excluded.display_name;
+    insert into public.profiles (id, display_name, email, account_type)
+    values (v_jon_id, 'Jón Jónsson', 'jon@demo.is', 'customer')
+    on conflict (id) do update set display_name = excluded.display_name, email = excluded.email, account_type = excluded.account_type;
 
     update public.offers
     set buyer_user_id = v_jon_id

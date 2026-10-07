@@ -1,6 +1,6 @@
 import type { IndexedProperty, PropertyStage } from "@/app/data/properties-index";
 import { createClient } from "@/lib/supabase/server";
-import { propertyRouteSlug } from "@/lib/portal/customer";
+import { getPropertyImages } from "@/lib/property-images/server";
 
 type Relation<T> = T | T[] | null;
 
@@ -9,6 +9,8 @@ type RawTransaction = {
   stage: string;
   asking_price_isk: number | null;
   property: Relation<{
+    id: string;
+    slug: string;
     address_line: string;
     postal_code: string;
     municipality: string;
@@ -56,7 +58,7 @@ function formatPrice(value: number | null) {
   return value === null ? "Verð ekki skráð" : `${value.toLocaleString("is-IS")} kr.`;
 }
 
-export async function getIndexedProperties(): Promise<{
+export async function getIndexedProperties(organizationId: string): Promise<{
   properties: IndexedProperty[];
   error: string | null;
 }> {
@@ -67,7 +69,7 @@ export async function getIndexedProperties(): Promise<{
       id,
       stage,
       asking_price_isk,
-      property:properties!transactions_property_id_fkey(address_line, postal_code, municipality),
+      property:properties!transactions_property_id_fkey(id, slug, address_line, postal_code, municipality),
       agent:profiles!transactions_assigned_agent_id_fkey(display_name),
       parties:transaction_parties!transaction_parties_transaction_id_fkey(
         role,
@@ -76,6 +78,7 @@ export async function getIndexedProperties(): Promise<{
       ),
       events:activity_events!activity_events_transaction_id_fkey(event_type, summary, created_at)
     `)
+    .eq("organization_id", organizationId)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -86,7 +89,9 @@ export async function getIndexedProperties(): Promise<{
     };
   }
 
-  const properties = ((data ?? []) as unknown as RawTransaction[]).flatMap((transaction, index) => {
+  const rows = (data ?? []) as unknown as RawTransaction[];
+  const imageMap = await getPropertyImages(supabase, rows.flatMap((transaction) => { const property = one(transaction.property); return property ? [property.id] : []; }));
+  const properties = rows.flatMap((transaction, index) => {
     const property = one(transaction.property);
     const agent = one(transaction.agent);
     if (!property || !agent) return [];
@@ -103,7 +108,7 @@ export async function getIndexedProperties(): Promise<{
 
     return [{
       id: transaction.id,
-      href: `/properties/${propertyRouteSlug(property.address_line)}`,
+      href: `/properties/${property.slug}`,
       address: property.address_line,
       location: `${property.postal_code} ${property.municipality}`,
       seller,
@@ -114,6 +119,7 @@ export async function getIndexedProperties(): Promise<{
       agent: agent.display_name,
       agentInitials: initials(agent.display_name),
       imageVariant: variants[index % variants.length],
+      imageUrl: imageMap.get(property.id)?.find((image) => image.isCover)?.url ?? imageMap.get(property.id)?.[0]?.url ?? null,
     }];
   });
 

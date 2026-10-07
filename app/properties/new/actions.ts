@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { propertyRouteSlug } from "@/lib/portal/customer";
 import { createClient } from "@/lib/supabase/server";
 
 type PartyInput = {
@@ -11,6 +10,9 @@ type PartyInput = {
 };
 
 export type CreatePropertyInput = {
+  sellerContactId: string | null;
+  assignedAgentId: string;
+  initialStage: "valuation" | "preparation";
   seller: PartyInput;
   coOwner: PartyInput | null;
   property: {
@@ -20,6 +22,7 @@ export type CreatePropertyInput = {
     propertyNumber: string;
     size: string;
     rooms: string;
+    bedrooms: string;
     year: string;
   };
   salePrice: string;
@@ -61,8 +64,10 @@ export async function createPropertyTransaction(
   }
 
   const year = parseDecimal(input.property.year);
+  const bedrooms = parseDecimal(input.property.bedrooms);
   const { data, error } = await supabase.rpc("create_property_transaction", {
     p_organization_id: null,
+    p_seller_contact_id: input.sellerContactId,
     p_seller_name: input.seller.name,
     p_seller_phone: clean(input.seller.phone),
     p_seller_email: clean(input.seller.email),
@@ -72,9 +77,11 @@ export async function createPropertyTransaction(
     p_registry_number: clean(input.property.propertyNumber),
     p_size_sqm: parseDecimal(input.property.size),
     p_room_count: parseDecimal(input.property.rooms),
-    p_bedroom_count: null,
+    p_bedroom_count: bedrooms === null ? null : Math.trunc(bedrooms),
     p_year_built: year === null ? null : Math.trunc(year),
     p_asking_price_isk: parseIsk(input.salePrice),
+    p_assigned_agent_id: input.assignedAgentId,
+    p_initial_stage: input.initialStage,
     p_co_owner_name: input.coOwner?.name ?? null,
     p_co_owner_phone: input.coOwner ? clean(input.coOwner.phone) : null,
     p_co_owner_email: input.coOwner ? clean(input.coOwner.email) : null,
@@ -99,6 +106,6 @@ export async function createPropertyTransaction(
   return {
     ok: true,
     transactionId: result.transaction_id,
-    propertySlug: propertyRouteSlug(input.property.address),
+    propertySlug: result.property_slug,
   };
 }

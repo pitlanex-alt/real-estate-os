@@ -16,6 +16,8 @@ export type InternalIdentity = {
   initials: string;
   role: OrganizationRole;
   roleLabel: string;
+  professionalTitle: string | null;
+  profilePhotoUrl: string | null;
 };
 
 export type PostAuthPreference = "internal" | "customer";
@@ -69,7 +71,7 @@ export async function resolvePostAuthDestination(
       .order("created_at", { ascending: true })
       .limit(1)
       .maybeSingle(),
-    supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
+    supabase.from("profiles").select("display_name,professional_title,profile_photo_path,account_type").eq("id", user.id).maybeSingle(),
     getCustomerPortalDestinations(supabase),
   ]);
 
@@ -78,6 +80,9 @@ export async function resolvePostAuthDestination(
   const customerDestinations = portalResult.data ?? [];
   const role = membership?.role as OrganizationRole | undefined;
   const displayName = profile?.display_name?.trim() || "Notandi";
+  const profilePhotoUrl = profile?.profile_photo_path
+    ? (await supabase.storage.from("agency-assets").createSignedUrl(profile.profile_photo_path, 3600)).data?.signedUrl ?? null
+    : null;
   const internalIdentity = membership && role
     ? {
         userId: user.id,
@@ -86,14 +91,17 @@ export async function resolvePostAuthDestination(
         initials: initials(displayName),
         role,
         roleLabel: roleLabels[role],
+        professionalTitle: profile?.professional_title?.trim() || null,
+        profilePhotoUrl,
       }
     : null;
 
   const internalDestination = internalIdentity ? "/properties" : null;
   const portalDestination = customerDestination(customerDestinations);
+  const onboardingDestination = profile?.account_type === "internal" ? "/onboarding" : null;
   const destination = preference === "customer"
     ? portalDestination ?? internalDestination ?? "/customer/access-denied"
-    : internalDestination ?? portalDestination ?? "/customer/access-denied";
+    : internalDestination ?? portalDestination ?? onboardingDestination ?? "/customer/access-denied";
 
   return {
     authenticated: true,

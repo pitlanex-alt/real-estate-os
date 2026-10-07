@@ -26,7 +26,7 @@ type NavItem = {
 const mainNavigation: NavItem[] = [
   { label: "Yfirlit", icon: LayoutDashboard, href: "/" },
   { label: "Fasteignir", icon: Building2, href: "/properties" },
-  { label: "Viðskiptavinir", icon: UserRound, href: "#" },
+  { label: "Viðskiptavinir", icon: UserRound, href: "/contacts" },
   { label: "Skoðanir", icon: CalendarDays, href: "#" },
   { label: "Tilboð", icon: Handshake, href: "#" },
   { label: "Verkefni", icon: CheckSquare2, href: "/tasks" },
@@ -34,8 +34,8 @@ const mainNavigation: NavItem[] = [
 ];
 
 const secondaryNavigation: NavItem[] = [
-  { label: "Teymi", icon: Users, href: "#" },
-  { label: "Stillingar", icon: Settings, href: "#" },
+  { label: "Teymi", icon: Users, href: "/team" },
+  { label: "Stillingar", icon: Settings, href: "/settings" },
 ];
 
 function Brand() {

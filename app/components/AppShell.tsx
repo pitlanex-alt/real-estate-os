@@ -19,7 +19,7 @@ export async function AppShell({
 }) {
   const supabase = await createClient();
   const identity = providedIdentity ?? await requireInternalIdentity(supabase);
-  const searchOptions = await getPropertySearchOptions(supabase);
+  const searchOptions = await getPropertySearchOptions(supabase, identity.organizationId);
 
   return (
     <div className="min-h-screen bg-[#111412] text-[#f3f1ea]">

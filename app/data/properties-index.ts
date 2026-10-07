@@ -22,6 +22,7 @@ export type IndexedProperty = {
   agent: string;
   agentInitials: string;
   imageVariant: "city" | "coast" | "stone";
+  imageUrl?: string | null;
 };
 
 export const propertyStatusFilters = [

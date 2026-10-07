@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, ChevronRight, Plus, Search } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Select } from "@/app/components/ui/Select";
@@ -10,6 +11,7 @@ import {
 } from "@/app/data/properties-index";
 
 function PropertyImage({ property, className = "" }: { property: IndexedProperty; className?: string }) {
+  if (property.imageUrl) return <span role="img" aria-label={`Mynd af ${property.address}`} className={`relative block shrink-0 overflow-hidden rounded-[8px] border border-white/[0.08] bg-[#282d29] ${className}`}><Image unoptimized fill sizes="64px" src={property.imageUrl} alt="" className="object-cover" /></span>;
   return (
     <span role="img" aria-label={`Mynd af ${property.address}`} className={`property-image property-image-flat property-image-${property.imageVariant} block shrink-0 overflow-hidden rounded-[8px] border border-white/[0.08] ${className}`}>
       <span className="property-building" />

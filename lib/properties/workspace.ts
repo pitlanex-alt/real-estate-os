@@ -1,4 +1,4 @@
-import { propertyRouteSlug } from "@/lib/portal/customer";
+import { getPropertyImages, type PropertyImage } from "@/lib/property-images/server";
 import { createClient } from "@/lib/supabase/server";
 import { getInternalWorkItems } from "@/lib/work-items/server";
 
@@ -11,6 +11,7 @@ function one<T>(value: Relation<T>) {
 
 export type PropertyWorkspaceData = {
   slug: string;
+  propertyId: string;
   transactionId: string;
   address: string;
   postalCode: string;
@@ -23,6 +24,10 @@ export type PropertyWorkspaceData = {
   stage: string;
   askingPriceIsk: number | null;
   agent: string;
+  agentTitle: string | null;
+  agentPhone: string | null;
+  agentEmail: string | null;
+  images: PropertyImage[];
   sellers: string[];
   viewings: Array<{ id: string; type: string; startsAt: string; endsAt: string; status: string }>;
   offers: Array<{ id: string; amountIsk: number; status: string; validUntil: string }>;
@@ -37,6 +42,8 @@ type TransactionCandidate = {
   asking_price_isk: number | null;
   started_at: string;
   property: Relation<{
+    id: string;
+    slug: string;
     address_line: string;
     postal_code: string;
     municipality: string;
@@ -46,7 +53,7 @@ type TransactionCandidate = {
     bedroom_count: number | null;
     year_built: number | null;
   }>;
-  agent: Relation<{ display_name: string }>;
+  agent: Relation<{ display_name: string; professional_title: string | null; phone: string | null; email: string | null }>;
   parties: Array<{
     role: string;
     contact: Relation<{ full_name: string }>;
@@ -56,20 +63,34 @@ type TransactionCandidate = {
 export async function getPropertyWorkspace(
   supabase: ServerSupabaseClient,
   propertySlug: string,
+  organizationId: string,
 ): Promise<{ data: PropertyWorkspaceData | null; error: string | null }> {
+  const { data: resolvedProperty, error: propertyError } = await supabase
+    .from("properties")
+    .select("id")
+    .eq("slug", propertySlug)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+  if (propertyError) {
+    console.error("Unable to resolve property workspace", propertyError);
+    return { data: null, error: "Ekki tókst að sækja vinnusvæði eignarinnar." };
+  }
+  if (!resolvedProperty) return { data: null, error: null };
+
   const { data: candidates, error: candidatesError } = await supabase
     .from("transactions")
     .select(`
       id, stage, asking_price_isk, started_at,
       property:properties!transactions_property_id_fkey(
-        address_line, postal_code, municipality, registry_number,
+        id, slug, address_line, postal_code, municipality, registry_number,
         size_sqm, room_count, bedroom_count, year_built
       ),
-      agent:profiles!transactions_assigned_agent_id_fkey(display_name),
+      agent:profiles!transactions_assigned_agent_id_fkey(display_name,professional_title,phone,email),
       parties:transaction_parties!transaction_parties_transaction_id_fkey(
         role, contact:contacts!transaction_parties_contact_id_fkey(full_name)
       )
     `)
+    .eq("property_id", resolvedProperty.id)
     .order("started_at", { ascending: false });
 
   if (candidatesError) {
@@ -77,11 +98,7 @@ export async function getPropertyWorkspace(
     return { data: null, error: "Ekki tókst að sækja vinnusvæði eignarinnar." };
   }
 
-  const matchingTransactions = ((candidates ?? []) as unknown as TransactionCandidate[])
-    .filter((candidate) => {
-      const property = one(candidate.property);
-      return property && propertyRouteSlug(property.address_line) === propertySlug;
-    });
+  const matchingTransactions = (candidates ?? []) as unknown as TransactionCandidate[];
   const transaction = matchingTransactions.find(
     (candidate) => candidate.stage !== "completed" && candidate.stage !== "cancelled",
   ) ?? matchingTransactions[0];
@@ -90,7 +107,7 @@ export async function getPropertyWorkspace(
   const agent = transaction ? one(transaction.agent) : null;
   if (!transaction || !property || !agent) return { data: null, error: null };
 
-  const [viewingsResult, offersResult, activityResult, workItems] = await Promise.all([
+  const [viewingsResult, offersResult, activityResult, workItems, imageMap] = await Promise.all([
     supabase
       .from("viewings")
       .select("id,viewing_type,starts_at,ends_at,status")
@@ -108,6 +125,7 @@ export async function getPropertyWorkspace(
       .order("created_at", { ascending: false })
       .limit(12),
     getInternalWorkItems(supabase, transaction.id),
+    getPropertyImages(supabase, [property.id]),
   ]);
 
   const loadError = viewingsResult.error ?? offersResult.error ?? activityResult.error;
@@ -126,6 +144,7 @@ export async function getPropertyWorkspace(
   return {
     data: {
       slug: propertySlug,
+      propertyId: property.id,
       transactionId: transaction.id,
       address: property.address_line,
       postalCode: property.postal_code,
@@ -138,6 +157,10 @@ export async function getPropertyWorkspace(
       stage: transaction.stage,
       askingPriceIsk: transaction.asking_price_isk,
       agent: agent.display_name,
+      agentTitle: agent.professional_title,
+      agentPhone: agent.phone,
+      agentEmail: agent.email,
+      images: imageMap.get(property.id) ?? [],
       sellers,
       viewings: (viewingsResult.data ?? []).map((viewing) => ({
         id: viewing.id,

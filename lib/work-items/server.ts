@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { propertyRouteSlug } from "@/lib/portal/customer";
 import type {
   CustomerDocument,
   CustomerTask,
@@ -12,7 +11,7 @@ type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
 type TransactionRow = {
   id: string;
-  property: { address_line: string } | { address_line: string }[] | null;
+  property: { address_line: string; slug: string } | { address_line: string; slug: string }[] | null;
 };
 
 function relation<T>(value: T | T[] | null): T | null {
@@ -74,7 +73,7 @@ export async function getInternalWorkItems(
   let transactionsQuery = supabase
     .from("transactions")
     .select(
-      "id,property:properties!transactions_property_id_fkey(address_line)",
+      "id,property:properties!transactions_property_id_fkey(address_line,slug)",
     )
     .in("organization_id", organizationIds)
     .order("created_at", { ascending: false });
@@ -111,6 +110,9 @@ export async function getInternalWorkItems(
       relation(transaction.property)?.address_line ?? "Óþekkt eign",
     ]),
   );
+  const slugByTransaction = new Map(
+    transactionRows.map((transaction) => [transaction.id, relation(transaction.property)?.slug ?? "eign"]),
+  );
   const profileById = new Map(
     (profilesResult.data ?? []).map((profile) => [profile.id, profile.display_name]),
   );
@@ -125,7 +127,7 @@ export async function getInternalWorkItems(
     visibility: row.visibility,
     completedAt: row.completed_at,
     property: propertyByTransaction.get(row.transaction_id) ?? "Óþekkt eign",
-    propertySlug: propertyRouteSlug(propertyByTransaction.get(row.transaction_id) ?? "eign"),
+    propertySlug: slugByTransaction.get(row.transaction_id) ?? "eign",
     assigneeId: row.assigned_to,
     assignee: row.assigned_to ? profileById.get(row.assigned_to) ?? null : null,
   }));
@@ -142,7 +144,7 @@ export async function getInternalWorkItems(
       fileSizeBytes: row.file_size_bytes,
       createdAt: row.created_at,
       property: propertyByTransaction.get(row.transaction_id) ?? "Óþekkt eign",
-      propertySlug: propertyRouteSlug(propertyByTransaction.get(row.transaction_id) ?? "eign"),
+      propertySlug: slugByTransaction.get(row.transaction_id) ?? "eign",
       uploadedBy: profileById.get(row.uploaded_by) ?? "Óþekktur",
     }),
   );

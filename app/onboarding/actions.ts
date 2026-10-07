@@ -1,0 +1,4 @@
+"use server";
+import { redirect } from "next/navigation";import {createClient}from"@/lib/supabase/server";
+export type OnboardingState={error:string|null};
+export async function createOrganization(_state:OnboardingState,formData:FormData):Promise<OnboardingState>{const supabase=await createClient();const{data:{user}}=await supabase.auth.getUser();if(!user)return{error:"Innskráning rann út."};const name=String(formData.get("organizationName")??"").trim();const displayName=String(formData.get("displayName")??"").trim();const title=String(formData.get("professionalTitle")??"").trim();const phone=String(formData.get("phone")??"").trim();const{error}=await supabase.rpc("create_internal_organization",{p_name:name,p_display_name:displayName,p_professional_title:title||null,p_phone:phone||null});if(error)return{error:error.code==="42501"?"Þessi aðgangur er ekki ætlaður fyrir innri uppsetningu.":"Ekki tókst að stofna fyrirtækið."};redirect("/settings?onboarding=1");}

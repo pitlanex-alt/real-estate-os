@@ -11,30 +11,25 @@ export type CustomerPropertySummary = {
   transactionId: string;
   askingPriceIsk: number;
   property: { address: string; postalCode: string; municipality: string; sizeSqm: number | null; bedroomCount: number | null; yearBuilt: number | null };
-  agent: { name: string; phone: string | null };
+  agent: { name: string; title?: string | null; phone: string | null; email?: string | null };
   customer: { name: string; phone: string | null; email: string | null };
   stage?: string;
+  coverImageUrl?: string | null;
 };
 
 export type PortalResult<T> = { data: T | null; denied: boolean; error: string | null };
 export type CustomerPortalDestination = {
   transactionId: string;
   role: "seller" | "co_owner" | "accepted_buyer";
+  propertySlug: string;
   address: string;
   postalCode: string;
   municipality: string;
 };
 
-export function propertyRouteSlug(address: string) {
-  return address.toLocaleLowerCase("is-IS").normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/ð/g, "d").replace(/þ/g, "th").replace(/æ/g, "ae").replace(/ö/g, "o")
-    .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-}
-
 export function customerPortalPath(destination: CustomerPortalDestination) {
   const audience = destination.role === "accepted_buyer" ? "buyer" : "seller";
-  return `/${audience}/${propertyRouteSlug(destination.address)}`;
+  return `/${audience}/${destination.propertySlug}`;
 }
 
 export async function getCustomerPortalDestinations(
@@ -49,6 +44,7 @@ export async function getCustomerPortalDestinations(
     return {
       transactionId: String(row.transaction_id),
       role: String(row.role) as CustomerPortalDestination["role"],
+      propertySlug: String(row.property_slug),
       address: String(row.address),
       postalCode: String(row.postal_code),
       municipality: String(row.municipality),
@@ -100,7 +96,7 @@ export async function getCustomerDestinationBySlug(
   if (result.error || !result.data) return { data: null, denied: result.denied, error: result.error };
   const destination = result.data.find((item) => {
     const correctAudience = audience === "buyer" ? item.role === "accepted_buyer" : item.role === "seller" || item.role === "co_owner";
-    return correctAudience && propertyRouteSlug(item.address) === propertySlug;
+    return correctAudience && item.propertySlug === propertySlug;
   }) ?? null;
   return { data: destination, denied: !destination, error: null };
 }
@@ -114,4 +110,23 @@ export async function getCustomerTransactionOffers(transactionId: string, supaba
     return row ? [{ id: String(row.id), status: String(row.status), amountIsk: Number(row.amount_isk), validUntil: String(row.valid_until) }] : [];
   });
   return { data: offers, error: null };
+}
+
+export async function getCustomerCoverImage(transactionId: string, supabaseClient?: ServerSupabaseClient) {
+  const supabase = supabaseClient ?? await createClient();
+  const { data, error } = await supabase.rpc("customer_property_images", { p_transaction_id: transactionId });
+  if (error || !Array.isArray(data)) return null;
+  const images = data.flatMap((value) => { const row = record(value); return row ? [{ path: String(row.storage_path), isCover: Boolean(row.is_cover), sortOrder: Number(row.sort_order) }] : []; });
+  const cover = images.find((image) => image.isCover) ?? images.sort((a, b) => a.sortOrder - b.sortOrder)[0];
+  if (!cover) return null;
+  const signed = await supabase.storage.from("property-images").createSignedUrl(cover.path, 3600);
+  return signed.data?.signedUrl ?? null;
+}
+
+export async function getCustomerAgentProfile(transactionId: string, supabaseClient?: ServerSupabaseClient) {
+  const supabase = supabaseClient ?? await createClient();
+  const { data, error } = await supabase.rpc("customer_agent_profile", { p_transaction_id: transactionId });
+  const row = record(data);
+  if (error || !row) return null;
+  return { name:String(row.name), title:row.title?String(row.title):null, phone:row.phone?String(row.phone):null, email:row.email?String(row.email):null };
 }

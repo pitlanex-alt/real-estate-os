@@ -13,7 +13,7 @@ import { createClient } from "@/lib/supabase/server";
 export default async function Home() {
   const supabase = await createClient();
   const identity = await requireInternalIdentity(supabase);
-  const dashboard = await getDashboardData(supabase);
+  const dashboard = await getDashboardData(supabase, identity.organizationId);
   const firstName = identity.displayName.split(/\s+/)[0];
   const dayLabel = new Intl.DateTimeFormat("is-IS", { weekday: "long", day: "numeric", month: "long", timeZone: "Atlantic/Reykjavik" }).format(new Date());
   const updatedAt = formatIcelandicTime(new Date());

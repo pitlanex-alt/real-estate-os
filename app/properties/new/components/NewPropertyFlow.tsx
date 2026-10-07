@@ -18,7 +18,7 @@ const setupStatusOptions: Array<{ value: SetupStatus; label: string }> = [
 ];
 
 type SellerForm = { name: string; idNumber: string; phone: string; email: string };
-type PropertyForm = { address: string; postcode: string; municipality: string; propertyNumber: string; size: string; rooms: string; year: string };
+type PropertyForm = { address: string; postcode: string; municipality: string; propertyNumber: string; size: string; rooms: string; bedrooms: string; year: string };
 type ValuationForm = { marketValue: string; salePrice: string; commission: string; completed: boolean; notes: string };
 
 function FlowSteps({ currentStep }: { currentStep: number }) {
@@ -58,11 +58,12 @@ function StepIntro({ step, title, description }: { step: number; title: string; 
   return <div><p className="text-[10px] font-medium uppercase tracking-[0.11em] text-[#758675]">Skref {step} af 5</p><h2 className="mt-3 text-[22px] font-semibold tracking-[-0.03em] text-[#efede6]">{title}</h2><p className="mt-2 text-[12px] leading-5 text-[#737b75]">{description}</p></div>;
 }
 
-function SellerStep({ seller, setSeller, secondOwner, setSecondOwner }: { seller: SellerForm; setSeller: (seller: SellerForm) => void; secondOwner: SellerForm | null; setSecondOwner: (seller: SellerForm | null) => void }) {
+function SellerStep({ seller, setSeller, secondOwner, setSecondOwner, contacts, sellerContactId, setSellerContactId }: { seller: SellerForm; setSeller: (seller: SellerForm) => void; secondOwner: SellerForm | null; setSecondOwner: (seller: SellerForm | null) => void; contacts:Array<{id:string;label:string;email:string|null;phone:string|null}>;sellerContactId:string;setSellerContactId:(value:string)=>void }) {
   return (
     <section aria-labelledby="seller-step-heading">
       <span id="seller-step-heading" className="sr-only">Seljandi</span>
       <StepIntro step={1} title="Seljandi" description="Skráðu tengiliðaupplýsingar eiganda áður en eignin fer í undirbúning." />
+      <div className="mt-7 max-w-md"><label className="mb-2 block text-[11px] font-medium text-[#8c948e]">Velja skráðan tengilið</label><Select ariaLabel="Velja skráðan seljanda" value={sellerContactId} onChange={(value)=>{setSellerContactId(value);const contact=contacts.find((item)=>item.id===value);if(contact)setSeller({...seller,name:contact.label,email:contact.email??"",phone:contact.phone??""});}} options={[{value:"",label:"Stofna nýjan tengilið"},...contacts.map((item)=>({value:item.id,label:item.label}))]} /></div>
       <div className="mt-7 grid gap-5 sm:grid-cols-2">
         <Field label="Nafn" value={seller.name} onChange={(name) => setSeller({ ...seller, name })} />
         <Field label="Kennitala" value={seller.idNumber} onChange={(idNumber) => setSeller({ ...seller, idNumber })} inputMode="numeric" />
@@ -104,6 +105,7 @@ function PropertyStep({ property, setProperty }: { property: PropertyForm; setPr
         <Field label="Fastanúmer" value={property.propertyNumber} onChange={(propertyNumber) => setProperty({ ...property, propertyNumber })} />
         <Field label="Stærð" value={property.size} onChange={(size) => setProperty({ ...property, size })} />
         <Field label="Fjöldi herbergja" value={property.rooms} onChange={(rooms) => setProperty({ ...property, rooms })} />
+        <Field label="Svefnherbergi" value={property.bedrooms} onChange={(bedrooms) => setProperty({ ...property, bedrooms })} inputMode="numeric" />
         <Field label="Byggingarár" value={property.year} onChange={(year) => setProperty({ ...property, year })} inputMode="numeric" />
       </div>
     </section>
@@ -168,14 +170,17 @@ function ReviewStep({ seller, property, valuation, checklist, agentName }: { sel
   );
 }
 
-export function NewPropertyFlow({ agentName }: { agentName: string }) {
+export function NewPropertyFlow({ agentName, contacts, agents, currentAgentId }: { agentName: string; contacts:Array<{id:string;label:string;email:string|null;phone:string|null}>;agents:Array<{id:string;label:string}>;currentAgentId:string }) {
   const router = useRouter();
   const [isCreating, startCreating] = useTransition();
   const [createError, setCreateError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [seller, setSeller] = useState<SellerForm>({ name: "", idNumber: "", phone: "", email: "" });
+  const [sellerContactId,setSellerContactId]=useState("");
+  const [assignedAgentId,setAssignedAgentId]=useState(currentAgentId);
+  const [initialStage,setInitialStage]=useState<"valuation"|"preparation">("preparation");
   const [secondOwner, setSecondOwner] = useState<SellerForm | null>(null);
-  const [property, setProperty] = useState<PropertyForm>({ address: "", postcode: "", municipality: "", propertyNumber: "", size: "", rooms: "", year: "" });
+  const [property, setProperty] = useState<PropertyForm>({ address: "", postcode: "", municipality: "", propertyNumber: "", size: "", rooms: "", bedrooms: "", year: "" });
   const [valuation, setValuation] = useState<ValuationForm>({ marketValue: "86.000.000 kr.", salePrice: "84.900.000 kr.", commission: "1,75%", completed: true, notes: "" });
   const initialChecklist = useMemo(() => Object.fromEntries(setupChecklistLabels.map((item, index) => [item, index < 2 ? "in-progress" : "not-started"])) as Record<string, SetupStatus>, []);
   const [checklist, setChecklist] = useState(initialChecklist);
@@ -184,6 +189,9 @@ export function NewPropertyFlow({ agentName }: { agentName: string }) {
     setCreateError(null);
     startCreating(async () => {
       const result = await createPropertyTransaction({
+        sellerContactId: sellerContactId || null,
+        assignedAgentId,
+        initialStage,
         seller: { name: seller.name, phone: seller.phone, email: seller.email },
         coOwner: secondOwner ? { name: secondOwner.name, phone: secondOwner.phone, email: secondOwner.email } : null,
         property,
@@ -206,11 +214,11 @@ export function NewPropertyFlow({ agentName }: { agentName: string }) {
       <div className="mt-7"><FlowSteps currentStep={currentStep} /></div>
 
       <div className="mt-10 max-w-3xl">
-        {currentStep === 1 && <SellerStep seller={seller} setSeller={setSeller} secondOwner={secondOwner} setSecondOwner={setSecondOwner} />}
+        {currentStep === 1 && <SellerStep seller={seller} setSeller={setSeller} secondOwner={secondOwner} setSecondOwner={setSecondOwner} contacts={contacts} sellerContactId={sellerContactId} setSellerContactId={setSellerContactId} />}
         {currentStep === 2 && <PropertyStep property={property} setProperty={setProperty} />}
         {currentStep === 3 && <ValuationStep valuation={valuation} setValuation={setValuation} />}
-        {currentStep === 4 && <SetupStep checklist={checklist} setChecklist={setChecklist} agentName={agentName} />}
-        {currentStep === 5 && <ReviewStep seller={seller} property={property} valuation={valuation} checklist={checklist} agentName={agentName} />}
+        {currentStep === 4 && <><div className="mb-7 grid gap-5 sm:grid-cols-2"><div><label className="mb-2 block text-[11px] text-[#8c948e]">Ábyrgur fasteignasali</label><Select ariaLabel="Ábyrgur fasteignasali" value={assignedAgentId} onChange={setAssignedAgentId} options={agents.map((agent)=>({value:agent.id,label:agent.label}))}/></div><div><label className="mb-2 block text-[11px] text-[#8c948e]">Upphafsstaða</label><Select ariaLabel="Upphafsstaða" value={initialStage} onChange={(value)=>setInitialStage(value as "valuation"|"preparation")} options={[{value:"valuation",label:"Verðmat"},{value:"preparation",label:"Undirbúningur"}]}/></div></div><SetupStep checklist={checklist} setChecklist={setChecklist} agentName={agents.find((agent)=>agent.id===assignedAgentId)?.label??agentName} /></>}
+        {currentStep === 5 && <ReviewStep seller={seller} property={property} valuation={valuation} checklist={checklist} agentName={agents.find((agent)=>agent.id===assignedAgentId)?.label??agentName} />}
       </div>
 
       {createError && <p role="alert" className="mt-7 max-w-3xl border-y border-[#c8665b]/25 py-4 text-[12px] text-[#c99088]">{createError}</p>}

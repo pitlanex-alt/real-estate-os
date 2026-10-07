@@ -1,4 +1,5 @@
 import { Bell, LogOut } from "lucide-react";
+import Image from "next/image";
 import { logoutInternal } from "@/app/login/logout";
 import type { InternalIdentity } from "@/lib/auth/post-auth";
 import { PropertySearch } from "@/app/components/PropertySearch";
@@ -21,12 +22,12 @@ export function Topbar({ identity, searchOptions }: { identity: InternalIdentity
           </button>
           <div className="h-7 w-px bg-white/[0.07]" />
           <div className="flex items-center gap-3">
-            <span className="grid size-8 place-items-center rounded-full bg-[#2a332b] text-[10px] font-semibold tracking-wide text-[#bac8b8] ring-1 ring-inset ring-white/[0.08]">
-              {identity.initials}
+            <span className="relative grid size-8 overflow-hidden rounded-full bg-[#2a332b] text-[10px] font-semibold tracking-wide text-[#bac8b8] ring-1 ring-inset ring-white/[0.08]">
+              {identity.profilePhotoUrl ? <Image unoptimized fill sizes="32px" src={identity.profilePhotoUrl} alt="" className="object-cover" /> : <span className="grid size-full place-items-center">{identity.initials}</span>}
             </span>
             <div className="hidden leading-none sm:block">
               <p className="text-[12px] font-medium text-[#e9e8e1]">{identity.displayName}</p>
-              <p className="mt-1.5 text-[10px] text-[#737b75]">{identity.roleLabel}</p>
+              <p className="mt-1.5 text-[10px] text-[#737b75]">{identity.professionalTitle ?? identity.roleLabel}</p>
             </div>
             <form action={logoutInternal}>
               <button

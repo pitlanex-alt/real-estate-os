@@ -15,7 +15,7 @@ export default async function PropertiesPage({ searchParams }: PageProps<"/prope
   const supabase = await createClient();
   const identity = await requireInternalIdentity(supabase);
 
-  const { properties, error } = await getIndexedProperties();
+  const { properties, error } = await getIndexedProperties(identity.organizationId);
 
   return (
     <AppShell activeItem="Fasteignir" identity={identity}>
