@@ -19,7 +19,7 @@ export function LoginForm() {
         <input id="password" name="password" type="password" autoComplete="current-password" required className="mt-2 min-h-11 w-full rounded-[8px] border border-white/[0.08] bg-[#191d1a] px-3 text-base text-[#dedfd8] outline-none focus:border-[#6f846f]/60" />
       </div>
       {state.error && <p role="alert" className="text-[12px] text-[#c98278]">{state.error}</p>}
-      <button type="submit" disabled={pending} className="min-h-11 w-full rounded-[8px] bg-[#6f846f] px-5 text-base font-semibold text-[#111412] disabled:cursor-wait disabled:opacity-60">
+      <button type="submit" disabled={pending} className="mo-button mo-button-primary min-h-11 w-full px-5 text-base font-semibold">
         {pending ? "Skrái inn…" : "Skrá inn"}
       </button>
     </form>

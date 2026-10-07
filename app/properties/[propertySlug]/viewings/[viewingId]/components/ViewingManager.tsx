@@ -4,6 +4,8 @@ import { Check, ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
+import { Button } from "@/app/components/ui/Button";
+import { Select } from "@/app/components/ui/Select";
 import {
   attendanceOptions,
   interestOptions,
@@ -83,7 +85,7 @@ function ViewingHeader({
 }) {
   return (
     <header>
-      <Link href={`/properties/${propertySlug}`} className="inline-flex min-h-11 items-center gap-1.5 text-[11px] font-medium text-[#778079] hover:text-[#b5bbb6]">
+      <Link href={`/properties/${propertySlug}`} className="mo-button mo-button-text min-h-11 gap-1.5 text-[11px] font-medium">
         <ChevronLeft size={14} strokeWidth={1.7} />
         {viewing.address}
       </Link>
@@ -101,14 +103,14 @@ function ViewingHeader({
             <span><strong className="font-semibold text-[#d8d8d1]">{noShow}</strong> mættu ekki</span>
           </div>
         </div>
-        <button
-          type="button"
+        <Button
+          variant="primary"
           onClick={onAddGuest}
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] bg-[#6f846f] px-4 text-[13px] font-semibold text-[#111412] transition-colors hover:bg-[#829782]"
+          className="min-h-11 px-4 text-[13px] font-semibold"
         >
           <Plus size={15} strokeWidth={2} />
           Skrá gest
-        </button>
+        </Button>
       </div>
     </header>
   );
@@ -154,7 +156,7 @@ function GuestRow({
       <button
         type="button"
         onClick={() => onOpen(guest)}
-        className="group grid min-h-14 min-w-0 gap-3 text-left md:grid-cols-[1.1fr_0.72fr_0.82fr_1.3fr] md:items-center md:gap-5"
+          className="mo-hover-row group grid min-h-14 min-w-0 gap-3 text-left md:grid-cols-[1.1fr_0.72fr_0.82fr_1.3fr] md:items-center md:gap-5"
       >
         <span className="min-w-0">
           <span className="flex items-center gap-2">
@@ -170,7 +172,7 @@ function GuestRow({
         <span className={`text-[10px] ${interestStyles[guest.interest]}`}>{interestLabel}</span>
         <span className="flex min-w-0 items-center justify-between gap-3">
           <span className="line-clamp-2 text-[10px] leading-4 text-[#69716b]">{guest.note || "Engar glósur skráðar."}</span>
-          <ChevronRight size={15} strokeWidth={1.5} className="shrink-0 text-[#4f5751] transition group-hover:translate-x-0.5 group-hover:text-[#9caf9a]" />
+          <ChevronRight size={15} strokeWidth={1.5} className="mo-hover-accent shrink-0 text-[#4f5751] transition" />
         </span>
       </button>
 
@@ -180,13 +182,12 @@ function GuestRow({
           Mæting skráð
         </span>
       ) : (
-        <button
-          type="button"
+        <Button
           onClick={() => onMarkAttended(guest.id)}
-          className="min-h-11 rounded-[8px] border border-[#6f846f]/35 px-3 text-[12px] font-medium text-[#a6b4a4] transition-colors hover:bg-[#6f846f]/10"
+          className="min-h-11 border-[#6f846f]/35 px-3 text-[12px] font-medium text-[#a6b4a4]"
         >
           Merkja mættan
-        </button>
+        </Button>
       )}
     </li>
   );
@@ -252,7 +253,7 @@ function GuestDetailPanel({
             <h2 className="text-[18px] font-semibold tracking-[-0.02em] text-[#eeede6]">{guest.name}</h2>
             <p className="mt-2 text-[12px] text-[#808882]">{guest.phone} · {guest.email}</p>
           </div>
-          <button type="button" onClick={onClose} className="grid size-11 place-items-center rounded-[8px] text-[#858d87] hover:bg-white/5 hover:text-white" aria-label="Loka">
+          <button type="button" onClick={onClose} className="mo-button mo-button-icon grid size-11 place-items-center" aria-label="Loka">
             <X size={19} />
           </button>
         </div>
@@ -266,7 +267,7 @@ function GuestDetailPanel({
                   key={option.value}
                   type="button"
                   onClick={() => setDraft({ ...draft, attendance: option.value, attendanceLabel: undefined })}
-                  className={`min-h-11 rounded-[8px] border px-2 text-[12px] font-medium ${draft.attendance === option.value ? "border-[#6f846f]/60 bg-[#6f846f]/12 text-[#b9c6b6]" : "border-white/[0.08] text-[#747c76]"}`}
+                  className={`mo-choice min-h-11 rounded-[8px] border px-2 text-[12px] font-medium ${draft.attendance === option.value ? "border-[#6f846f]/60 bg-[#6f846f]/12 text-[#b9c6b6]" : "border-white/[0.08] text-[#747c76]"}`}
                 >
                   {option.label}
                 </button>
@@ -282,7 +283,7 @@ function GuestDetailPanel({
                   key={option.value}
                   type="button"
                   onClick={() => setDraft({ ...draft, interest: option.value, interestLabel: undefined })}
-                  className={`min-h-11 rounded-[8px] border px-3 text-left text-[12px] font-medium ${draft.interest === option.value ? "border-[#6f846f]/60 bg-[#6f846f]/12 text-[#b9c6b6]" : "border-white/[0.08] text-[#747c76]"}`}
+                  className={`mo-choice min-h-11 rounded-[8px] border px-3 text-left text-[12px] font-medium ${draft.interest === option.value ? "border-[#6f846f]/60 bg-[#6f846f]/12 text-[#b9c6b6]" : "border-white/[0.08] text-[#747c76]"}`}
                 >
                   {option.label}
                 </button>
@@ -304,19 +305,19 @@ function GuestDetailPanel({
 
           <div className="mt-7">
             <label htmlFor="next-action" className="text-[11px] font-medium uppercase tracking-[0.09em] text-[#69716b]">Næsta aðgerð</label>
-            <select
+            <Select
               id="next-action"
               value={draft.nextAction}
-              onChange={(event) => setDraft({ ...draft, nextAction: event.target.value as ViewingGuest["nextAction"] })}
-              className="mt-3 min-h-11 w-full rounded-[9px] border border-white/[0.08] bg-[#1a1f1b] px-3 text-base text-[#d6d8d1] outline-none focus:border-[#6f846f]/60"
-            >
-              {nextActionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
+              onChange={(value) => setDraft({ ...draft, nextAction: value as ViewingGuest["nextAction"] })}
+              options={nextActionOptions}
+              ariaLabel="Næsta aðgerð"
+              className="mt-3"
+            />
           </div>
         </div>
 
         <div className="border-t border-white/[0.07] px-5 py-4 sm:px-7">
-          <button type="button" onClick={save} disabled={isSaving} className="min-h-11 w-full rounded-[8px] bg-[#6f846f] px-4 text-[14px] font-semibold text-[#111412] hover:bg-[#829782] disabled:cursor-wait disabled:opacity-60">{isSaving ? "Vista…" : "Vista"}</button>
+          <Button variant="primary" onClick={save} disabled={isSaving} className="min-h-11 w-full px-4 text-[14px] font-semibold">{isSaving ? "Vista…" : "Vista"}</Button>
         </div>
       </aside>
     </div>
@@ -350,7 +351,7 @@ function AddGuestModal({
             <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#6f846f]">Óskráður gestur</p>
             <h2 id="add-guest-heading" className="mt-2 text-[19px] font-semibold text-[#eeede6]">Skrá gest</h2>
           </div>
-          <button type="button" onClick={onClose} className="grid size-11 place-items-center rounded-[8px] text-[#858d87] hover:bg-white/5" aria-label="Loka">
+          <button type="button" onClick={onClose} className="mo-button mo-button-icon grid size-11 place-items-center" aria-label="Loka">
             <X size={19} />
           </button>
         </div>
@@ -367,7 +368,7 @@ function AddGuestModal({
             <label htmlFor="walk-in-email" className="text-[12px] text-[#8b938d]">Netfang <span className="text-[#626a64]">(valfrjálst)</span></label>
             <input id="walk-in-email" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} className="mt-2 min-h-11 w-full rounded-[8px] border border-white/[0.08] bg-[#1b201c] px-3 text-base text-[#e2e2db] outline-none focus:border-[#6f846f]/60" />
           </div>
-          <button type="submit" disabled={isSaving} className="min-h-11 w-full rounded-[8px] bg-[#6f846f] px-4 text-[14px] font-semibold text-[#111412] hover:bg-[#829782] disabled:cursor-wait disabled:opacity-60">{isSaving ? "Skrái gest…" : "Skrá sem mættan"}</button>
+          <Button type="submit" variant="primary" disabled={isSaving} className="min-h-11 w-full px-4 text-[14px] font-semibold">{isSaving ? "Skrái gest…" : "Skrá sem mættan"}</Button>
         </form>
       </section>
     </div>
@@ -414,7 +415,7 @@ function CompleteViewing({
           <h2 id="complete-heading" className="text-[16px] font-semibold text-[#ecebe4]">Ljúka skoðun</h2>
           <p className="mt-2 text-[10.5px] text-[#6f7771]">Farðu yfir mætingu og næstu aðgerðir áður en skoðun er lokað.</p>
         </div>
-        {!isOpen && <button type="button" onClick={() => setIsOpen(true)} className="min-h-11 rounded-[8px] border border-white/[0.1] px-4 text-[13px] font-medium text-[#a8afa9] hover:border-white/[0.16] hover:text-white">Ljúka skoðun</button>}
+        {!isOpen && <Button onClick={() => setIsOpen(true)} className="min-h-11 px-4 text-[13px] font-medium">Ljúka skoðun</Button>}
       </div>
 
       {isOpen && (
@@ -442,8 +443,8 @@ function CompleteViewing({
             </ul>
           </div>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-end">
-            <button type="button" onClick={() => setIsOpen(false)} className="min-h-11 px-4 text-[13px] text-[#7c847e]">Til baka</button>
-            <button type="button" onClick={async () => { setIsCompleting(true); await onComplete(); setIsCompleting(false); }} disabled={isCompleting} className="min-h-11 rounded-[8px] bg-[#6f846f] px-4 text-[13px] font-semibold text-[#111412] hover:bg-[#829782] disabled:cursor-wait disabled:opacity-60">{isCompleting ? "Lýk skoðun…" : "Ljúka skoðun"}</button>
+            <Button variant="ghost" onClick={() => setIsOpen(false)} className="min-h-11 px-4 text-[13px]">Til baka</Button>
+            <Button variant="primary" onClick={async () => { setIsCompleting(true); await onComplete(); setIsCompleting(false); }} disabled={isCompleting} className="min-h-11 px-4 text-[13px] font-semibold">{isCompleting ? "Lýk skoðun…" : "Ljúka skoðun"}</Button>
           </div>
         </div>
       )}

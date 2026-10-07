@@ -22,7 +22,7 @@ export function PropertyRow({ property }: { property: Property }) {
     <li>
       <Link
         href={property.href ?? "#"}
-        className="group grid min-h-[104px] grid-cols-[72px_minmax(190px,1.45fr)_minmax(170px,1fr)_190px_160px_20px] items-center gap-5 border-b border-white/[0.07] px-1 py-4 transition-colors hover:bg-white/[0.018]"
+        className="mo-hover-row group grid min-h-[104px] grid-cols-[72px_minmax(190px,1.45fr)_minmax(170px,1fr)_190px_160px_20px] items-center gap-5 border-b border-white/[0.07] px-1 py-4 transition-colors"
       >
         <div
           role="img"
@@ -33,7 +33,7 @@ export function PropertyRow({ property }: { property: Property }) {
         </div>
 
         <div className="min-w-0">
-          <h3 className="truncate text-[13px] font-semibold tracking-[-0.01em] text-[#efeee7] group-hover:text-white">
+          <h3 className="mo-hover-accent truncate text-[13px] font-semibold tracking-[-0.01em] text-[#efeee7]">
             {property.address}
           </h3>
           <p className="mt-1.5 text-[10.5px] text-[#747c76]">{property.location}</p>
@@ -62,7 +62,7 @@ export function PropertyRow({ property }: { property: Property }) {
           <span className="truncate text-[10.5px] text-[#858d87]">{property.agent.name}</span>
         </div>
 
-        <ChevronRight size={16} strokeWidth={1.5} className="text-[#4f5751] transition group-hover:translate-x-0.5 group-hover:text-[#9caf9a]" />
+        <ChevronRight size={16} strokeWidth={1.5} className="mo-hover-accent text-[#4f5751] transition" />
       </Link>
     </li>
   );

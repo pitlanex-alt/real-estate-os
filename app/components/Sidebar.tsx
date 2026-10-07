@@ -61,16 +61,16 @@ function Navigation({ onNavigate, activeItem }: { onNavigate?: () => void; activ
             href={href}
             onClick={onNavigate}
             aria-current={isSelected ? "page" : undefined}
-            className={`group flex h-10 items-center gap-3 rounded-[10px] px-3 text-[13px] font-medium transition-colors ${
+            className={`mo-nav-item group flex h-10 items-center gap-3 rounded-[10px] px-3 text-[13px] font-medium transition-colors ${
               isSelected
                 ? "bg-[#202820] text-[#eef1e9]"
-                : "text-[#89918b] hover:bg-white/[0.035] hover:text-[#e3e6df]"
+                : "text-[#89918b]"
             }`}
           >
             <Icon
               size={17}
               strokeWidth={1.65}
-              className={isSelected ? "text-[#9caf9a]" : "text-[#747c76] group-hover:text-[#aab0ab]"}
+              className={isSelected ? "text-[#9caf9a]" : "mo-nav-icon text-[#747c76]"}
             />
             {label}
           </Link>
@@ -115,7 +115,7 @@ export function Sidebar({ activeItem = "Yfirlit" }: { activeItem?: string }) {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="fixed left-4 top-[17px] z-30 grid size-10 place-items-center rounded-[10px] border border-white/[0.08] bg-[#181c19] text-[#cbd0ca] lg:hidden"
+        className="mo-button mo-button-secondary fixed left-4 top-[17px] z-30 grid size-10 place-items-center lg:hidden"
         aria-label="Opna valmynd"
         aria-expanded={isOpen}
       >
@@ -133,7 +133,7 @@ export function Sidebar({ activeItem = "Yfirlit" }: { activeItem?: string }) {
           <aside className="absolute inset-y-0 left-0 w-[280px] border-r border-white/[0.08] bg-[#0d100e]">
             <button
               type="button"
-              className="absolute right-4 top-5 z-10 grid size-9 place-items-center rounded-[9px] text-[#959d97] hover:bg-white/5 hover:text-white"
+              className="mo-button mo-button-icon absolute right-4 top-5 z-10 grid size-9 place-items-center"
               onClick={() => setIsOpen(false)}
               aria-label="Loka valmynd"
             >

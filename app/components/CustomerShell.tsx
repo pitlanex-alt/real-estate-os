@@ -43,7 +43,7 @@ export function CustomerShell({
               {customerInitials}
             </span>
             <form action={logoutCustomer}>
-              <button type="submit" className="min-h-11 px-2 text-[12px] text-[#727b74] hover:text-[#b8beb9]">Skrá út</button>
+              <button type="submit" className="mo-button mo-button-text min-h-11 px-2 text-[12px]">Skrá út</button>
             </form>
           </div>
         </div>

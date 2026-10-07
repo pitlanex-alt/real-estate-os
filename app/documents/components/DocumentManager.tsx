@@ -1,10 +1,56 @@
 "use client";
+
 import { Download, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { Button } from "@/app/components/ui/Button";
+import { Select } from "@/app/components/ui/Select";
 import type { DocumentVisibility, InternalDocument, WorkOption } from "@/lib/work-items/model";
 import { deleteDocumentAction, getDocumentDownloadUrl, updateDocumentVisibilityAction, uploadDocumentAction } from "../actions";
-const labels={internal:"Innri",seller:"Seljandi",buyer:"Kaupandi",shared:"Sameiginlegt"};
-export function DocumentManager({documents,transactions}:{documents:InternalDocument[];transactions:WorkOption[]}){const[show,setShow]=useState(false);const[pending,setPending]=useState<string|null>(null);const[error,setError]=useState<string|null>(null);async function run(key:string,fn:()=>Promise<void>){setPending(key);setError(null);try{await fn();}catch(e){setError(e instanceof Error?e.message:"Aðgerð mistókst.");}finally{setPending(null);}}async function download(id:string){setPending(id);const result=await getDocumentDownloadUrl(id);setPending(null);if(result.url)window.open(result.url,"_blank","noopener,noreferrer");else setError(result.error??"Skrá fannst ekki í geymslu.");}
-return <><div className="flex justify-end"><button onClick={()=>setShow(!show)} className="inline-flex min-h-11 items-center gap-2 rounded-[8px] bg-[#6f846f] px-4 text-[12px] font-semibold text-[#111412]"><Plus size={14}/>Hlaða upp skjali</button></div>{show&&<form action={(data)=>void run("upload",()=>uploadDocumentAction(data))} className="mt-5 grid gap-3 border-y border-white/[0.07] py-5 md:grid-cols-2 lg:grid-cols-5"><input name="title" required placeholder="Heiti skjals" className="min-h-11 rounded-[8px] border border-white/[0.08] bg-[#181c19] px-3 text-base"/><input name="documentType" required placeholder="Tegund" className="min-h-11 rounded-[8px] border border-white/[0.08] bg-[#181c19] px-3 text-base"/><select name="transactionId" className="min-h-11 rounded-[8px] border border-white/[0.08] bg-[#181c19] px-3 text-base">{transactions.map(x=><option key={x.id} value={x.id}>{x.label}</option>)}</select><select name="visibility" className="min-h-11 rounded-[8px] border border-white/[0.08] bg-[#181c19] px-3 text-base">{Object.entries(labels).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select><div className="flex gap-2"><input name="file" type="file" required className="min-h-11 min-w-0 flex-1 text-base text-[#929a94] file:mr-2 file:min-h-11 file:border-0 file:bg-[#202620] file:px-3 file:text-[#bdc6bb]"/><button disabled={pending==="upload"} className="min-h-11 rounded-[8px] bg-[#6f846f] px-3 text-[12px] font-semibold text-[#111412]">Vista</button></div></form>}{error&&<p role="alert" className="mt-3 text-[12px] text-[#c98279]">{error}</p>}<div className="mt-6 border-t border-white/[0.07]">{documents.map(doc=><DocumentRow key={doc.id} document={doc} pending={pending===doc.id} run={(fn)=>run(doc.id,fn)} download={()=>void download(doc.id)}/>) }{!documents.length&&<p className="py-10 text-[13px] text-[#737b75]">Engin skjöl fundust.</p>}</div></>}
-function DocumentRow({document,pending,run,download}:{document:InternalDocument;pending:boolean;run:(fn:()=>Promise<void>)=>void;download:()=>void}){const[visibility,setVisibility]=useState<DocumentVisibility>(document.visibility);return <article className="grid gap-3 border-b border-white/[0.07] py-4 md:grid-cols-[1.5fr_.7fr_150px_130px_auto] md:items-center"><div><h2 className="text-[13px] font-medium text-[#e4e3dc]">{document.title}</h2><p className="mt-1 text-[10.5px] text-[#6f7771]"><Link href={`/properties/${document.propertySlug}`} className="hover:text-[#a9b8a7]">{document.property}</Link> · {document.documentType}</p></div><p className="text-[11px] text-[#8b938d]">{document.uploadedBy}</p><select value={visibility} onChange={e=>setVisibility(e.target.value as DocumentVisibility)} className="min-h-11 rounded-[8px] border border-white/[0.07] bg-[#171b18] px-2 text-base">{Object.entries(labels).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select><button disabled={pending} onClick={()=>run(()=>updateDocumentVisibilityAction(document.id,visibility))} className="min-h-11 rounded-[8px] border border-white/[0.09] px-3 text-[11px] text-[#aeb4ae]">Vista aðgang</button><div className="flex"><button aria-label="Sækja" disabled={pending} onClick={download} className="grid size-11 place-items-center text-[#93a590]"><Download size={15}/></button><button aria-label="Eyða" disabled={pending} onClick={()=>run(()=>deleteDocumentAction(document.id))} className="grid size-11 place-items-center text-[#9a716c]"><Trash2 size={15}/></button></div></article>}
+
+const labels = { internal: "Innri", seller: "Seljandi", buyer: "Kaupandi", shared: "Sameiginlegt" };
+const visibilityOptions = Object.entries(labels).map(([value, label]) => ({ value, label }));
+
+export function DocumentManager({ documents, transactions }: { documents: InternalDocument[]; transactions: WorkOption[] }) {
+  const [show, setShow] = useState(false);
+  const [pending, setPending] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  async function run(key: string, fn: () => Promise<void>) { setPending(key); setError(null); try { await fn(); } catch (caught) { setError(caught instanceof Error ? caught.message : "Aðgerð mistókst."); } finally { setPending(null); } }
+  async function download(id: string) { setPending(id); const result = await getDocumentDownloadUrl(id); setPending(null); if (result.url) window.open(result.url, "_blank", "noopener,noreferrer"); else setError(result.error ?? "Skrá fannst ekki í geymslu."); }
+  return <>
+    <div className="flex justify-end"><Button variant="primary" onClick={() => setShow(!show)} className="min-h-11 px-4 text-[12px] font-semibold"><Plus size={14} />Hlaða upp skjali</Button></div>
+    {show && <UploadDocumentForm transactions={transactions} pending={pending === "upload"} run={(data) => run("upload", () => uploadDocumentAction(data))} />}
+    {error && <p role="alert" className="mt-3 text-[12px] text-[#c98279]">{error}</p>}
+    <div className="mt-6 border-t border-white/[0.07]">
+      {documents.map((document) => <DocumentRow key={document.id} document={document} pending={pending === document.id} run={(fn) => run(document.id, fn)} download={() => void download(document.id)} />)}
+      {!documents.length && <p className="py-10 text-[13px] text-[#737b75]">Engin skjöl fundust.</p>}
+    </div>
+  </>;
+}
+
+function UploadDocumentForm({ transactions, pending, run }: { transactions: WorkOption[]; pending: boolean; run: (data: FormData) => void }) {
+  const [transactionId, setTransactionId] = useState(transactions[0]?.id ?? "");
+  const [visibility, setVisibility] = useState("internal");
+  return <form action={run} className="mt-5 grid gap-3 border-y border-white/[0.07] py-5 md:grid-cols-2 xl:grid-cols-[1fr_.8fr_1fr_.8fr_1.3fr_auto]">
+    <input name="title" required placeholder="Heiti skjals" className="mo-control min-h-11 min-w-0 px-3 text-base outline-none" />
+    <input name="documentType" required placeholder="Tegund" className="mo-control min-h-11 min-w-0 px-3 text-base outline-none" />
+    <Select name="transactionId" ariaLabel="Eign" value={transactionId} onChange={setTransactionId} options={transactions.map((item) => ({ value: item.id, label: item.label }))} disabled={!transactions.length} />
+    <Select name="visibility" ariaLabel="Sýnileiki" value={visibility} onChange={setVisibility} options={visibilityOptions} />
+    <input name="file" type="file" required className="min-h-11 min-w-0 text-base text-[#929a94] file:mr-2 file:min-h-11 file:cursor-pointer file:rounded-[8px] file:border file:border-white/[0.08] file:bg-[#202620] file:px-3 file:text-[#bdc6bb]" />
+    <Button type="submit" variant="primary" disabled={pending || !transactions.length} className="min-h-11 px-4 text-[12px] font-semibold">Vista</Button>
+  </form>;
+}
+
+function DocumentRow({ document, pending, run, download }: { document: InternalDocument; pending: boolean; run: (fn: () => Promise<void>) => void; download: () => void }) {
+  const [visibility, setVisibility] = useState<DocumentVisibility>(document.visibility);
+  return <article className="grid gap-3 border-b border-white/[0.07] py-4 md:grid-cols-[1.5fr_.7fr_150px_130px_auto] md:items-center">
+    <div><h2 className="text-[13px] font-medium text-[#e4e3dc]">{document.title}</h2><p className="mt-1 text-[10.5px] text-[#6f7771]"><Link href={`/properties/${document.propertySlug}`} className="mo-button-text">{document.property}</Link> · {document.documentType}</p></div>
+    <p className="text-[11px] text-[#8b938d]">{document.uploadedBy}</p>
+    <Select ariaLabel={`Sýnileiki fyrir ${document.title}`} value={visibility} onChange={(value) => setVisibility(value as DocumentVisibility)} options={visibilityOptions} />
+    <Button disabled={pending} onClick={() => run(() => updateDocumentVisibilityAction(document.id, visibility))} className="min-h-11 px-3 text-[11px]">Vista aðgang</Button>
+    <div className="flex justify-end">
+      <Button variant="icon" aria-label="Sækja" disabled={pending} onClick={download} className="size-11 text-[#93a590]"><Download size={15} /></Button>
+      <Button variant="danger" aria-label="Eyða" disabled={pending} onClick={() => run(() => deleteDocumentAction(document.id))} className="size-11 border-transparent"><Trash2 size={15} /></Button>
+    </div>
+  </article>;
+}

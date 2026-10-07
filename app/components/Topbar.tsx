@@ -14,7 +14,7 @@ export function Topbar({ identity, searchOptions }: { identity: InternalIdentity
           <button
             type="button"
             aria-label="Tilkynningar"
-            className="relative grid size-9 place-items-center rounded-[9px] text-[#8f9791] transition-colors hover:bg-white/5 hover:text-[#f3f1ea]"
+            className="mo-button mo-button-icon relative grid size-9 place-items-center"
           >
             <Bell size={18} strokeWidth={1.65} />
             <span className="absolute right-[7px] top-[7px] size-1.5 rounded-full bg-[#c99a52] ring-2 ring-[#111412]" />
@@ -33,7 +33,7 @@ export function Topbar({ identity, searchOptions }: { identity: InternalIdentity
                 type="submit"
                 aria-label="Skrá út"
                 title="Skrá út"
-                className="grid size-9 place-items-center rounded-[9px] text-[#737b75] transition-colors hover:bg-white/5 hover:text-[#d8dcd7]"
+                className="mo-button mo-button-icon grid size-9 place-items-center"
               >
                 <LogOut size={16} strokeWidth={1.6} />
               </button>

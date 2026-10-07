@@ -3,6 +3,7 @@
 import { Check, ChevronRight, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { Select } from "@/app/components/ui/Select";
 import {
   propertyStatusFilters,
   type IndexedProperty,
@@ -28,7 +29,7 @@ function Agent({ property }: { property: IndexedProperty }) {
 function DesktopPropertyRow({ property }: { property: IndexedProperty }) {
   return (
     <li>
-      <Link href={property.href} className="group grid min-h-[92px] grid-cols-[64px_minmax(150px,1.25fr)_minmax(120px,.85fr)_105px_95px_minmax(135px,1fr)_130px_16px] items-center gap-3 border-b border-white/[0.07] py-3 transition-colors hover:bg-white/[0.018]">
+      <Link href={property.href} className="mo-hover-row group grid min-h-[92px] grid-cols-[64px_minmax(150px,1.25fr)_minmax(120px,.85fr)_105px_95px_minmax(135px,1fr)_130px_16px] items-center gap-3 border-b border-white/[0.07] py-3 transition-colors focus-visible:outline-2 focus-visible:outline-[#9caf9a]/60">
         <PropertyImage property={property} className="h-14 w-16" />
         <span className="min-w-0"><span className="block truncate text-[12px] font-semibold text-[#ecebe4]">{property.address}</span><span className="mt-1 block text-[9.5px] text-[#6f7771]">{property.location}</span></span>
         <span className="truncate text-[10px] text-[#9aa19b]">{property.seller}</span>
@@ -36,7 +37,7 @@ function DesktopPropertyRow({ property }: { property: IndexedProperty }) {
         <span><span className="inline-flex rounded-full border border-[#6f846f]/25 bg-[#6f846f]/10 px-2 py-1 text-[9px] font-medium text-[#a5b3a3]">{property.stage}</span></span>
         <span className={`truncate text-[9.5px] ${property.nextActionTone === "warning" ? "text-[#bc965e]" : "text-[#737b75]"}`}>{property.nextAction}</span>
         <Agent property={property} />
-        <ChevronRight size={15} strokeWidth={1.5} className="text-[#4e5650] transition group-hover:translate-x-0.5 group-hover:text-[#9caf9a]" />
+        <ChevronRight size={15} strokeWidth={1.5} className="mo-hover-accent text-[#4e5650] transition" />
       </Link>
     </li>
   );
@@ -45,7 +46,7 @@ function DesktopPropertyRow({ property }: { property: IndexedProperty }) {
 function CompactPropertyRow({ property }: { property: IndexedProperty }) {
   return (
     <li>
-      <Link href={property.href} className="group grid grid-cols-[64px_minmax(0,1fr)_16px] gap-4 border-b border-white/[0.07] py-4">
+      <Link href={property.href} className="mo-hover-row group grid grid-cols-[64px_minmax(0,1fr)_16px] gap-4 border-b border-white/[0.07] py-4">
         <PropertyImage property={property} className="h-14 w-16" />
         <span className="min-w-0">
           <span className="flex flex-wrap items-center gap-2"><span className="truncate text-[12px] font-semibold text-[#ecebe4]">{property.address}</span><span className="rounded-full bg-[#6f846f]/10 px-2 py-0.5 text-[8px] text-[#a5b3a3]">{property.stage}</span></span>
@@ -53,7 +54,7 @@ function CompactPropertyRow({ property }: { property: IndexedProperty }) {
           <span className={`mt-2 block truncate text-[9.5px] ${property.nextActionTone === "warning" ? "text-[#bc965e]" : "text-[#69716b]"}`}>{property.nextAction}</span>
           <span className="mt-2 block text-[9px] text-[#59615b]">{property.agent}</span>
         </span>
-        <ChevronRight size={15} className="self-center text-[#4e5650] group-hover:text-[#9caf9a]" />
+        <ChevronRight size={15} className="mo-hover-accent self-center text-[#4e5650]" />
       </Link>
     </li>
   );
@@ -84,7 +85,7 @@ export function PropertiesIndex({
     <>
       <header className="flex flex-col gap-6 border-b border-white/[0.07] pb-7 sm:flex-row sm:items-end sm:justify-between">
         <div><h1 className="text-[27px] font-semibold tracking-[-0.035em] text-[#f2f0e9]">Fasteignir</h1><p className="mt-2 text-[12px] text-[#7a827c]">Yfirlit yfir allar eignir og stöðu þeirra.</p></div>
-        <Link href="/properties/new" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] bg-[#6f846f] px-4 text-[13px] font-semibold text-[#111412] hover:bg-[#829782]"><Plus size={15} />Ný eign</Link>
+        <Link href="/properties/new" className="mo-button mo-button-primary min-h-11 px-4 text-[13px] font-semibold"><Plus size={15} />Ný eign</Link>
       </header>
 
       {showSuccess && (
@@ -107,12 +108,7 @@ export function PropertiesIndex({
             <label htmlFor="property-search" className="sr-only">Leita eftir heimilisfangi eða seljanda</label>
             <input id="property-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Leita eftir heimilisfangi eða seljanda..." className="min-h-11 w-full rounded-[9px] border border-white/[0.08] bg-[#171b18] pl-10 pr-4 text-base text-[#deddd6] outline-none placeholder:text-[#636b65] focus:border-[#6f846f]/60" />
           </div>
-          <div>
-            <label htmlFor="property-status" className="sr-only">Sía eftir stöðu</label>
-            <select id="property-status" value={status} onChange={(event) => setStatus(event.target.value as (typeof propertyStatusFilters)[number])} className="min-h-11 w-full rounded-[9px] border border-white/[0.08] bg-[#171b18] px-3 text-base text-[#c8cbc4] outline-none focus:border-[#6f846f]/60">
-              {propertyStatusFilters.map((filter) => <option key={filter}>{filter}</option>)}
-            </select>
-          </div>
+          <Select id="property-status" ariaLabel="Sía eftir stöðu" value={status} onChange={(value) => setStatus(value as (typeof propertyStatusFilters)[number])} options={propertyStatusFilters.map((filter) => ({ value: filter, label: filter }))} />
         </div>
       </section>
 
@@ -127,7 +123,7 @@ export function PropertiesIndex({
             <ul className="border-t border-white/[0.07] xl:hidden">{filteredProperties.map((property) => <CompactPropertyRow key={property.id} property={property} />)}</ul>
           </>
         ) : (
-          <div className="border-y border-white/[0.07] py-12 text-center"><p className="text-[13px] text-[#8a928c]">Engar eignir fundust.</p><button type="button" onClick={() => { setQuery(""); setStatus("Allar"); }} className="mt-3 min-h-11 px-4 text-[12px] font-medium text-[#899b8a]">Hreinsa síur</button></div>
+          <div className="border-y border-white/[0.07] py-12 text-center"><p className="text-[13px] text-[#8a928c]">Engar eignir fundust.</p><button type="button" onClick={() => { setQuery(""); setStatus("Allar"); }} className="mo-button mo-button-text mt-3 min-h-11 px-4 text-[12px] font-medium">Hreinsa síur</button></div>
         )}
       </section>
     </>

@@ -18,13 +18,13 @@ export function AttentionList({ items }: { items: AttentionItem[] }) {
       </div>
       <ul className="border-t border-white/[0.07]">
         {items.map((item) => (
-          <li key={item.title} className="group flex items-start gap-3 border-b border-white/[0.07] py-[13px]">
+          <li key={item.title} className="mo-hover-row group flex items-start gap-3 border-b border-white/[0.07] py-[13px]">
             <span className={`mt-[6px] size-1.5 shrink-0 rounded-full ${toneStyles[item.tone]}`} />
             <div className="min-w-0 flex-1">
               <p className="text-[12px] font-medium text-[#e5e5de]">{item.title}</p>
               <p className="mt-1 truncate text-[10.5px] text-[#717973]">{item.detail}</p>
             </div>
-            <ArrowUpRight size={14} className="mt-1 shrink-0 text-[#535b55] transition-colors group-hover:text-[#9caf9a]" />
+            <ArrowUpRight size={14} className="mo-hover-accent mt-1 shrink-0 text-[#535b55] transition-colors" />
           </li>
         ))}
       </ul>

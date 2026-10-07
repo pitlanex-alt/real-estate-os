@@ -62,7 +62,7 @@ export default async function Home() {
                 <span className="text-[10px] text-[#68706a]">{activePropertyCount} alls</span>
               </div>
               <div className="flex items-center gap-2">
-                <Link href="/properties" className="flex h-8 items-center gap-1.5 px-1 text-[10px] font-medium text-[#879889] hover:text-[#b2c0b0]">
+                <Link href="/properties" className="mo-button mo-button-text flex h-8 items-center gap-1.5 px-1 text-[10px] font-medium">
                   Sjá allar
                   <ArrowRight size={13} />
                 </Link>

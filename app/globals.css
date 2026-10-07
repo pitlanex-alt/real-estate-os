@@ -27,13 +27,178 @@ body {
 }
 
 button,
-input {
+input,
+textarea {
   font: inherit;
 }
 
 button,
 a {
   -webkit-tap-highlight-color: transparent;
+}
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href] {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+.mo-control {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: #181c19;
+  color: #dedfd8;
+  transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease;
+}
+
+.mo-control:focus-visible,
+.mo-control-open {
+  outline: none;
+  border-color: rgba(156, 175, 154, 0.52);
+  box-shadow: 0 0 0 2px rgba(111, 132, 111, 0.18);
+}
+
+.mo-control-error {
+  border-color: rgba(200, 102, 91, 0.58);
+}
+
+.mo-control:disabled {
+  opacity: 0.46;
+}
+
+.mo-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 8px;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, opacity 150ms ease;
+}
+
+.mo-button:focus-visible,
+.mo-select-option:focus-visible,
+.mo-calendar-day:focus-visible {
+  outline: 2px solid rgba(156, 175, 154, 0.62);
+  outline-offset: 2px;
+}
+
+.mo-button:disabled {
+  opacity: 0.42;
+}
+
+.mo-button-primary {
+  border: 1px solid #6f846f;
+  background: #6f846f;
+  color: #111412;
+}
+
+.mo-button-secondary {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #181c19;
+  color: #b8bdb7;
+}
+
+.mo-button-ghost,
+.mo-button-icon {
+  border: 1px solid transparent;
+  background: transparent;
+  color: #909891;
+}
+
+.mo-button-danger {
+  border: 1px solid rgba(200, 102, 91, 0.2);
+  background: transparent;
+  color: #b77a73;
+}
+
+.mo-button-text {
+  border: 0;
+  background: transparent;
+  color: #9caf9a;
+}
+
+.mo-select-option,
+.mo-calendar-day,
+.mo-checkbox-label,
+.mo-choice,
+.mo-tab {
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.mo-checkbox-label:not(:has(input:disabled)) {
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mo-control:not(:disabled):hover {
+    border-color: rgba(156, 175, 154, 0.32);
+    background: #1b201c;
+  }
+
+  .mo-button-primary:not(:disabled):hover {
+    border-color: #8da08b;
+    background: #829782;
+  }
+
+  .mo-button-secondary:not(:disabled):hover {
+    border-color: rgba(255, 255, 255, 0.17);
+    background: #202520;
+    color: #eeeae2;
+  }
+
+  .mo-button-ghost:not(:disabled):hover,
+  .mo-button-icon:not(:disabled):hover {
+    background: rgba(111, 132, 111, 0.13);
+    color: #c6d1c3;
+  }
+
+  .mo-button-danger:not(:disabled):hover {
+    border-color: rgba(200, 102, 91, 0.38);
+    background: rgba(200, 102, 91, 0.1);
+    color: #d18a82;
+  }
+
+  .mo-button-text:not(:disabled):hover {
+    color: #c9d4c7;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .mo-select-option:not(:disabled):hover,
+  .mo-calendar-day:hover {
+    background: rgba(111, 132, 111, 0.13);
+    color: #e8e8e1;
+  }
+
+  .mo-checkbox-label:not(:has(input:disabled)):hover > span:first-of-type {
+    border-color: rgba(156, 175, 154, 0.55);
+  }
+
+  .mo-choice:not(:disabled):hover {
+    border-color: rgba(156, 175, 154, 0.34);
+    background: rgba(111, 132, 111, 0.09);
+    color: #c7cec5;
+  }
+
+  .mo-tab:not(:disabled):hover {
+    color: #b7c3b5;
+  }
+
+  .mo-nav-item:not([aria-current="page"]):hover,
+  .mo-hover-row:hover {
+    background: rgba(255, 255, 255, 0.035);
+    color: #e3e6df;
+  }
+
+  .mo-nav-item:hover .mo-nav-icon,
+  .mo-hover-row:hover .mo-hover-accent {
+    color: #aab9a8;
+  }
 }
 
 a {

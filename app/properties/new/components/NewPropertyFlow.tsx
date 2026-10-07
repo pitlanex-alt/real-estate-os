@@ -4,6 +4,9 @@ import { Check, ChevronLeft, ChevronRight, Download, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
+import { Button } from "@/app/components/ui/Button";
+import { Checkbox } from "@/app/components/ui/Checkbox";
+import { Select } from "@/app/components/ui/Select";
 import { setupChecklistLabels, type SetupStatus } from "@/app/data/properties-index";
 import { createPropertyTransaction } from "../actions";
 
@@ -70,7 +73,7 @@ function SellerStep({ seller, setSeller, secondOwner, setSecondOwner }: { seller
 
       {secondOwner ? (
         <div className="mt-8 border-t border-white/[0.07] pt-7">
-          <div className="flex items-center justify-between"><h3 className="text-[14px] font-semibold text-[#d8d8d1]">Annar eigandi</h3><button type="button" onClick={() => setSecondOwner(null)} className="min-h-11 px-2 text-[11px] text-[#9f6c66]">Fjarlægja</button></div>
+          <div className="flex items-center justify-between"><h3 className="text-[14px] font-semibold text-[#d8d8d1]">Annar eigandi</h3><Button variant="danger" onClick={() => setSecondOwner(null)} className="min-h-11 border-transparent px-2 text-[11px]">Fjarlægja</Button></div>
           <div className="mt-4 grid gap-5 sm:grid-cols-2">
             <Field label="Nafn annars eiganda" value={secondOwner.name} onChange={(name) => setSecondOwner({ ...secondOwner, name })} />
             <Field label="Kennitala annars eiganda" value={secondOwner.idNumber} onChange={(idNumber) => setSecondOwner({ ...secondOwner, idNumber })} inputMode="numeric" />
@@ -79,7 +82,7 @@ function SellerStep({ seller, setSeller, secondOwner, setSecondOwner }: { seller
           </div>
         </div>
       ) : (
-        <button type="button" onClick={() => setSecondOwner({ name: "", idNumber: "", phone: "", email: "" })} className="mt-7 inline-flex min-h-11 items-center gap-2 text-[12px] font-medium text-[#8fa08e]"><Plus size={14} />Bæta við öðrum eiganda</button>
+        <Button variant="text" onClick={() => setSecondOwner({ name: "", idNumber: "", phone: "", email: "" })} className="mt-7 min-h-11 text-[12px] font-medium"><Plus size={14} />Bæta við öðrum eiganda</Button>
       )}
     </section>
   );
@@ -93,7 +96,7 @@ function PropertyStep({ property, setProperty }: { property: PropertyForm; setPr
     <section aria-labelledby="property-step-heading">
       <span id="property-step-heading" className="sr-only">Eign</span>
       <StepIntro step={2} title="Eign" description="Grunnupplýsingar um eignina. Síðar verður hægt að sækja þær sjálfkrafa úr eignaskrá." />
-      <button type="button" onClick={populateRegistryData} className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-[8px] border border-white/[0.09] px-4 text-[12px] font-medium text-[#9ba99a] hover:border-[#6f846f]/45"><Download size={14} />Sækja upplýsingar um eign</button>
+      <Button onClick={populateRegistryData} className="mt-6 min-h-11 px-4 text-[12px] font-medium"><Download size={14} />Sækja upplýsingar um eign</Button>
       <div className="mt-7 grid gap-5 sm:grid-cols-2">
         <Field label="Heimilisfang" value={property.address} onChange={(address) => setProperty({ ...property, address })} />
         <Field label="Póstnúmer" value={property.postcode} onChange={(postcode) => setProperty({ ...property, postcode })} inputMode="numeric" />
@@ -117,7 +120,7 @@ function ValuationStep({ valuation, setValuation }: { valuation: ValuationForm; 
         <Field label="Áætlað söluverð" value={valuation.salePrice} onChange={(salePrice) => setValuation({ ...valuation, salePrice })} />
         <Field label="Söluþóknun" value={valuation.commission} onChange={(commission) => setValuation({ ...valuation, commission })} />
       </div>
-      <label className="mt-7 flex min-h-12 cursor-pointer items-center gap-3 border-y border-white/[0.07] py-3 text-[13px] text-[#aeb3ad]"><input type="checkbox" checked={valuation.completed} onChange={(event) => setValuation({ ...valuation, completed: event.target.checked })} className="size-5 accent-[#7f947e]" />Verðmat hefur verið framkvæmt</label>
+      <Checkbox checked={valuation.completed} onChange={(completed) => setValuation({ ...valuation, completed })} label="Verðmat hefur verið framkvæmt" className="mt-7 min-h-12 border-y border-white/[0.07] py-3 text-[13px] text-[#aeb3ad]" />
       <div className="mt-7"><label htmlFor="valuation-notes" className="text-[11px] font-medium text-[#8c948e]">Glósur úr verðmati</label><textarea id="valuation-notes" value={valuation.notes} onChange={(event) => setValuation({ ...valuation, notes: event.target.value })} rows={4} placeholder="Valfrjálst" className="mt-2 w-full resize-none rounded-[8px] border border-white/[0.08] bg-[#191d1a] p-3 text-base leading-6 text-[#dedfd8] outline-none placeholder:text-[#59615b] focus:border-[#6f846f]/60" /></div>
     </section>
   );
@@ -135,10 +138,8 @@ function SetupStep({ checklist, setChecklist, agentName }: { checklist: Record<s
       <div className="mt-7 divide-y divide-white/[0.07] border-t border-white/[0.07]">
         {setupChecklistLabels.map((item) => (
           <div key={item} className="grid gap-2 py-3 sm:grid-cols-[1fr_190px] sm:items-center">
-            <label htmlFor={`setup-${item}`} className="text-[13px] text-[#adb2ac]">{item}</label>
-            <select id={`setup-${item}`} value={checklist[item]} onChange={(event) => setChecklist({ ...checklist, [item]: event.target.value as SetupStatus })} className="min-h-11 rounded-[8px] border border-white/[0.08] bg-[#191d1a] px-3 text-base text-[#c9cbc4] outline-none focus:border-[#6f846f]/60">
-              {setupStatusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
+            <span className="text-[13px] text-[#adb2ac]">{item}</span>
+            <Select id={`setup-${item}`} ariaLabel={`Staða fyrir ${item}`} value={checklist[item]} onChange={(value) => setChecklist({ ...checklist, [item]: value as SetupStatus })} options={setupStatusOptions} />
           </div>
         ))}
       </div>
@@ -200,7 +201,7 @@ export function NewPropertyFlow({ agentName }: { agentName: string }) {
 
   return (
     <>
-      <Link href="/properties" className="inline-flex min-h-11 items-center gap-1.5 text-[11px] font-medium text-[#778079] hover:text-[#b5bbb6]"><ChevronLeft size={14} />Fasteignir</Link>
+      <Link href="/properties" className="mo-button mo-button-text min-h-11 gap-1.5 text-[11px] font-medium"><ChevronLeft size={14} />Fasteignir</Link>
       <header className="mt-3 border-b border-white/[0.07] pb-7"><p className="text-[9.5px] font-medium uppercase tracking-[0.13em] text-[#6f846f]">Ný viðskipti</p><h1 className="mt-3 text-[27px] font-semibold tracking-[-0.035em] text-[#f1efe8]">Stofna nýja eign</h1><p className="mt-2 text-[12px] text-[#747c76]">Byrjaðu ferlið með seljanda, eign og verðmati.</p></header>
       <div className="mt-7"><FlowSteps currentStep={currentStep} /></div>
 
@@ -215,8 +216,8 @@ export function NewPropertyFlow({ agentName }: { agentName: string }) {
       {createError && <p role="alert" className="mt-7 max-w-3xl border-y border-[#c8665b]/25 py-4 text-[12px] text-[#c99088]">{createError}</p>}
 
       <div className="sticky bottom-0 z-10 -mx-4 mt-10 flex gap-3 border-t border-white/[0.08] bg-[#111412] px-4 py-4 sm:static sm:mx-0 sm:max-w-3xl sm:justify-end sm:bg-transparent sm:px-0">
-        {currentStep > 1 && <button type="button" onClick={() => setCurrentStep((step) => step - 1)} className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[8px] border border-white/[0.1] px-4 text-base font-medium text-[#a9b0aa] sm:flex-none"><ChevronLeft size={15} />Til baka</button>}
-        {currentStep < 5 ? <button type="button" onClick={() => setCurrentStep((step) => step + 1)} className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[8px] bg-[#6f846f] px-5 text-base font-semibold text-[#111412] hover:bg-[#829782] sm:flex-none">Halda áfram<ChevronRight size={15} /></button> : <button type="button" onClick={submitProperty} disabled={isCreating} className="min-h-11 flex-1 rounded-[8px] bg-[#6f846f] px-5 text-base font-semibold text-[#111412] hover:bg-[#829782] disabled:cursor-wait disabled:opacity-60 sm:flex-none">{isCreating ? "Stofna eign…" : "Stofna eign"}</button>}
+        {currentStep > 1 && <Button onClick={() => setCurrentStep((step) => step - 1)} className="min-h-11 flex-1 px-4 text-base font-medium sm:flex-none"><ChevronLeft size={15} />Til baka</Button>}
+        {currentStep < 5 ? <Button variant="primary" onClick={() => setCurrentStep((step) => step + 1)} className="min-h-11 flex-1 px-5 text-base font-semibold sm:flex-none">Halda áfram<ChevronRight size={15} /></Button> : <Button variant="primary" onClick={submitProperty} disabled={isCreating} className="min-h-11 flex-1 px-5 text-base font-semibold sm:flex-none">{isCreating ? "Stofna eign…" : "Stofna eign"}</Button>}
       </div>
     </>
   );
