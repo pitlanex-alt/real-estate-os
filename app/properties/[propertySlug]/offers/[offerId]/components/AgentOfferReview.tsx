@@ -5,14 +5,15 @@ import Link from "next/link";
 import { useState } from "react";
 import { formatIcelandicDate, formatIcelandicTime } from "@/lib/datetime/iceland";
 import { financingStatusLabel, formatIsk, offerConditionLabel, type AgentOfferData, type OfferStatus } from "@/lib/offers/model";
-import { approveOfferForSeller, requestOfferChange, sendOfferToSeller } from "../actions";
+import { approveOfferForSeller, confirmOfferAccepted, rejectOffer, requestOfferChange, sendOfferToSeller } from "../actions";
 
-const statusLabels: Record<OfferStatus, string> = { draft: "Drög", submitted: "Bíður yfirferðar", change_requested: "Breytinga óskað", agent_approved: "Tilbúið fyrir seljanda", sent_to_seller: "Sent seljanda", seller_intent_recorded: "Svar seljanda móttekið", withdrawn: "Dregið til baka", expired: "Útrunnið", superseded: "Leyst af hólmi" };
+const statusLabels: Record<OfferStatus, string> = { draft: "Drög", submitted: "Bíður yfirferðar", change_requested: "Breytinga óskað", agent_approved: "Tilbúið fyrir seljanda", sent_to_seller: "Sent seljanda", seller_intent_recorded: "Svar seljanda móttekið", accepted: "Samþykkt", rejected: "Hafnað", withdrawn: "Dregið til baka", expired: "Útrunnið", superseded: "Leyst af hólmi" };
 
 export function AgentOfferReview({ offer, propertySlug }: { offer: AgentOfferData; propertySlug: string }) {
   const [status, setStatus] = useState(offer.status);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
   const financing = offer.conditions.find((condition) => condition.type === "financing");
   const difference = offer.amountIsk - offer.askingPriceIsk;
   const checklist = [["Kaupandi auðkenndur", offer.review?.buyerIdentified], ["Tengiliðaupplýsingar staðfestar", offer.review?.contactConfirmed], ["Gildistími skráður", offer.review?.validityRecorded], ["Afhendingardagur skráður", offer.review?.handoverRecorded]] as const;
@@ -21,5 +22,31 @@ export function AgentOfferReview({ offer, propertySlug }: { offer: AgentOfferDat
 
   return <><header><Link href={`/properties/${propertySlug}`} className="inline-flex min-h-11 items-center gap-1.5 text-[11px] font-medium text-[#778079]"><ChevronLeft size={14} />{offer.property}</Link><div className="mt-3 border-b border-white/[0.07] pb-7"><p className="text-[9.5px] uppercase tracking-[0.14em] text-[#6f846f]">Tilboð {offer.id.slice(0, 8)}</p><div className="mt-3 flex flex-wrap items-center gap-3"><h1 className="text-[28px] font-semibold tracking-[-0.04em]">{formatIsk(offer.amountIsk)}</h1><span className="rounded-full border border-white/[0.09] bg-white/[0.03] px-2.5 py-1 text-[10px] text-[#a0a7a1]">{statusLabels[status]}</span></div><div className="mt-5 flex flex-wrap gap-8 text-[10.5px] text-[#a9afa9]"><span>{offer.buyerName}</span><span>{offer.property}</span><span className="text-[#c19a60]"><Clock3 size={11} className="mr-1 inline" />{formatIcelandicDate(offer.validUntil)} · {formatIcelandicTime(offer.validUntil)}</span></div></div></header>
     <div className="grid gap-12 pt-9 lg:grid-cols-[1.15fr_.85fr] lg:gap-16"><section><h2 className="text-[15px] font-semibold">Samantekt tilboðs</h2><dl className="mt-5 border-t border-white/[0.07]">{[["Tilboðsupphæð", formatIsk(offer.amountIsk)], ["Ásett verð", formatIsk(offer.askingPriceIsk)], ["Mismunur", `${difference < 0 ? "−" : "+"}${formatIsk(Math.abs(difference))}`], ["Skilyrði", offer.conditions.map((condition) => offerConditionLabel(condition.type)).join(", ") || "Engin"], ["Staða fjármögnunar", financingStatusLabel(financing?.status ?? null)]].map(([label,value]) => <div key={label} className="grid border-b border-white/[0.07] py-3.5 sm:grid-cols-[180px_1fr]"><dt className="text-[10.5px] text-[#677069]">{label}</dt><dd className="text-[12px] text-[#c9cbc4]">{value}</dd></div>)}</dl></section><aside><h2 className="text-[15px] font-semibold">Yfirferð fasteignasala</h2><ul className="mt-5 border-t border-white/[0.07]">{checklist.map(([label,complete]) => <li key={label} className="flex min-h-12 items-center gap-3 border-b border-white/[0.07] text-[11px] text-[#a4aaa4]">{complete ? <Check size={14} className="text-[#91a18f]" /> : <Circle size={13} className="text-[#c99a52]" />}{label}</li>)}</ul>{offer.review?.financingNeedsConfirmation && <p className="mt-4 text-[10.5px] text-[#c19a60]">Fjármögnun þarf nánari staðfestingu.</p>}</aside></div>
-    <section className="mt-10 border-t border-white/[0.07] pt-7"><h2 className="text-[14px] font-semibold">Aðgerðir</h2><p className="mt-2 text-[10px] text-[#666e68]">Innri yfirferð fasteignasala, ekki samþykki seljanda.</p><div className="mt-5 flex flex-wrap gap-3">{status === "submitted" && <><button disabled={pending} onClick={() => void run(() => approveOfferForSeller(offer.id, propertySlug), "agent_approved")} className="mo-button mo-button-primary min-h-11 px-4 text-[12px] font-semibold">Samþykkja til yfirferðar</button><button disabled={pending} onClick={() => void run(() => requestOfferChange(offer.id, propertySlug, "Staðfesta þarf upplýsingar"), "change_requested")} className="mo-button mo-button-secondary min-h-11 px-4 text-[12px]">Óska eftir breytingu</button></>}{status === "agent_approved" && <button disabled={pending} onClick={() => void run(() => sendOfferToSeller(offer.id, propertySlug), "sent_to_seller")} className="mo-button mo-button-primary min-h-11 px-4 text-[12px] font-semibold">Senda til seljanda</button>}{["sent_to_seller","seller_intent_recorded"].includes(status) && <p className="text-[12px] text-[#9caf9a]">Tilboðið hefur verið sent seljanda.</p>}</div>{error && <p role="alert" className="mt-3 text-[11px] text-[#c98279]">{error}</p>}</section></>;
+    <section className="mt-10 border-t border-white/[0.07] pt-7">
+      <h2 className="text-[14px] font-semibold">Aðgerðir</h2>
+      <p className="mt-2 text-[10px] text-[#666e68]">Innri yfirferð fasteignasala. Viljayfirlýsing seljanda breytir ekki sjálfkrafa niðurstöðu tilboðs.</p>
+      <div className="mt-5 flex flex-wrap gap-3">
+        {status === "submitted" && <><button disabled={pending} onClick={() => void run(() => approveOfferForSeller(offer.id, propertySlug), "agent_approved")} className="mo-button mo-button-primary min-h-11 px-4 text-[12px] font-semibold">Samþykkja til yfirferðar</button><button disabled={pending} onClick={() => void run(() => requestOfferChange(offer.id, propertySlug, "Staðfesta þarf upplýsingar"), "change_requested")} className="mo-button mo-button-secondary min-h-11 px-4 text-[12px]">Óska eftir breytingu</button></>}
+        {status === "agent_approved" && <button disabled={pending} onClick={() => void run(() => sendOfferToSeller(offer.id, propertySlug), "sent_to_seller")} className="mo-button mo-button-primary min-h-11 px-4 text-[12px] font-semibold">Senda til seljanda</button>}
+        {status === "sent_to_seller" && <p className="text-[12px] text-[#9caf9a]">Tilboðið hefur verið sent seljanda og bíður svars.</p>}
+      </div>
+
+      {status === "seller_intent_recorded" && offer.latestSellerIntent === "accept" && <div className="mt-6 max-w-2xl border-y border-[#6f846f]/25 py-6">
+        <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-[#879a85]">Seljandi vill samþykkja</p>
+        <h3 className="mt-2 text-[16px] font-semibold">Staðfesta samþykkt tilboðs</h3>
+        <p className="mt-3 text-[11px] leading-5 text-[#858d87]">Þetta skráir samþykkt tilboð í Mó og færir innra vinnuflæði í samningsundirbúning. Aðgerðin stofnar ekki og undirritar ekki löglegan kaupsamning.</p>
+        <button disabled={pending} onClick={() => void run(() => confirmOfferAccepted(offer.id, propertySlug), "accepted")} className="mo-button mo-button-primary mt-5 min-h-11 px-5 text-[12px] font-semibold">Staðfesta samþykkt tilboðs</button>
+      </div>}
+
+      {status === "seller_intent_recorded" && offer.latestSellerIntent !== "accept" && <p className="mt-5 text-[12px] text-[#c99a52]">Nýjasta viljayfirlýsing seljanda: {offer.latestSellerIntent === "reject" ? "hafna" : offer.latestSellerIntent === "counter_offer" ? "ræða móttilboð" : "ekkert svar"}.</p>}
+
+      {!["accepted", "rejected", "withdrawn", "expired", "superseded", "draft"].includes(status) && <div className="mt-7 max-w-2xl border-t border-white/[0.07] pt-6">
+        <label className="block text-[11px] text-[#858d87]">Ástæða höfnunar <span className="text-[#626a64]">(valfrjálst)</span><textarea value={rejectionReason} onChange={(event) => setRejectionReason(event.target.value)} rows={3} maxLength={1000} className="mo-control mt-2 w-full resize-y px-3 py-3 text-base leading-6 outline-none" /></label>
+        <button disabled={pending} onClick={() => void run(() => rejectOffer(offer.id, propertySlug, rejectionReason), "rejected")} className="mo-button mo-button-danger mt-4 min-h-11 px-4 text-[12px]">Merkja tilboð hafnað</button>
+      </div>}
+
+      {status === "accepted" && <p className="mt-6 border-y border-[#6f846f]/25 py-5 text-[12px] text-[#a9b8a7]">Tilboðið hefur verið staðfest samþykkt og viðskiptin eru komin í samningsundirbúning.</p>}
+      {status === "rejected" && <p className="mt-6 border-y border-[#9b5149]/20 py-5 text-[12px] text-[#c98279]">Tilboðið hefur verið skráð hafnað.</p>}
+      {error && <p role="alert" className="mt-3 text-[11px] text-[#c98279]">{error}</p>}
+    </section></>;
 }

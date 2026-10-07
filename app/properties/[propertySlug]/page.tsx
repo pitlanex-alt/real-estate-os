@@ -14,6 +14,17 @@ export default async function PropertyWorkspacePage({ params }: PageProps<"/prop
   const identity = await requireInternalIdentity(supabase);
   const result = await getPropertyWorkspace(supabase, propertySlug, identity.organizationId);
   if (!result.data && !result.error) notFound();
+  let canEditListing = identity.role === "admin" || identity.role === "coordinator";
+  if (result.data && identity.role === "agent") {
+    const { data: assignment } = await supabase
+      .from("transaction_assignments")
+      .select("transaction_id")
+      .eq("transaction_id", result.data.transactionId)
+      .eq("user_id", identity.userId)
+      .limit(1)
+      .maybeSingle();
+    canEditListing = Boolean(assignment);
+  }
 
-  return <AppShell activeItem="Fasteignir" identity={identity}><div className="mx-auto w-full max-w-[1336px] px-4 pb-16 pt-8 sm:px-6 lg:px-10 xl:px-12">{result.data ? <PropertyWorkspace property={result.data} canEdit={identity.role !== "viewer"} /> : <section role="alert" className="border-y border-[#c8665b]/25 py-6 text-[12px] text-[#c99088]">{result.error}</section>}</div></AppShell>;
+  return <AppShell activeItem="Fasteignir" identity={identity}><div className="mx-auto w-full max-w-[1336px] px-4 pb-16 pt-8 sm:px-6 lg:px-10 xl:px-12">{result.data ? <PropertyWorkspace property={result.data} canEdit={identity.role !== "viewer"} canEditListing={canEditListing} /> : <section role="alert" className="border-y border-[#c8665b]/25 py-6 text-[12px] text-[#c99088]">{result.error}</section>}</div></AppShell>;
 }

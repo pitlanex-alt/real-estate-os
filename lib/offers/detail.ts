@@ -7,6 +7,8 @@ export type OfferStatus =
   | "agent_approved"
   | "sent_to_seller"
   | "seller_intent_recorded"
+  | "accepted"
+  | "rejected"
   | "withdrawn"
   | "expired"
   | "superseded";
@@ -35,6 +37,7 @@ export type AgentOfferData = BuyerOfferData & {
   receivedAt: string;
   agentApprovedAt: string | null;
   sentToSellerAt: string | null;
+  latestSellerIntent: "accept" | "reject" | "counter_offer" | null;
   review: {
     buyerIdentified: boolean;
     contactConfirmed: boolean;
@@ -119,14 +122,15 @@ export async function getAgentOffer(offerId: string): Promise<AgentOfferData | n
   const { data: offer, error } = await supabase.from("offers").select("*").eq("id", offerId).maybeSingle();
   if (error) throw new Error(error.message);
   if (!offer) return null;
-  const [buyerResult, transactionResult, conditionsResult, reviewResult, historyResult] = await Promise.all([
+  const [buyerResult, transactionResult, conditionsResult, reviewResult, historyResult, sellerIntentResult] = await Promise.all([
     supabase.from("contacts").select("full_name,phone,email").eq("id", offer.buyer_contact_id).single(),
     supabase.from("transactions").select("asking_price_isk,property_id").eq("id", offer.transaction_id).single(),
     supabase.from("offer_conditions").select("condition_type,status,details").eq("offer_id", offer.id).order("created_at"),
     supabase.from("offer_reviews").select("*").eq("offer_id", offer.id).maybeSingle(),
     supabase.from("offer_status_history").select("to_status,created_at").eq("offer_id", offer.id).order("created_at"),
+    supabase.from("seller_offer_responses").select("intent").eq("offer_id", offer.id).order("submitted_at", { ascending: false }).order("id", { ascending: false }).limit(1).maybeSingle(),
   ]);
-  const firstError = [buyerResult.error, transactionResult.error, conditionsResult.error, reviewResult.error, historyResult.error].find(Boolean);
+  const firstError = [buyerResult.error, transactionResult.error, conditionsResult.error, reviewResult.error, historyResult.error, sellerIntentResult.error].find(Boolean);
   if (firstError) throw new Error(firstError.message);
   if (!buyerResult.data || !transactionResult.data) throw new Error("Tilboðsgögn eru ófullnægjandi.");
   const { data: property, error: propertyError } = await supabase.from("properties").select("address_line,postal_code,municipality").eq("id", transactionResult.data.property_id).single();
@@ -139,6 +143,7 @@ export async function getAgentOffer(offerId: string): Promise<AgentOfferData | n
     askingPriceIsk: Number(transactionResult.data.asking_price_isk), property: property.address_line,
     location: `${property.postal_code} ${property.municipality}`, receivedAt: offer.submitted_at ?? offer.created_at,
     agentApprovedAt: offer.agent_approved_at, sentToSellerAt: offer.sent_to_seller_at,
+    latestSellerIntent: sellerIntentResult.data?.intent as AgentOfferData["latestSellerIntent"] ?? null,
     conditions: (conditionsResult.data ?? []).map((condition) => ({ type: condition.condition_type, status: condition.status, details: condition.details })),
     history: (historyResult.data ?? []).map((history) => ({ status: history.to_status as OfferStatus, createdAt: history.created_at })),
     review: review ? {

@@ -17,6 +17,41 @@ export type CustomerPropertySummary = {
   coverImageUrl?: string | null;
 };
 
+export type SellerListingReview = {
+  transactionId: string;
+  title: string | null;
+  description: string | null;
+  highlights: string[];
+  askingPriceIsk: number | null;
+  readiness: "not_started" | "in_progress" | "ready";
+  property: {
+    address: string;
+    postalCode: string;
+    municipality: string;
+    propertyType: string | null;
+    floor: number | null;
+    parking: string | null;
+    monthlyFeesIsk: number | null;
+    sizeSqm: number | null;
+    roomCount: number | null;
+    bedroomCount: number | null;
+    yearBuilt: number | null;
+  };
+  checklist: {
+    propertyFactsComplete: boolean;
+    photosUploaded: boolean;
+    descriptionComplete: boolean;
+    sellerApproved: boolean;
+    requiredDocumentsReady: boolean;
+  };
+  latestResponse: {
+    type: "approved" | "changes_requested";
+    feedback: string | null;
+    submittedAt: string;
+  } | null;
+  images: Array<{ id: string; fileName: string; isCover: boolean; sortOrder: number; url: string | null }>;
+};
+
 export type PortalResult<T> = { data: T | null; denied: boolean; error: string | null };
 export type CustomerPortalDestination = {
   transactionId: string;
@@ -121,6 +156,98 @@ export async function getCustomerCoverImage(transactionId: string, supabaseClien
   if (!cover) return null;
   const signed = await supabase.storage.from("property-images").createSignedUrl(cover.path, 3600);
   return signed.data?.signedUrl ?? null;
+}
+
+function parseSellerListingReview(value: unknown): Omit<SellerListingReview, "images"> | null {
+  const row = record(value);
+  const property = record(row?.property);
+  const readiness = record(row?.readiness);
+  const latestResponse = record(row?.latest_response);
+  if (!row || !property || !readiness) return null;
+  const responseType = latestResponse?.response_type;
+  return {
+    transactionId: String(row.transaction_id),
+    title: row.listing_title == null ? null : String(row.listing_title),
+    description: row.listing_description == null ? null : String(row.listing_description),
+    highlights: Array.isArray(row.listing_highlights) ? row.listing_highlights.map(String) : [],
+    askingPriceIsk: row.asking_price_isk == null ? null : Number(row.asking_price_isk),
+    readiness: String(row.listing_readiness) as SellerListingReview["readiness"],
+    property: {
+      address: String(property.address),
+      postalCode: String(property.postal_code),
+      municipality: String(property.municipality),
+      propertyType: property.property_type == null ? null : String(property.property_type),
+      floor: property.floor == null ? null : Number(property.floor),
+      parking: property.parking == null ? null : String(property.parking),
+      monthlyFeesIsk: property.monthly_fees_isk == null ? null : Number(property.monthly_fees_isk),
+      sizeSqm: property.size_sqm == null ? null : Number(property.size_sqm),
+      roomCount: property.room_count == null ? null : Number(property.room_count),
+      bedroomCount: property.bedroom_count == null ? null : Number(property.bedroom_count),
+      yearBuilt: property.year_built == null ? null : Number(property.year_built),
+    },
+    checklist: {
+      propertyFactsComplete: Boolean(readiness.property_facts_complete),
+      photosUploaded: Boolean(readiness.photos_uploaded),
+      descriptionComplete: Boolean(readiness.description_complete),
+      sellerApproved: Boolean(readiness.seller_approved),
+      requiredDocumentsReady: Boolean(readiness.required_documents_ready),
+    },
+    latestResponse: latestResponse && (responseType === "approved" || responseType === "changes_requested") ? {
+      type: responseType,
+      feedback: latestResponse.feedback == null ? null : String(latestResponse.feedback),
+      submittedAt: String(latestResponse.submitted_at),
+    } : null,
+  };
+}
+
+export async function getSellerListingReview(
+  transactionId: string,
+  supabaseClient?: ServerSupabaseClient,
+): Promise<PortalResult<SellerListingReview>> {
+  const supabase = supabaseClient ?? await createClient();
+  const [{ data, error }, imagesResult] = await Promise.all([
+    supabase.rpc("seller_listing_review", { p_transaction_id: transactionId }),
+    supabase.rpc("customer_property_images", { p_transaction_id: transactionId }),
+  ]);
+  const parsed = parseSellerListingReview(data);
+  if (error || !parsed) {
+    return {
+      data: null,
+      denied: error?.code === "42501" || error?.code === "28000",
+      error: error?.message ?? "Listing review is unavailable",
+    };
+  }
+  if (imagesResult.error || !Array.isArray(imagesResult.data)) {
+    return { data: { ...parsed, images: [] }, denied: false, error: null };
+  }
+  const imageRows = imagesResult.data.flatMap((value) => {
+    const row = record(value);
+    return row ? [{
+      id: String(row.id),
+      path: String(row.storage_path),
+      fileName: String(row.file_name),
+      isCover: Boolean(row.is_cover),
+      sortOrder: Number(row.sort_order),
+    }] : [];
+  });
+  const signed = imageRows.length
+    ? await supabase.storage.from("property-images").createSignedUrls(imageRows.map((image) => image.path), 3600)
+    : { data: [], error: null };
+  const urls = new Map((signed.data ?? []).map((item) => [item.path, item.signedUrl]));
+  return {
+    data: {
+      ...parsed,
+      images: imageRows.map((image) => ({
+        id: image.id,
+        fileName: image.fileName,
+        isCover: image.isCover,
+        sortOrder: image.sortOrder,
+        url: urls.get(image.path) ?? null,
+      })),
+    },
+    denied: false,
+    error: null,
+  };
 }
 
 export async function getCustomerAgentProfile(transactionId: string, supabaseClient?: ServerSupabaseClient) {

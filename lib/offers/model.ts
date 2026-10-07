@@ -1,10 +1,25 @@
-export type OfferStatus = "draft" | "submitted" | "change_requested" | "agent_approved" | "sent_to_seller" | "seller_intent_recorded" | "withdrawn" | "expired" | "superseded";
+export type OfferStatus = "draft" | "submitted" | "change_requested" | "agent_approved" | "sent_to_seller" | "seller_intent_recorded" | "accepted" | "rejected" | "withdrawn" | "expired" | "superseded";
 export type OfferConditionData = { type: string; status: string | null; details: string | null };
 export type OfferHistoryData = { status: OfferStatus; createdAt: string };
 export type BuyerOfferData = { id: string; status: OfferStatus; amountIsk: number; validUntil: string; requestedHandoverDate: string; submittedAt: string | null; buyerName: string; buyerPhone: string | null; buyerEmail: string | null; conditions: OfferConditionData[]; history: OfferHistoryData[] };
-export type AgentOfferData = BuyerOfferData & { askingPriceIsk: number; property: string; location: string; receivedAt: string; agentApprovedAt: string | null; sentToSellerAt: string | null; review: { buyerIdentified: boolean; contactConfirmed: boolean; financingNeedsConfirmation: boolean; validityRecorded: boolean; handoverRecorded: boolean; internalNotes: string; changeRequest: string | null } | null };
+export type AgentOfferData = BuyerOfferData & { askingPriceIsk: number; property: string; location: string; receivedAt: string; agentApprovedAt: string | null; sentToSellerAt: string | null; latestSellerIntent: "accept" | "reject" | "counter_offer" | null; review: { buyerIdentified: boolean; contactConfirmed: boolean; financingNeedsConfirmation: boolean; validityRecorded: boolean; handoverRecorded: boolean; internalNotes: string; changeRequest: string | null } | null };
 export type SellerOfferData = { id: string; status: OfferStatus; amountIsk: number; askingPriceIsk: number; validUntil: string; requestedHandoverDate: string; property: string; location: string; agent: string; conditions: OfferConditionData[]; latestIntent: "accept" | "reject" | "counter_offer" | null };
 
 export function formatIsk(value: number) { return `${Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} kr.`; }
 export function offerConditionLabel(type: string) { return ({ financing: "Háð fjármögnun", "property-sale": "Háð sölu annarrar eignar", inspection: "Háð skoðun / nánari yfirferð", none: "Engin sérstök skilyrði" } as Record<string, string>)[type] ?? type; }
 export function financingStatusLabel(status: string | null) { return ({ approved: "Samþykkt", in_progress: "Í vinnslu", "in-progress": "Í vinnslu", not_started: "Ekki hafin", "not-started": "Ekki hafin" } as Record<string, string>)[status ?? ""] ?? "—"; }
+export function customerOfferStatusLabel(status: string) {
+  return ({
+    draft: "Drög",
+    submitted: "Í yfirferð hjá fasteignasala",
+    change_requested: "Breytingar nauðsynlegar",
+    agent_approved: "Yfirfarið af fasteignasala",
+    sent_to_seller: "Hjá seljanda",
+    seller_intent_recorded: "Svar seljanda í yfirferð",
+    accepted: "Tilboð samþykkt",
+    rejected: "Tilboði hafnað",
+    withdrawn: "Tilboð dregið til baka",
+    expired: "Tilboð útrunnið",
+    superseded: "Tilboði lokið",
+  } as Record<string, string>)[status] ?? status;
+}
