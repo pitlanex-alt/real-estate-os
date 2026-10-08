@@ -35,7 +35,7 @@ function sameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-export function DatePicker({ value, onChange, name, id, ariaLabel, disabled = false, required = false, closeOnSelect = true, className = "" }: { value: string; onChange: (value: string) => void; name?: string; id?: string; ariaLabel?: string; disabled?: boolean; required?: boolean; closeOnSelect?: boolean; className?: string }) {
+export function DatePicker({ value, onChange, name, id, ariaLabel, disabled = false, required = false, closeOnSelect = true, className = "", size = "normal" }: { value: string; onChange: (value: string) => void; name?: string; id?: string; ariaLabel?: string; disabled?: boolean; required?: boolean; closeOnSelect?: boolean; className?: string; size?: "normal" | "compact" }) {
   const generated = useId();
   const controlId = id ?? `mo-date-${generated.replaceAll(":", "")}`;
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -105,18 +105,18 @@ export function DatePicker({ value, onChange, name, id, ariaLabel, disabled = fa
   return (
     <div className={`relative min-w-0 ${className}`}>
       {name && <input type="hidden" name={name} value={value} required={required} />}
-      <button ref={triggerRef} id={controlId} type="button" aria-label={ariaLabel} aria-haspopup="dialog" aria-expanded={open} disabled={disabled} onClick={() => open ? close(false) : openCalendar()} onKeyDown={(event) => event.key === "Escape" && open && close()} className={`mo-control flex min-h-11 w-full items-center justify-between gap-3 px-3 text-left text-base ${open ? "mo-control-open" : ""}`}>
-        <span className={value ? "text-[#dedfd8]" : "text-[#636b65]"}>{displayDate(value)}</span>
-        <CalendarDays size={15} className="shrink-0 text-[#788079]" />
+      <button ref={triggerRef} id={controlId} type="button" aria-label={ariaLabel} aria-haspopup="dialog" aria-expanded={open} disabled={disabled} onClick={() => open ? close(false) : openCalendar()} onKeyDown={(event) => event.key === "Escape" && open && close()} className={`mo-control flex w-full items-center justify-between gap-3 text-left ${size === "compact" ? "min-h-10 rounded-[10px] px-2.5 text-[11px]" : "min-h-12 px-4 text-base"} ${open ? "mo-control-open" : ""}`}>
+        <span className={value ? "text-[#252925]" : "text-[#9ba19a]"}>{displayDate(value)}</span>
+        <CalendarDays size={15} className="shrink-0 text-[#858c84]" />
       </button>
       <Popover open={open} onClose={close} triggerRef={triggerRef} minWidth={300} labelledBy={controlId}>
         <div role="dialog" aria-modal="false" aria-label="Veldu dagsetningu" className="p-3">
           <div className="flex items-center justify-between">
             <button type="button" aria-label="Fyrri mánuður" onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1, 12))} className="mo-button mo-button-icon grid size-10 place-items-center"><ChevronLeft size={17} /></button>
-            <p className="text-[13px] font-medium capitalize text-[#dedfd8]">{monthNames[visibleMonth.getMonth()]} {visibleMonth.getFullYear()}</p>
+            <p className="text-[13px] font-semibold capitalize text-[#252925]">{monthNames[visibleMonth.getMonth()]} {visibleMonth.getFullYear()}</p>
             <button type="button" aria-label="Næsti mánuður" onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1, 12))} className="mo-button mo-button-icon grid size-10 place-items-center"><ChevronRight size={17} /></button>
           </div>
-          <div className="mt-2 grid grid-cols-7 text-center">{weekdays.map((day) => <span key={day} className="py-2 text-[9px] font-medium uppercase tracking-[0.04em] text-[#687069]">{day}</span>)}</div>
+          <div className="mt-2 grid grid-cols-7 text-center">{weekdays.map((day) => <span key={day} className="py-2 text-[10px] font-medium text-[#8a9189]">{day}</span>)}</div>
           <div className="grid grid-cols-7" role="grid">
             {days.map((date) => {
               const key = serializeDate(date);
@@ -124,7 +124,7 @@ export function DatePicker({ value, onChange, name, id, ariaLabel, disabled = fa
               const selected = selectedDate ? sameDay(date, selectedDate) : false;
               const today = sameDay(date, icelandToday);
               const active = sameDay(date, activeDate);
-              return <button ref={(node) => { if (node) dayRefs.current.set(key, node); else dayRefs.current.delete(key); }} key={key} type="button" role="gridcell" tabIndex={active ? 0 : -1} aria-selected={selected} aria-label={accessibleDateLabel(date)} onFocus={() => setActiveDate(date)} onKeyDown={dayKeyDown} onClick={() => choose(date)} className={`mo-calendar-day grid size-10 place-items-center rounded-[7px] text-[12px] ${selected ? "bg-[#6f846f] font-semibold text-[#111412]" : outside ? "text-[#4f5751]" : "text-[#afb4ae]"} ${today && !selected ? "ring-1 ring-inset ring-[#6f846f]/55" : ""}`}>{date.getDate()}</button>;
+              return <button ref={(node) => { if (node) dayRefs.current.set(key, node); else dayRefs.current.delete(key); }} key={key} type="button" role="gridcell" tabIndex={active ? 0 : -1} aria-selected={selected} aria-label={accessibleDateLabel(date)} onFocus={() => setActiveDate(date)} onKeyDown={dayKeyDown} onClick={() => choose(date)} className={`mo-calendar-day grid size-10 place-items-center rounded-[10px] text-[12px] ${selected ? "bg-[#d9f65a] font-semibold text-[#202614]" : outside ? "text-[#c3c8c1]" : "text-[#555c55]"} ${today && !selected ? "ring-1 ring-inset ring-[#9eb57f]" : ""}`}>{date.getDate()}</button>;
             })}
           </div>
         </div>

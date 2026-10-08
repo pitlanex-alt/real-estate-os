@@ -1,19 +1,20 @@
 "use client";
 
-import { Check, ChevronRight, Plus, Search } from "lucide-react";
+import { Check, ChevronRight, Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Select } from "@/app/components/ui/Select";
+import { SearchInput } from "@/app/components/ui/Input";
 import {
   propertyStatusFilters,
   type IndexedProperty,
 } from "@/app/data/properties-index";
 
 function PropertyImage({ property, className = "" }: { property: IndexedProperty; className?: string }) {
-  if (property.imageUrl) return <span role="img" aria-label={`Mynd af ${property.address}`} className={`relative block shrink-0 overflow-hidden rounded-[8px] border border-white/[0.08] bg-[#282d29] ${className}`}><Image unoptimized fill sizes="64px" src={property.imageUrl} alt="" className="object-cover" /></span>;
+  if (property.imageUrl) return <span role="img" aria-label={`Mynd af ${property.address}`} className={`relative block shrink-0 overflow-hidden rounded-[12px] border border-black/[0.07] bg-[var(--surface-soft)] ${className}`}><Image unoptimized fill sizes="96px" src={property.imageUrl} alt="" className="object-cover" /></span>;
   return (
-    <span role="img" aria-label={`Mynd af ${property.address}`} className={`property-image property-image-flat property-image-${property.imageVariant} block shrink-0 overflow-hidden rounded-[8px] border border-white/[0.08] ${className}`}>
+    <span role="img" aria-label={`Mynd af ${property.address}`} className={`property-image property-image-flat property-image-${property.imageVariant} block shrink-0 overflow-hidden rounded-[12px] border border-black/[0.07] ${className}`}>
       <span className="property-building" />
     </span>
   );
@@ -22,8 +23,8 @@ function PropertyImage({ property, className = "" }: { property: IndexedProperty
 function Agent({ property }: { property: IndexedProperty }) {
   return (
     <span className="flex min-w-0 items-center gap-2.5">
-      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#252c26] text-[8px] font-semibold tracking-wide text-[#aeb9ac] ring-1 ring-inset ring-white/[0.07]">{property.agentInitials}</span>
-      <span className="truncate text-[10px] text-[#838b85]">{property.agent}</span>
+      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[var(--mint)] text-[8px] font-bold tracking-wide text-[#3f594c] ring-1 ring-inset ring-black/[0.05]">{property.agentInitials}</span>
+      <span className="truncate text-[10px] text-[var(--text-secondary)]">{property.agent}</span>
     </span>
   );
 }
@@ -31,15 +32,15 @@ function Agent({ property }: { property: IndexedProperty }) {
 function DesktopPropertyRow({ property }: { property: IndexedProperty }) {
   return (
     <li>
-      <Link href={property.href} className="mo-hover-row group grid min-h-[92px] grid-cols-[64px_minmax(150px,1.25fr)_minmax(120px,.85fr)_105px_95px_minmax(135px,1fr)_130px_16px] items-center gap-3 border-b border-white/[0.07] py-3 transition-colors focus-visible:outline-2 focus-visible:outline-[#9caf9a]/60">
-        <PropertyImage property={property} className="h-14 w-16" />
-        <span className="min-w-0"><span className="block truncate text-[12px] font-semibold text-[#ecebe4]">{property.address}</span><span className="mt-1 block text-[9.5px] text-[#6f7771]">{property.location}</span></span>
-        <span className="truncate text-[10px] text-[#9aa19b]">{property.seller}</span>
-        <span className={`truncate text-[10px] font-medium ${property.price.startsWith("Verð") ? "text-[#656d67]" : "text-[#c5c6bf]"}`}>{property.price}</span>
-        <span><span className="inline-flex rounded-full border border-[#6f846f]/25 bg-[#6f846f]/10 px-2 py-1 text-[9px] font-medium text-[#a5b3a3]">{property.stage}</span></span>
-        <span className={`truncate text-[9.5px] ${property.nextActionTone === "warning" ? "text-[#bc965e]" : "text-[#737b75]"}`}>{property.nextAction}</span>
+      <Link href={property.href} className="mo-hover-row group grid min-h-[104px] grid-cols-[88px_minmax(150px,1.25fr)_minmax(120px,.85fr)_105px_95px_minmax(135px,1fr)_130px_16px] items-center gap-3 rounded-[14px] px-2 py-3 transition-colors focus-visible:outline-2 focus-visible:outline-[#7d9961]/60">
+        <PropertyImage property={property} className="h-[72px] w-[88px]" />
+        <span className="min-w-0"><span className="block truncate text-[13px] font-semibold text-[var(--text-primary)]">{property.address}</span><span className="mt-1 block text-[10px] text-[var(--text-secondary)]">{property.location}</span></span>
+        <span className="truncate text-[10px] text-[var(--text-secondary)]">{property.seller}</span>
+        <span className={`truncate text-[10px] font-medium ${property.price.startsWith("Verð") ? "text-[var(--text-muted)]" : "text-[#343934]"}`}>{property.price}</span>
+        <span><span className="kelvo-status-progress inline-flex rounded-full px-2.5 py-1 text-[9px] font-medium">{property.stage}</span></span>
+        <span className={`truncate text-[9.5px] ${property.nextActionTone === "warning" ? "text-[#9b6f2d]" : "text-[var(--text-secondary)]"}`}>{property.nextAction}</span>
         <Agent property={property} />
-        <ChevronRight size={15} strokeWidth={1.5} className="mo-hover-accent text-[#4e5650] transition" />
+        <ChevronRight size={15} strokeWidth={1.5} className="mo-hover-accent text-[var(--text-muted)] transition" />
       </Link>
     </li>
   );
@@ -48,15 +49,15 @@ function DesktopPropertyRow({ property }: { property: IndexedProperty }) {
 function CompactPropertyRow({ property }: { property: IndexedProperty }) {
   return (
     <li>
-      <Link href={property.href} className="mo-hover-row group grid grid-cols-[64px_minmax(0,1fr)_16px] gap-4 border-b border-white/[0.07] py-4">
-        <PropertyImage property={property} className="h-14 w-16" />
+      <Link href={property.href} className="mo-hover-row group grid grid-cols-[76px_minmax(0,1fr)_16px] gap-4 rounded-[14px] px-2 py-3">
+        <PropertyImage property={property} className="h-16 w-[76px]" />
         <span className="min-w-0">
-          <span className="flex flex-wrap items-center gap-2"><span className="truncate text-[12px] font-semibold text-[#ecebe4]">{property.address}</span><span className="rounded-full bg-[#6f846f]/10 px-2 py-0.5 text-[8px] text-[#a5b3a3]">{property.stage}</span></span>
-          <span className="mt-1.5 block truncate text-[10px] text-[#858d87]">{property.seller} · {property.price}</span>
-          <span className={`mt-2 block truncate text-[9.5px] ${property.nextActionTone === "warning" ? "text-[#bc965e]" : "text-[#69716b]"}`}>{property.nextAction}</span>
-          <span className="mt-2 block text-[9px] text-[#59615b]">{property.agent}</span>
+          <span className="flex flex-wrap items-center gap-2"><span className="truncate text-[12px] font-semibold text-[var(--text-primary)]">{property.address}</span><span className="kelvo-status-progress rounded-full px-2 py-0.5 text-[8px]">{property.stage}</span></span>
+          <span className="mt-1.5 block truncate text-[10px] text-[var(--text-secondary)]">{property.seller} · {property.price}</span>
+          <span className={`mt-2 block truncate text-[9.5px] ${property.nextActionTone === "warning" ? "text-[#9b6f2d]" : "text-[var(--text-secondary)]"}`}>{property.nextAction}</span>
+          <span className="mt-2 block text-[9px] text-[var(--text-muted)]">{property.agent}</span>
         </span>
-        <ChevronRight size={15} className="mo-hover-accent self-center text-[#4e5650]" />
+        <ChevronRight size={15} className="mo-hover-accent self-center text-[var(--text-muted)]" />
       </Link>
     </li>
   );
@@ -85,15 +86,15 @@ export function PropertiesIndex({
 
   return (
     <>
-      <header className="flex flex-col gap-6 border-b border-white/[0.07] pb-7 sm:flex-row sm:items-end sm:justify-between">
-        <div><h1 className="text-[27px] font-semibold tracking-[-0.035em] text-[#f2f0e9]">Fasteignir</h1><p className="mt-2 text-[12px] text-[#7a827c]">Yfirlit yfir allar eignir og stöðu þeirra.</p></div>
+      <header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+        <div><h1 className="text-[28px] font-bold tracking-[-0.04em] text-[var(--text-primary)]">Fasteignir</h1><p className="mt-2 text-[13px] text-[var(--text-secondary)]">Yfirlit yfir allar eignir og stöðu þeirra.</p></div>
         <Link href="/properties/new" className="mo-button mo-button-primary min-h-11 px-4 text-[13px] font-semibold"><Plus size={15} />Ný eign</Link>
       </header>
 
       {showSuccess && (
-        <div className="mt-6 flex items-start gap-3 border-y border-[#6f846f]/25 bg-[#6f846f]/[0.05] py-4 text-[11px] text-[#aab7a8]">
-          <Check size={14} className="mt-0.5 shrink-0 text-[#9caf9a]" />
-          <p><span className="font-medium text-[#d7ddd4]">Eign stofnuð í undirbúningi.</span> Næstu verkefni eru tilbúin í vinnusvæði eignarinnar.</p>
+        <div className="mt-6 flex items-start gap-3 rounded-[14px] border border-[#afcfbe]/60 bg-[var(--surface-accent)] px-4 py-4 text-[11px] text-[#536451]">
+          <Check size={14} className="mt-0.5 shrink-0 text-[#627b56]" />
+          <p><span className="font-semibold text-[#334033]">Eign stofnuð í undirbúningi.</span> Næstu verkefni eru tilbúin í vinnusvæði eignarinnar.</p>
         </div>
       )}
 
@@ -105,27 +106,26 @@ export function PropertiesIndex({
 
       <section className="mt-7" aria-label="Leit og síur">
         <div className="grid gap-3 sm:grid-cols-[minmax(240px,1fr)_220px]">
-          <div className="relative">
-            <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#69716b]" />
+          <div>
             <label htmlFor="property-search" className="sr-only">Leita eftir heimilisfangi eða seljanda</label>
-            <input id="property-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Leita eftir heimilisfangi eða seljanda..." className="min-h-11 w-full rounded-[9px] border border-white/[0.08] bg-[#171b18] pl-10 pr-4 text-base text-[#deddd6] outline-none placeholder:text-[#636b65] focus:border-[#6f846f]/60" />
+            <SearchInput id="property-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Leita eftir heimilisfangi eða seljanda..." />
           </div>
           <Select id="property-status" ariaLabel="Sía eftir stöðu" value={status} onChange={(value) => setStatus(value as (typeof propertyStatusFilters)[number])} options={propertyStatusFilters.map((filter) => ({ value: filter, label: filter }))} />
         </div>
       </section>
 
-      <section className="mt-7" aria-labelledby="property-list-heading">
-        <div className="mb-3 flex items-baseline justify-between"><h2 id="property-list-heading" className="text-[14px] font-semibold text-[#e8e7e0]">Allar eignir</h2><span className="text-[10px] text-[#626a64]">{filteredProperties.length} eignir</span></div>
-        <div className="hidden grid-cols-[64px_minmax(150px,1.25fr)_minmax(120px,.85fr)_105px_95px_minmax(135px,1fr)_130px_16px] gap-3 border-y border-white/[0.07] py-2.5 text-[8px] font-medium uppercase tracking-[0.08em] text-[#59615b] xl:grid">
+      <section className="kelvo-card mt-7 overflow-hidden px-3 py-4 sm:px-5" aria-labelledby="property-list-heading">
+        <div className="mb-3 flex items-baseline justify-between px-2"><h2 id="property-list-heading" className="text-[14px] font-semibold text-[var(--text-primary)]">Allar eignir</h2><span className="text-[10px] text-[var(--text-muted)]">{filteredProperties.length} eignir</span></div>
+        <div className="hidden grid-cols-[88px_minmax(150px,1.25fr)_minmax(120px,.85fr)_105px_95px_minmax(135px,1fr)_130px_16px] gap-3 border-y border-black/[0.06] px-2 py-2.5 text-[8px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] xl:grid">
           <span /><span>Eign</span><span>Seljandi</span><span>Ásett verð</span><span>Staða</span><span>Næsta skref</span><span>Umsjón</span><span />
         </div>
         {filteredProperties.length ? (
           <>
             <ul className="hidden xl:block">{filteredProperties.map((property) => <DesktopPropertyRow key={property.id} property={property} />)}</ul>
-            <ul className="border-t border-white/[0.07] xl:hidden">{filteredProperties.map((property) => <CompactPropertyRow key={property.id} property={property} />)}</ul>
+            <ul className="divide-y divide-black/[0.06] border-t border-black/[0.06] xl:hidden">{filteredProperties.map((property) => <CompactPropertyRow key={property.id} property={property} />)}</ul>
           </>
         ) : (
-          <div className="border-y border-white/[0.07] py-12 text-center"><p className="text-[13px] text-[#8a928c]">Engar eignir fundust.</p><button type="button" onClick={() => { setQuery(""); setStatus("Allar"); }} className="mo-button mo-button-text mt-3 min-h-11 px-4 text-[12px] font-medium">Hreinsa síur</button></div>
+          <div className="border-y border-black/[0.06] py-12 text-center"><p className="text-[13px] text-[var(--text-secondary)]">Engar eignir fundust.</p><button type="button" onClick={() => { setQuery(""); setStatus("Allar"); }} className="mo-button mo-button-text mt-3 min-h-11 px-4 text-[12px] font-medium">Hreinsa síur</button></div>
         )}
       </section>
     </>

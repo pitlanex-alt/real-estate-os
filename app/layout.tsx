@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Mó — Fasteignakerfi",
+  title: "Kelvo — Fasteignakerfi",
   description: "Yfirlit fyrir fasteignasala",
 };
 

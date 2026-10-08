@@ -14,20 +14,20 @@ export default async function CustomerPortalChooserPage() {
   if (!resolution.customerDestinations.length) redirect(resolution.destination ?? "/customer/access-denied");
   if (resolution.customerDestinations.length === 1) redirect(customerPortalPath(resolution.customerDestinations[0]));
 
-  return <main className="min-h-screen bg-[#121512] px-5 py-14 text-[#f3f1ea]">
+  return <main className="min-h-screen bg-[var(--background)] px-5 py-10 sm:py-14">
     <section className="mx-auto w-full max-w-2xl">
-      <div className="flex items-center justify-between border-b border-white/[0.08] pb-7">
-        <div className="flex items-center gap-3"><span className="relative grid size-8 place-items-center rounded-full border border-white/10 bg-[#191d19]"><span className="absolute h-3.5 w-px -rotate-45 bg-[#9caf9a]" /><span className="absolute h-3.5 w-px rotate-45 bg-[#687b68]" /></span><span className="text-[20px] font-semibold tracking-[-0.04em]">Mó</span></div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3"><span className="grid size-9 place-items-center rounded-[12px] border border-[#bfd747] bg-[var(--accent)] text-[15px] font-bold text-[var(--accent-text)]">K</span><span className="text-[20px] font-bold tracking-[-0.045em] text-[var(--text-primary)]">Kelvo</span></div>
         <form action={logoutCustomer}><button className="mo-button mo-button-text min-h-11 px-2 text-[12px]">Skrá út</button></form>
       </div>
-      <p className="mt-10 text-[11px] font-medium uppercase tracking-[0.13em] text-[#819181]">Viðskiptavinagátt</p>
-      <h1 className="mt-3 text-[27px] font-semibold tracking-[-0.035em]">Veldu eign</h1>
-      <p className="mt-3 text-[14px] text-[#7f8781]">Þú hefur aðgang að fleiri en einni gátt.</p>
-      <ul className="mt-8 divide-y divide-white/[0.07] border-y border-white/[0.07]">
+      <p className="mt-10 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#667d5d]">Viðskiptavinagátt</p>
+      <h1 className="mt-3 text-[29px] font-bold tracking-[-0.04em] text-[var(--text-primary)]">Veldu eign</h1>
+      <p className="mt-3 text-[14px] text-[var(--text-secondary)]">Þú hefur aðgang að fleiri en einni gátt.</p>
+      <ul className="mt-8 grid gap-3">
         {resolution.customerDestinations.map((destination) => <li key={`${destination.transactionId}-${destination.role}`}>
-          <Link href={customerPortalPath(destination)} className="mo-hover-row flex min-h-20 items-center justify-between gap-5 py-4 transition-colors focus-visible:outline-2 focus-visible:outline-[#9caf9a]/60">
-            <div><p className="text-[15px] font-medium text-[#e1dfd8]">{destination.address}</p><p className="mt-1.5 text-[12px] text-[#747c76]">{destination.postalCode} {destination.municipality}</p></div>
-            <span className="mo-hover-accent text-[12px] font-medium text-[#91a18f]">{roleLabels[destination.role]}</span>
+          <Link href={customerPortalPath(destination)} className="kelvo-card mo-hover-row flex min-h-24 items-center justify-between gap-5 px-5 py-4 transition-colors focus-visible:outline-2 focus-visible:outline-[#7d9961]/60">
+            <div><p className="text-[15px] font-semibold text-[var(--text-primary)]">{destination.address}</p><p className="mt-1.5 text-[12px] text-[var(--text-secondary)]">{destination.postalCode} {destination.municipality}</p></div>
+            <span className="kelvo-status-progress mo-hover-accent rounded-full px-3 py-1.5 text-[11px] font-semibold">{roleLabels[destination.role]}</span>
           </Link>
         </li>)}
       </ul>

@@ -17,5 +17,5 @@ export default async function ViewingPage({ params }: { params: Promise<{ proper
   if (!viewing && !error) notFound();
   if (viewing && (!workspace.data || !workspace.data.viewings.some((item) => item.id === viewingId))) notFound();
 
-  return <AppShell activeItem="Skoðanir" identity={identity}><div className="mx-auto w-full max-w-[1336px] px-4 pb-16 pt-7 sm:px-6 lg:px-10 xl:px-12">{viewing ? <ViewingManager initialViewing={viewing} initialGuests={guests} propertySlug={propertySlug} /> : <div role="alert" className="border-y border-[#c8665b]/25 py-6 text-[12px] text-[#c99088]">{error}</div>}</div></AppShell>;
+  return <AppShell activeItem="Skoðanir" identity={identity}><div className="mx-auto w-full max-w-[1336px] px-4 pb-16 pt-7 sm:px-6 lg:px-10 xl:px-12">{viewing ? <ViewingManager initialViewing={viewing} initialGuests={guests} propertySlug={propertySlug} /> : <div role="alert" className="rounded-[14px] border border-[#b75e56]/20 bg-[#f7e7e5] px-4 py-5 text-[12px] text-[#914b45]">{error}</div>}</div></AppShell>;
 }

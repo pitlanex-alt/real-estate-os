@@ -1,8 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --background: #111412;
-  --foreground: #f3f1ea;
+  --background: #f4f5f1;
+  --surface: #ffffff;
+  --surface-soft: #eef1ec;
+  --surface-accent: #e8f0e3;
+  --text-primary: #171a17;
+  --text-secondary: #6f756e;
+  --text-muted: #9ba19a;
+  --border: rgba(20, 25, 20, 0.08);
+  --border-strong: rgba(20, 25, 20, 0.14);
+  --accent: #d9f65a;
+  --accent-hover: #cdeb4e;
+  --accent-text: #202614;
+  --mint: #cde6da;
+  --mint-strong: #afcfbe;
+  --danger: #b75e56;
+  --warning: #b98a3f;
+  --foreground: var(--text-primary);
 }
 
 @theme inline {
@@ -23,13 +38,23 @@ body {
   margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: Inter, "Helvetica Neue", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 button,
 input,
-textarea {
+textarea,
+select {
   font: inherit;
+}
+
+@media (max-width: 767px) {
+  input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  textarea,
+  select,
+  .mo-control {
+    font-size: 16px !important;
+  }
 }
 
 button,
@@ -49,22 +74,27 @@ button:disabled,
 }
 
 .mo-control {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  background: #181c19;
-  color: #dedfd8;
-  transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(20, 25, 20, 0.025);
+  transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+
+.mo-control::placeholder {
+  color: var(--text-muted);
 }
 
 .mo-control:focus-visible,
 .mo-control-open {
   outline: none;
-  border-color: rgba(156, 175, 154, 0.52);
-  box-shadow: 0 0 0 2px rgba(111, 132, 111, 0.18);
+  border-color: #9cb87f;
+  box-shadow: 0 0 0 3px rgba(205, 230, 218, 0.62);
 }
 
 .mo-control-error {
-  border-color: rgba(200, 102, 91, 0.58);
+  border-color: rgba(183, 94, 86, 0.58);
 }
 
 .mo-control:disabled {
@@ -76,14 +106,15 @@ button:disabled,
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: 8px;
-  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, opacity 150ms ease;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, opacity 150ms ease, box-shadow 150ms ease;
 }
 
 .mo-button:focus-visible,
 .mo-select-option:focus-visible,
 .mo-calendar-day:focus-visible {
-  outline: 2px solid rgba(156, 175, 154, 0.62);
+  outline: 2px solid rgba(125, 153, 97, 0.7);
   outline-offset: 2px;
 }
 
@@ -92,34 +123,43 @@ button:disabled,
 }
 
 .mo-button-primary {
-  border: 1px solid #6f846f;
-  background: #6f846f;
-  color: #111412;
+  border: 1px solid #c7df4f;
+  background: var(--accent);
+  color: var(--accent-text);
+  box-shadow: 0 1px 2px rgba(32, 38, 20, 0.08);
 }
 
 .mo-button-secondary {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: #181c19;
-  color: #b8bdb7;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: #343934;
+  box-shadow: 0 1px 2px rgba(20, 25, 20, 0.035);
+}
+
+.mo-button-positive {
+  border: 1px solid rgba(95, 118, 90, 0.24);
+  background: #f7fbf5;
+  color: #5f765a;
+  box-shadow: 0 1px 2px rgba(20, 25, 20, 0.025);
 }
 
 .mo-button-ghost,
 .mo-button-icon {
   border: 1px solid transparent;
   background: transparent;
-  color: #909891;
+  color: var(--text-secondary);
 }
 
 .mo-button-danger {
-  border: 1px solid rgba(200, 102, 91, 0.2);
-  background: transparent;
-  color: #b77a73;
+  border: 1px solid rgba(183, 94, 86, 0.2);
+  background: #fffafa;
+  color: var(--danger);
 }
 
 .mo-button-text {
   border: 0;
   background: transparent;
-  color: #9caf9a;
+  color: #526545;
 }
 
 .mo-select-option,
@@ -136,68 +176,74 @@ button:disabled,
 
 @media (hover: hover) and (pointer: fine) {
   .mo-control:not(:disabled):hover {
-    border-color: rgba(156, 175, 154, 0.32);
-    background: #1b201c;
+    border-color: rgba(95, 112, 79, 0.3);
+    background: #fdfefb;
   }
 
   .mo-button-primary:not(:disabled):hover {
-    border-color: #8da08b;
-    background: #829782;
+    border-color: #bdd742;
+    background: var(--accent-hover);
   }
 
   .mo-button-secondary:not(:disabled):hover {
-    border-color: rgba(255, 255, 255, 0.17);
-    background: #202520;
-    color: #eeeae2;
+    border-color: rgba(20, 25, 20, 0.2);
+    background: var(--surface-soft);
+    color: var(--text-primary);
+  }
+
+  .mo-button-positive:not(:disabled):hover {
+    border-color: rgba(95, 118, 90, 0.38);
+    background: var(--surface-accent);
+    color: #42583e;
   }
 
   .mo-button-ghost:not(:disabled):hover,
   .mo-button-icon:not(:disabled):hover {
-    background: rgba(111, 132, 111, 0.13);
-    color: #c6d1c3;
+    background: var(--surface-accent);
+    color: #34432f;
   }
 
   .mo-button-danger:not(:disabled):hover {
-    border-color: rgba(200, 102, 91, 0.38);
-    background: rgba(200, 102, 91, 0.1);
-    color: #d18a82;
+    border-color: rgba(183, 94, 86, 0.34);
+    background: #f8e9e7;
+    color: #9f4d47;
   }
 
   .mo-button-text:not(:disabled):hover {
-    color: #c9d4c7;
+    color: #304127;
     text-decoration: underline;
     text-underline-offset: 3px;
   }
 
   .mo-select-option:not(:disabled):hover,
   .mo-calendar-day:hover {
-    background: rgba(111, 132, 111, 0.13);
-    color: #e8e8e1;
+    background: var(--surface-accent);
+    color: var(--text-primary);
   }
 
   .mo-checkbox-label:not(:has(input:disabled)):hover > span:first-of-type {
-    border-color: rgba(156, 175, 154, 0.55);
+    border-color: #91aa73;
   }
 
   .mo-choice:not(:disabled):hover {
-    border-color: rgba(156, 175, 154, 0.34);
-    background: rgba(111, 132, 111, 0.09);
-    color: #c7cec5;
+    border-color: rgba(95, 112, 79, 0.24);
+    background: var(--surface-accent);
+    color: var(--text-primary);
   }
 
   .mo-tab:not(:disabled):hover {
-    color: #b7c3b5;
+    color: #394a32;
   }
 
   .mo-nav-item:not([aria-current="page"]):hover,
   .mo-hover-row:hover {
-    background: rgba(255, 255, 255, 0.035);
-    color: #e3e6df;
+    background: #f1f4ed;
+    color: var(--text-primary);
   }
 
   .mo-nav-item:hover .mo-nav-icon,
   .mo-hover-row:hover .mo-hover-accent {
-    color: #aab9a8;
+    color: #526545;
   }
 }
 
@@ -207,8 +253,8 @@ a {
 }
 
 ::selection {
-  background: rgba(111, 132, 111, 0.4);
-  color: #f7f5ef;
+  background: var(--mint);
+  color: var(--text-primary);
 }
 
 ::-webkit-scrollbar {
@@ -216,20 +262,77 @@ a {
 }
 
 ::-webkit-scrollbar-track {
-  background: #111412;
+  background: var(--background);
 }
 
 ::-webkit-scrollbar-thumb {
-  border: 3px solid #111412;
+  border: 3px solid var(--background);
   border-radius: 999px;
-  background: #333a34;
+  background: #c8cec6;
 }
+
+.kelvo-card {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: 0 8px 28px rgba(25, 34, 24, 0.045);
+}
+
+.kelvo-status-success { background: #edf6c9; color: #465321; }
+.kelvo-status-progress { background: #e2f0e9; color: #426054; }
+.kelvo-status-warning { background: #f6eddc; color: #7b5b29; }
+.kelvo-status-danger { background: #f7e7e5; color: #914b45; }
+.kelvo-status-neutral { background: #ecefeb; color: #666d66; }
+
+.kelvo-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #e9ece6;
+}
+
+.kelvo-skeleton::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+  animation: kelvo-skeleton-shimmer 1.7s ease-in-out infinite;
+}
+
+@keyframes kelvo-skeleton-shimmer {
+  100% { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kelvo-skeleton::after { animation: none; }
+}
+
+/* R1 compatibility bridge while route-specific screens move to tokens in R2. */
+.kelvo-app [class*="border-white"] { border-color: var(--border); }
+.kelvo-app [class*="text-[#f3"],
+.kelvo-app [class*="text-[#ee"],
+.kelvo-app [class*="text-[#e9"],
+.kelvo-app [class*="text-[#e8"],
+.kelvo-app [class*="text-[#e5"],
+.kelvo-app [class*="text-[#e4"],
+.kelvo-app [class*="text-[#e3"],
+.kelvo-app [class*="text-[#de"],
+.kelvo-app [class*="text-[#d7"],
+.kelvo-app [class*="text-[#d1"] { color: var(--text-primary); }
+.kelvo-app [class~="text-[#c9cbc4]"],
+.kelvo-app [class~="text-[#c8c9c2]"],
+.kelvo-app [class~="text-[#c7c9c2]"] { color: #343934; }
+.kelvo-app [class~="text-[#bfc2bb]"],
+.kelvo-app [class~="text-[#b9bdb6]"],
+.kelvo-app [class~="text-[#b8bdb7]"],
+.kelvo-app [class~="text-[#aeb4ae]"],
+.kelvo-app [class~="text-[#a9afa9]"] { color: #555d56; }
 
 .property-image {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background-color: #282d29;
+  background-color: #e2e7df;
 }
 
 .property-image::before,
@@ -244,14 +347,14 @@ a {
 .property-image::before {
   inset: 0;
   z-index: -2;
-  background: linear-gradient(150deg, #667069 0%, #343b36 48%, #1e2320 100%);
+  background: linear-gradient(150deg, #dfe9e2 0%, #c9d7cf 48%, #a9bcae 100%);
 }
 
 .property-image::after {
   inset: auto 0 0;
   z-index: 3;
   height: 22%;
-  background: rgba(13, 16, 14, 0.42);
+  background: rgba(54, 69, 59, 0.18);
 }
 
 .property-building {
@@ -260,8 +363,8 @@ a {
   left: 18%;
   z-index: 1;
   height: 54%;
-  background: #afb1a8;
-  box-shadow: -11px 4px 0 #858c85;
+  background: #f8f7f1;
+  box-shadow: -11px 4px 0 #bdc8bf;
 }
 
 .property-building::before {
@@ -269,20 +372,20 @@ a {
   right: 12%;
   width: 16%;
   height: 31%;
-  background: #35403a;
-  box-shadow: -14px 0 0 #35403a, -28px 0 0 #35403a;
+  background: #82968a;
+  box-shadow: -14px 0 0 #82968a, -28px 0 0 #82968a;
 }
 
 .property-building::after {
   top: -25%;
   right: -1px;
-  border-right: 24px solid #7a817b;
+  border-right: 24px solid #aebbb2;
   border-top: 9px solid transparent;
   border-left: 23px solid transparent;
 }
 
 .property-image-coast::before {
-  background: linear-gradient(155deg, #87918a 0%, #4d5751 49%, #252b27 50%, #303732 100%);
+  background: linear-gradient(155deg, #d9e7e1 0%, #b8d4c8 49%, #a9bba8 50%, #dce3d5 100%);
 }
 
 .property-image-coast .property-building {
@@ -294,7 +397,7 @@ a {
 }
 
 .property-image-city::before {
-  background: linear-gradient(145deg, #727b75 0%, #4d5650 48%, #242925 49%, #343a35 100%);
+  background: linear-gradient(145deg, #e7ece7 0%, #cbd8d0 48%, #b6c5b8 49%, #dce4dc 100%);
 }
 
 .property-image-city .property-building {
@@ -306,14 +409,14 @@ a {
 }
 
 .property-image-flat::before {
-  background: #4d5650;
+  background: #d8dfd7;
 }
 
 .seller-property-image {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background: #4c5650;
+  background: #dfe7e1;
 }
 
 .seller-property-image::before {
@@ -321,7 +424,7 @@ a {
   position: absolute;
   inset: auto 0 0;
   height: 24%;
-  background: #29302b;
+  background: #bccabe;
 }
 
 .seller-property-image::after {
@@ -331,8 +434,8 @@ a {
   top: 12%;
   width: 22%;
   height: 38%;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  background: #667069;
+  border: 1px solid rgba(20, 25, 20, 0.05);
+  background: #c9d5cc;
 }
 
 .seller-building {
@@ -341,8 +444,8 @@ a {
   bottom: 16%;
   left: 23%;
   height: 61%;
-  background: #a5a8a0;
-  box-shadow: -24px 13px 0 #737c75;
+  background: #f4f3ec;
+  box-shadow: -24px 13px 0 #aab9ae;
 }
 
 .seller-building::before {
@@ -352,7 +455,7 @@ a {
   right: 0;
   left: 0;
   height: 13%;
-  background: #858c85;
+  background: #c4cfc6;
   clip-path: polygon(9% 0, 100% 0, 100% 100%, 0 100%);
 }
 
@@ -363,7 +466,7 @@ a {
   bottom: 0;
   width: 17%;
   height: 42%;
-  background: #414a44;
+  background: #71847a;
 }
 
 .seller-windows {
@@ -372,8 +475,8 @@ a {
   left: 12%;
   width: 13%;
   height: 25%;
-  background: #3c4943;
-  box-shadow: 58px 0 0 #3c4943, 116px 0 0 #3c4943, 0 52px 0 #3c4943, 58px 52px 0 #3c4943;
+  background: #83998d;
+  box-shadow: 58px 0 0 #83998d, 116px 0 0 #83998d, 0 52px 0 #83998d, 58px 52px 0 #83998d;
 }
 
 .property-image-stone::before {

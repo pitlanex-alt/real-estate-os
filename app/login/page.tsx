@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { resolvePostAuthDestination } from "@/lib/auth/post-auth";
 
 export const metadata: Metadata = {
-  title: "Innskráning — Mó",
+  title: "Innskráning — Kelvo",
 };
 
 export default async function LoginPage() {
@@ -17,17 +17,15 @@ export default async function LoginPage() {
   }
 
   return (
-    <main className="grid min-h-screen place-items-center bg-[#111412] px-5 text-[#f3f1ea]">
-      <section className="w-full max-w-sm border-y border-white/[0.08] py-9" aria-labelledby="login-heading">
+    <main className="grid min-h-screen place-items-center bg-[var(--background)] px-5 py-10 text-[var(--text-primary)]">
+      <section className="kelvo-card w-full max-w-sm p-7 sm:p-9" aria-labelledby="login-heading">
         <div className="flex items-center gap-3">
-          <span className="relative grid size-8 place-items-center rounded-full border border-white/12 bg-[#171b18]">
-            <span className="absolute h-3.5 w-px -rotate-45 bg-[#9caf9a]" />
-            <span className="absolute h-3.5 w-px rotate-45 bg-[#687b68]" />
-          </span>
-          <span className="text-[20px] font-semibold tracking-[-0.04em]">Mó</span>
+          <span className="grid size-9 place-items-center rounded-[12px] border border-[#bfd747] bg-[var(--accent)] text-[15px] font-bold text-[var(--accent-text)]">K</span>
+          <span className="text-[20px] font-bold tracking-[-0.045em] text-[var(--text-primary)]">Kelvo</span>
         </div>
-        <h1 id="login-heading" className="mt-8 text-[24px] font-semibold tracking-[-0.03em]">Innskráning</h1>
-        <p className="mt-2 text-[12px] leading-5 text-[#7a827c]">Einföld innskráning fyrir fyrsta bakendafasa.</p>
+        <p className="mt-8 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#667d5d]">Fyrir starfsfólk</p>
+        <h1 id="login-heading" className="mt-3 text-[27px] font-bold tracking-[-0.04em] text-[var(--text-primary)]">Innskráning</h1>
+        <p className="mt-3 text-[13px] leading-6 text-[var(--text-secondary)]">Skráðu þig inn í vinnusvæði fasteignasölunnar.</p>
         <LoginForm />
       </section>
     </main>

@@ -6,7 +6,7 @@ import { Popover } from "./Popover";
 
 export type SelectOption = { value: string; label: string; disabled?: boolean };
 
-export function Select({ options, value, onChange, name, id, placeholder = "Veldu", disabled = false, required = false, ariaLabel, className = "", error = false }: { options: SelectOption[]; value: string; onChange: (value: string) => void; name?: string; id?: string; placeholder?: string; disabled?: boolean; required?: boolean; ariaLabel?: string; className?: string; error?: boolean }) {
+export function Select({ options, value, onChange, name, id, placeholder = "Veldu", disabled = false, required = false, ariaLabel, className = "", error = false, size = "normal" }: { options: SelectOption[]; value: string; onChange: (value: string) => void; name?: string; id?: string; placeholder?: string; disabled?: boolean; required?: boolean; ariaLabel?: string; className?: string; error?: boolean; size?: "normal" | "compact" }) {
   const generatedId = useId();
   const controlId = id ?? `mo-select-${generatedId.replaceAll(":", "")}`;
   const listboxId = `${controlId}-listbox`;
@@ -71,10 +71,10 @@ export function Select({ options, value, onChange, name, id, placeholder = "Veld
         disabled={disabled}
         onClick={() => open ? close(false) : openMenu()}
         onKeyDown={onKeyDown}
-        className={`mo-control flex min-h-11 w-full items-center justify-between gap-3 px-3 text-left text-base ${error ? "mo-control-error" : ""} ${open ? "mo-control-open" : ""}`}
+        className={`mo-control flex w-full items-center justify-between gap-3 text-left ${size === "compact" ? "min-h-10 rounded-[10px] px-2.5 text-[11px]" : "min-h-12 px-4 text-base"} ${error ? "mo-control-error" : ""} ${open ? "mo-control-open" : ""}`}
       >
-        <span className={`truncate ${selected ? "text-[#dedfd8]" : "text-[#636b65]"}`}>{selected?.label ?? placeholder}</span>
-        <ChevronDown size={15} className={`shrink-0 text-[#788079] transition-transform ${open ? "rotate-180 text-[#9caf9a]" : ""}`} />
+        <span className={`truncate ${selected ? "text-[#252925]" : "text-[#9ba19a]"}`}>{selected?.label ?? placeholder}</span>
+        <ChevronDown size={15} className={`shrink-0 text-[#858c84] transition-transform ${open ? "rotate-180 text-[#596c4e]" : ""}`} />
       </button>
       <Popover open={open} onClose={close} triggerRef={triggerRef} minWidth={180} labelledBy={controlId}>
         <div id={listboxId} role="listbox" aria-label={ariaLabel} className="p-1.5">
@@ -92,10 +92,10 @@ export function Select({ options, value, onChange, name, id, placeholder = "Veld
                 disabled={option.disabled}
                 onPointerMove={() => !option.disabled && setActiveIndex(index)}
                 onClick={() => choose(index)}
-                className={`mo-select-option flex min-h-10 w-full items-center justify-between gap-3 rounded-[7px] px-3 text-left text-[13px] ${isSelected ? "bg-[#6f846f]/15 text-[#c6d1c3]" : isActive ? "bg-white/[0.045] text-[#e4e4dd]" : "text-[#9ba29c]"}`}
+                className={`mo-select-option flex min-h-10 w-full items-center justify-between gap-3 rounded-[10px] px-3 text-left text-[13px] ${isSelected ? "bg-[#e8f0e3] font-medium text-[#263023]" : isActive ? "bg-[#f2f5ef] text-[#2c312c]" : "text-[#6f756e]"}`}
               >
                 <span>{option.label}</span>
-                {isSelected && <Check size={14} className="text-[#9caf9a]" />}
+                {isSelected && <Check size={14} className="text-[#5e744f]" />}
               </button>
             );
           })}

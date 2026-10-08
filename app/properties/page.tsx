@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireInternalIdentity } from "@/lib/auth/post-auth";
 
 export const metadata: Metadata = {
-  title: "Fasteignir — Mó",
+  title: "Fasteignir — Kelvo",
   description: "Yfirlit yfir allar eignir og stöðu þeirra",
 };
 

@@ -22,10 +22,10 @@ export async function AppShell({
   const searchOptions = await getPropertySearchOptions(supabase, identity.organizationId);
 
   return (
-    <div className="min-h-screen bg-[#111412] text-[#f3f1ea]">
+    <div className="kelvo-app min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
       <Sidebar activeItem={activeItem} />
       <Topbar identity={identity} searchOptions={searchOptions} />
-      <main className="min-w-0 pt-[74px] lg:pl-[232px]">{children}</main>
+      <main className="min-w-0 pt-[72px] md:pl-[248px]">{children}</main>
     </div>
   );
 }

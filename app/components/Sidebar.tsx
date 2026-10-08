@@ -40,12 +40,11 @@ const secondaryNavigation: NavItem[] = [
 
 function Brand() {
   return (
-    <Link href="/" className="flex h-9 items-center gap-3" aria-label="Mó heim">
-      <span className="relative grid size-8 place-items-center rounded-full border border-white/12 bg-[#171b18]">
-        <span className="absolute h-3.5 w-px -rotate-45 bg-[#9caf9a]" />
-        <span className="absolute h-3.5 w-px rotate-45 bg-[#687b68]" />
+    <Link href="/" className="flex h-10 items-center gap-3" aria-label="Kelvo heim">
+      <span className="relative grid size-9 place-items-center rounded-[12px] border border-[#bfd747] bg-[#d9f65a] text-[15px] font-bold tracking-[-0.04em] text-[#202614] shadow-[0_2px_7px_rgba(54,64,30,0.08)]">
+        K
       </span>
-      <span className="text-[20px] font-semibold tracking-[-0.04em] text-[#f3f1ea]">Mó</span>
+      <span className="text-[21px] font-bold tracking-[-0.045em] text-[#171a17]">Kelvo</span>
     </Link>
   );
 }
@@ -61,16 +60,16 @@ function Navigation({ onNavigate, activeItem }: { onNavigate?: () => void; activ
             href={href}
             onClick={onNavigate}
             aria-current={isSelected ? "page" : undefined}
-            className={`mo-nav-item group flex h-10 items-center gap-3 rounded-[10px] px-3 text-[13px] font-medium transition-colors ${
+            className={`mo-nav-item group flex h-11 items-center gap-3 rounded-[13px] px-3.5 text-[13px] font-medium transition-colors ${
               isSelected
-                ? "bg-[#202820] text-[#eef1e9]"
-                : "text-[#89918b]"
+                ? "bg-[#e8f0e3] text-[#20251f] shadow-[inset_0_0_0_1px_rgba(83,102,70,0.05)]"
+                : "text-[#70776f]"
             }`}
           >
             <Icon
               size={17}
               strokeWidth={1.65}
-              className={isSelected ? "text-[#9caf9a]" : "mo-nav-icon text-[#747c76]"}
+              className={isSelected ? "text-[#53684a]" : "mo-nav-icon text-[#90978f]"}
             />
             {label}
           </Link>
@@ -79,9 +78,9 @@ function Navigation({ onNavigate, activeItem }: { onNavigate?: () => void; activ
     });
 
   return (
-    <nav className="flex min-h-0 flex-1 flex-col pt-10" aria-label="Aðalvalmynd">
+    <nav className="flex min-h-0 flex-1 flex-col pt-9" aria-label="Aðalvalmynd">
       <ul className="space-y-1">{renderItems(mainNavigation)}</ul>
-      <div className="mt-auto border-t border-white/[0.06] pt-5">
+      <div className="mt-auto border-t border-black/[0.06] pt-5">
         <ul className="space-y-1">{renderItems(secondaryNavigation)}</ul>
       </div>
     </nav>
@@ -95,8 +94,8 @@ function SidebarContent({ onNavigate, activeItem }: { onNavigate?: () => void; a
         <Brand />
       </div>
       <Navigation onNavigate={onNavigate} activeItem={activeItem} />
-      <div className="mx-2 mt-5 flex items-center gap-2.5 text-[11px] text-[#5f6761]">
-        <span className="size-1.5 rounded-full bg-[#6f846f]" />
+      <div className="mx-2 mt-5 flex items-center gap-2.5 text-[11px] text-[#8a9189]">
+        <span className="size-1.5 rounded-full bg-[#9eb33f]" />
         Kerfi virkt
       </div>
     </div>
@@ -108,29 +107,31 @@ export function Sidebar({ activeItem = "Yfirlit" }: { activeItem?: string }) {
 
   return (
     <>
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[232px] border-r border-white/[0.07] bg-[#0d100e] lg:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[248px] border-r border-black/[0.06] bg-[#fafbf8] md:block">
         <SidebarContent activeItem={activeItem} />
       </aside>
 
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        className="mo-button mo-button-secondary fixed left-4 top-[17px] z-30 grid size-10 place-items-center lg:hidden"
-        aria-label="Opna valmynd"
-        aria-expanded={isOpen}
-      >
-        <Menu size={19} strokeWidth={1.7} />
-      </button>
+      <div className="fixed left-4 top-[17px] z-30 md:hidden">
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="mo-button mo-button-secondary grid size-10 place-items-center"
+          aria-label="Opna valmynd"
+          aria-expanded={isOpen}
+        >
+          <Menu size={19} strokeWidth={1.7} />
+        </button>
+      </div>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-50 md:hidden">
           <button
             type="button"
-            className="absolute inset-0 bg-black/60"
+            className="absolute inset-0 bg-[#171a17]/30 backdrop-blur-[2px]"
             aria-label="Loka valmynd"
             onClick={() => setIsOpen(false)}
           />
-          <aside className="absolute inset-y-0 left-0 w-[280px] border-r border-white/[0.08] bg-[#0d100e]">
+          <aside className="absolute inset-y-0 left-0 w-[288px] border-r border-black/[0.08] bg-[#fafbf8] shadow-[12px_0_36px_rgba(20,25,20,0.1)]">
             <button
               type="button"
               className="mo-button mo-button-icon absolute right-4 top-5 z-10 grid size-9 place-items-center"

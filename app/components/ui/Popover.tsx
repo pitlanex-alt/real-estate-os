@@ -52,7 +52,7 @@ export function Popover({ open, onClose, triggerRef, children, minWidth = 220, l
       ref={contentRef}
       role="presentation"
       aria-labelledby={labelledBy}
-      className="fixed z-[100] overflow-auto rounded-[10px] border border-white/[0.1] bg-[#181c19] shadow-[0_12px_28px_rgba(0,0,0,0.28)]"
+      className="fixed z-[100] overflow-auto rounded-[14px] border border-black/[0.09] bg-white shadow-[0_18px_44px_rgba(25,34,24,0.14)]"
       style={{ left: position.left, top: position.top, width: position.width, maxHeight: position.maxHeight }}
     >
       {children}

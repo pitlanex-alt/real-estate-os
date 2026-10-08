@@ -9,7 +9,7 @@ export function Checkbox({ checked, onChange, name, value = "on", label, id, dis
   return (
     <label htmlFor={inputId} className={`mo-checkbox-label flex min-h-11 items-center gap-3 ${disabled ? "opacity-50" : ""} ${className}`}>
       <input id={inputId} type="checkbox" name={name} value={value} checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} className="peer sr-only" />
-      <span aria-hidden className="grid size-[18px] shrink-0 place-items-center rounded-[4px] border border-white/[0.16] bg-[#151916] text-[#111412] transition-colors peer-checked:border-[#829782] peer-checked:bg-[#829782] peer-focus-visible:ring-2 peer-focus-visible:ring-[#9caf9a]/50 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[#111412]">
+      <span aria-hidden className="grid size-[18px] shrink-0 place-items-center rounded-[5px] border border-black/[0.18] bg-white text-[#202614] transition-colors peer-checked:border-[#bdd842] peer-checked:bg-[#d9f65a] peer-focus-visible:ring-2 peer-focus-visible:ring-[#afcfbe] peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[#f4f5f1]">
         {checked && <Check size={13} strokeWidth={2.6} />}
       </span>
       <span>{label}</span>

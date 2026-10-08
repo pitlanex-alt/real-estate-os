@@ -14,6 +14,6 @@ function timeOptions(value: string) {
   return options.sort((a, b) => a.value.localeCompare(b.value));
 }
 
-export function TimePicker({ value, onChange, name, id, ariaLabel = "Veldu tíma", disabled = false, required = false, className = "" }: { value: string; onChange: (value: string) => void; name?: string; id?: string; ariaLabel?: string; disabled?: boolean; required?: boolean; className?: string }) {
-  return <Select options={timeOptions(value)} value={value} onChange={onChange} name={name} id={id} ariaLabel={ariaLabel} placeholder="Veldu tíma" disabled={disabled} required={required} className={className} />;
+export function TimePicker({ value, onChange, name, id, ariaLabel = "Veldu tíma", disabled = false, required = false, className = "", size = "normal" }: { value: string; onChange: (value: string) => void; name?: string; id?: string; ariaLabel?: string; disabled?: boolean; required?: boolean; className?: string; size?: "normal" | "compact" }) {
+  return <Select options={timeOptions(value)} value={value} onChange={onChange} name={name} id={id} ariaLabel={ariaLabel} placeholder="Veldu tíma" disabled={disabled} required={required} className={className} size={size} />;
 }

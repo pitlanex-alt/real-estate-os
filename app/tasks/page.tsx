@@ -13,17 +13,17 @@ export default async function TasksPage() {
   return (
     <AppShell activeItem="Verkefni" identity={identity}>
       <div className="mx-auto w-full max-w-[1336px] px-4 pb-16 pt-8 sm:px-6 lg:px-10 xl:px-12">
-        <header className="border-b border-white/[0.07] pb-7">
-          <h1 className="text-[27px] font-semibold tracking-[-0.035em]">
+        <header>
+          <h1 className="text-[28px] font-bold tracking-[-0.04em] text-[var(--text-primary)]">
             Verkefni
           </h1>
-          <p className="mt-2 text-[12px] text-[#7a827c]">
+          <p className="mt-2 text-[13px] text-[var(--text-secondary)]">
             Vinna sem tengist virkum eignaviðskiptum.
           </p>
         </header>
         <div className="pt-6">
           {data.error ? (
-            <p className="text-[#c98279]">Ekki tókst að sækja verkefni.</p>
+            <p className="rounded-[14px] border border-[#b75e56]/20 bg-[#f7e7e5] px-4 py-3 text-[#914b45]">Ekki tókst að sækja verkefni.</p>
           ) : (
             <TaskManager
               tasks={data.tasks}
