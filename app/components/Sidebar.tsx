@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
+import { KelvoMark } from "@/app/components/KelvoBrand";
 
 type NavItem = {
   label: string;
@@ -40,11 +41,8 @@ const secondaryNavigation: NavItem[] = [
 
 function Brand() {
   return (
-    <Link href="/" className="flex h-10 items-center gap-3" aria-label="Kelvo heim">
-      <span className="relative grid size-9 place-items-center rounded-[12px] border border-[#bfd747] bg-[#d9f65a] text-[15px] font-bold tracking-[-0.04em] text-[#202614] shadow-[0_2px_7px_rgba(54,64,30,0.08)]">
-        K
-      </span>
-      <span className="text-[21px] font-bold tracking-[-0.045em] text-[#171a17]">Kelvo</span>
+    <Link href="/" className="flex h-10 items-center" aria-label="Kelvo heim">
+      <KelvoMark className="h-9" priority />
     </Link>
   );
 }

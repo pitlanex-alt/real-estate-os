@@ -4,6 +4,7 @@ import { logoutCustomer } from "@/app/customer/actions";
 import { resolvePostAuthDestination } from "@/lib/auth/post-auth";
 import { customerPortalPath } from "@/lib/portal/customer";
 import { createClient } from "@/lib/supabase/server";
+import { KelvoLogo } from "@/app/components/KelvoBrand";
 
 const roleLabels = { seller: "Seljandagátt", co_owner: "Seljandagátt", accepted_buyer: "Kaupendagátt" } as const;
 
@@ -17,7 +18,7 @@ export default async function CustomerPortalChooserPage() {
   return <main className="min-h-screen bg-[var(--background)] px-5 py-10 sm:py-14">
     <section className="mx-auto w-full max-w-2xl">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3"><span className="grid size-9 place-items-center rounded-[12px] border border-[#bfd747] bg-[var(--accent)] text-[15px] font-bold text-[var(--accent-text)]">K</span><span className="text-[20px] font-bold tracking-[-0.045em] text-[var(--text-primary)]">Kelvo</span></div>
+        <KelvoLogo className="w-[108px]" priority />
         <form action={logoutCustomer}><button className="mo-button mo-button-text min-h-11 px-2 text-[12px]">Skrá út</button></form>
       </div>
       <p className="mt-10 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#667d5d]">Viðskiptavinagátt</p>

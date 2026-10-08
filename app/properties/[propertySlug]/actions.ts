@@ -1,11 +1,8 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { requireInternalIdentity } from "@/lib/auth/post-auth";
 import { createClient } from "@/lib/supabase/server";
-
-const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
 
 export type ListingPreparationState = {
   error: string | null;
@@ -17,11 +14,6 @@ export type PublishReadinessState = {
   error: string | null;
   success: string | null;
 };
-
-function safeFileName(name: string) {
-  const extension = name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
-  return `mynd-${randomUUID()}.${extension}`;
-}
 
 function formText(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -148,26 +140,6 @@ export async function markListingReadyForPublish(
   }
   revalidatePath(`/properties/${propertySlug}`);
   return { error: null, success: "Skráningin er tilbúin til birtingar." };
-}
-
-export async function uploadPropertyImage(propertySlug: string, formData: FormData) {
-  const file = formData.get("file");
-  if (!(file instanceof File) || !file.size) throw new Error("Veldu mynd til að hlaða upp.");
-  if (!allowedTypes.has(file.type) || file.size > 15 * 1024 * 1024) throw new Error("Mynd verður að vera JPG, PNG, WebP eða AVIF og mest 15 MB.");
-  const supabase = await createClient();
-  const identity = await requireInternalIdentity(supabase);
-  const { data: property, error: propertyError } = await supabase.from("properties").select("id,organization_id").eq("slug", propertySlug).eq("organization_id", identity.organizationId).single();
-  if (propertyError || !property) throw new Error("Eign fannst ekki.");
-  const path = `organizations/${property.organization_id}/properties/${property.id}/${randomUUID()}/${safeFileName(file.name)}`;
-  const { error: uploadError } = await supabase.storage.from("property-images").upload(path, file, { contentType: file.type, upsert: false });
-  if (uploadError) throw new Error("Ekki tókst að hlaða myndinni upp.");
-  const { error: recordError } = await supabase.rpc("create_property_image_record", { p_property_id: property.id, p_storage_path: path, p_file_name: file.name, p_mime_type: file.type, p_file_size_bytes: file.size, p_is_cover: formData.get("isCover") === "on" });
-  if (recordError) {
-    await supabase.storage.from("property-images").remove([path]);
-    throw new Error("Ekki tókst að vista myndina.");
-  }
-  revalidatePath(`/properties/${propertySlug}`);
-  revalidatePath("/properties");
 }
 
 export async function setPropertyCover(propertySlug: string, imageId: string) {

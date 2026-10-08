@@ -3,12 +3,12 @@ import { LogOut } from "lucide-react";
 import Link from "next/link";
 import { logoutCustomer } from "@/app/customer/actions";
 import { Button } from "@/app/components/ui/Button";
+import { KelvoLogo } from "@/app/components/KelvoBrand";
 
 function CustomerBrand({ homeHref, label }: { homeHref: string; label: string }) {
   return (
-    <Link href={homeHref} className="flex items-center gap-3" aria-label={label}>
-      <span className="grid size-9 place-items-center rounded-[12px] border border-[#bfd747] bg-[var(--accent)] text-[15px] font-bold text-[var(--accent-text)] shadow-[0_2px_7px_rgba(54,64,30,0.08)]">K</span>
-      <span className="text-[20px] font-bold tracking-[-0.045em] text-[var(--text-primary)]">Kelvo</span>
+    <Link href={homeHref} className="flex items-center" aria-label={label}>
+      <KelvoLogo className="w-[100px] sm:w-[108px]" priority />
     </Link>
   );
 }
