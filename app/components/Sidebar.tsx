@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
-import { KelvoMark } from "@/app/components/KelvoBrand";
+import { KelvoLogo, KelvoMark } from "@/app/components/KelvoBrand";
 
 type NavItem = {
   label: string;
@@ -39,10 +39,10 @@ const secondaryNavigation: NavItem[] = [
   { label: "Stillingar", icon: Settings, href: "/settings" },
 ];
 
-function Brand() {
+function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <Link href="/" className="flex h-10 items-center" aria-label="Kelvo heim">
-      <KelvoMark className="h-9" priority />
+      {compact ? <KelvoMark className="h-9" priority /> : <KelvoLogo className="w-[104px]" priority />}
     </Link>
   );
 }
@@ -85,11 +85,11 @@ function Navigation({ onNavigate, activeItem }: { onNavigate?: () => void; activ
   );
 }
 
-function SidebarContent({ onNavigate, activeItem }: { onNavigate?: () => void; activeItem: string }) {
+function SidebarContent({ onNavigate, activeItem, compactBrand = false }: { onNavigate?: () => void; activeItem: string; compactBrand?: boolean }) {
   return (
     <div className="flex h-full flex-col px-4 pb-5 pt-6">
       <div className="px-2">
-        <Brand />
+        <Brand compact={compactBrand} />
       </div>
       <Navigation onNavigate={onNavigate} activeItem={activeItem} />
       <div className="mx-2 mt-5 flex items-center gap-2.5 text-[11px] text-[#8a9189]">
@@ -138,7 +138,7 @@ export function Sidebar({ activeItem = "Yfirlit" }: { activeItem?: string }) {
             >
               <X size={19} />
             </button>
-            <SidebarContent activeItem={activeItem} onNavigate={() => setIsOpen(false)} />
+            <SidebarContent activeItem={activeItem} compactBrand onNavigate={() => setIsOpen(false)} />
           </aside>
         </div>
       )}
