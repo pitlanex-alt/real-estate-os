@@ -4,6 +4,7 @@ import { Download, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/app/components/ui/Button";
+import { Combobox } from "@/app/components/ui/Combobox";
 import { FileUpload } from "@/app/components/ui/FileUpload";
 import { Input } from "@/app/components/ui/Input";
 import { Select } from "@/app/components/ui/Select";
@@ -36,7 +37,18 @@ function UploadDocumentForm({ transactions, pending, run }: { transactions: Work
   return <form action={run} className="kelvo-card mt-5 grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-[1fr_.8fr_1fr_.8fr_1.3fr_auto]">
     <Input name="title" required placeholder="Heiti skjals" controlSize="compact" />
     <Input name="documentType" required placeholder="Tegund" controlSize="compact" />
-    <Select name="transactionId" ariaLabel="Eign" value={transactionId} onChange={setTransactionId} options={transactions.map((item) => ({ value: item.id, label: item.label }))} disabled={!transactions.length} size="compact" />
+    <Combobox
+      name="transactionId"
+      ariaLabel="Eign"
+      placeholder="Leita að fasteign..."
+      emptyMessage="Engin fasteign fannst."
+      value={transactionId}
+      onChange={setTransactionId}
+      options={transactions.map((item) => ({ value: item.id, label: item.label, description: item.description }))}
+      disabled={!transactions.length}
+      required
+      size="compact"
+    />
     <Select name="visibility" ariaLabel="Sýnileiki" value={visibility} onChange={setVisibility} options={visibilityOptions} size="compact" />
     <FileUpload name="file" required presentation="action" chooseLabel="Velja skrá" />
     <Button type="submit" variant="primary" size="compact" disabled={pending || !transactions.length} className="font-semibold">Vista</Button>

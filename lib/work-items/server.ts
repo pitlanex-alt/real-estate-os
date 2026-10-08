@@ -11,7 +11,21 @@ type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
 type TransactionRow = {
   id: string;
+  stage: string;
   property: { address_line: string; slug: string } | { address_line: string; slug: string }[] | null;
+};
+
+const transactionStageLabels: Record<string, string> = {
+  valuation: "Verðmat",
+  preparation: "Undirbúningur",
+  listed: "Á sölu",
+  viewings: "Skoðanir",
+  offers: "Tilboð",
+  contract: "Samningur",
+  closing: "Frágangur",
+  handover: "Afhending",
+  completed: "Lokið",
+  cancelled: "Hætt við",
 };
 
 function relation<T>(value: T | T[] | null): T | null {
@@ -73,11 +87,10 @@ export async function getInternalWorkItems(
   let transactionsQuery = supabase
     .from("transactions")
     .select(
-      "id,property:properties!transactions_property_id_fkey(address_line,slug)",
+      "id,stage,property:properties!transactions_property_id_fkey(address_line,slug)",
     )
     .in("organization_id", organizationIds)
     .order("created_at", { ascending: false });
-
   if (transactionId) {
     tasksQuery = tasksQuery.eq("transaction_id", transactionId);
     documentsQuery = documentsQuery.eq("transaction_id", transactionId);
@@ -116,7 +129,6 @@ export async function getInternalWorkItems(
   const profileById = new Map(
     (profilesResult.data ?? []).map((profile) => [profile.id, profile.display_name]),
   );
-
   const tasks: InternalTask[] = (tasksResult.data ?? []).map((row) => ({
     id: row.id,
     transactionId: row.transaction_id,
@@ -152,6 +164,7 @@ export async function getInternalWorkItems(
   const transactions: WorkOption[] = transactionRows.map((transaction) => ({
     id: transaction.id,
     label: propertyByTransaction.get(transaction.id) ?? "Óþekkt eign",
+    description: transactionStageLabels[transaction.stage] ?? transaction.stage,
   }));
   const assignees: WorkOption[] = (profilesResult.data ?? []).map((profile) => ({
     id: profile.id,
