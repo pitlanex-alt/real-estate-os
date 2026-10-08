@@ -65,10 +65,10 @@ function TaskRow({ task, assignees, pending, run }: { task: InternalTask; assign
   const overdue = task.dueAt && new Date(task.dueAt) < new Date() && !["completed", "cancelled"].includes(task.status);
   const subdued = task.status === "completed" || task.status === "cancelled";
 
-  return <article className={`grid gap-3 border-b border-black/[0.06] px-1 py-3 last:border-b-0 xl:grid-cols-[minmax(170px,1.35fr)_minmax(125px,.8fr)_112px_minmax(174px,1fr)_112px_66px_88px] xl:items-center xl:gap-2 ${subdued ? "bg-[#f8f9f6]" : ""}`}>
-    <div className={subdued ? "opacity-70" : ""}>
-      <div className="flex flex-wrap items-center gap-2"><h2 className="text-[12px] font-semibold text-[var(--text-primary)]">{task.title}</h2>{subdued && <span className="kelvo-status-neutral rounded-full px-2 py-0.5 text-[8px]">{task.status === "completed" ? "Lokið" : "Hætt við"}</span>}</div>
-      <p className="mt-1 text-[10px] text-[var(--text-secondary)]"><Link href={`/properties/${task.propertySlug}`} className="mo-button-text">{task.property}</Link> · {visibilityLabels[task.visibility]}</p>
+  return <article className="mo-hover-row grid gap-3 border-b border-black/[0.06] px-2 py-3 last:border-b-0 xl:grid-cols-[minmax(170px,1.35fr)_minmax(125px,.8fr)_112px_minmax(174px,1fr)_112px_66px_88px] xl:items-center xl:gap-2">
+    <div>
+      <div className="flex flex-wrap items-center gap-2"><h2 className={`text-[12px] font-semibold text-[var(--text-primary)] ${subdued ? "opacity-70" : ""}`}>{task.title}</h2>{subdued && <span className={`${task.status === "completed" ? "kelvo-status-progress" : "kelvo-status-neutral"} rounded-full px-2 py-0.5 text-[8px]`}>{task.status === "completed" ? "Lokið" : "Hætt við"}</span>}</div>
+      <p className={`mt-1 text-[10px] text-[var(--text-secondary)] ${subdued ? "opacity-70" : ""}`}><Link href={`/properties/${task.propertySlug}`} className="mo-button-text">{task.property}</Link> · {visibilityLabels[task.visibility]}</p>
     </div>
     <Select ariaLabel={`Ábyrgðaraðili fyrir ${task.title}`} value={assigned} onChange={setAssigned} options={[{ value: "", label: "Óúthlutað" }, ...assignees.map((item) => ({ value: item.id, label: item.label }))]} size="compact" />
     <Select ariaLabel={`Staða fyrir ${task.title}`} value={status} onChange={(value) => setStatus(value as InternalTask["status"])} options={statusOptions} size="compact" />
