@@ -172,7 +172,6 @@ button:disabled,
 
 .mo-hover-row {
   border-radius: 12px;
-  transition: background-color 150ms ease, color 150ms ease;
 }
 
 .mo-checkbox-label:not(:has(input:disabled)) {
@@ -242,11 +241,6 @@ button:disabled,
 
   .mo-nav-item:not([aria-current="page"]):hover {
     background: #f1f4ed;
-    color: var(--text-primary);
-  }
-
-  .mo-hover-row:hover {
-    background: #f6f8f4;
     color: var(--text-primary);
   }
 
