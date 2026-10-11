@@ -256,6 +256,11 @@ export async function getCustomerAgentProfile(transactionId: string, supabaseCli
   const { data, error } = await supabase.rpc("customer_agent_profile", { p_transaction_id: transactionId });
   const row = record(data);
   if (error || !row) return null;
-  const photoUrl = row.id && row.profile_photo_path ? profilePhotoUrl(String(row.id), { transactionId }) : null;
+  const photoUrl = row.id && row.profile_photo_path
+    ? profilePhotoUrl(String(row.id), {
+        transactionId,
+        version: row.profile_updated_at ? String(row.profile_updated_at) : null,
+      })
+    : null;
   return { name:String(row.name), title:row.title?String(row.title):null, phone:row.phone?String(row.phone):null, email:row.email?String(row.email):null, photoUrl };
 }

@@ -72,7 +72,7 @@ export async function resolvePostAuthDestination(
       .order("created_at", { ascending: true })
       .limit(1)
       .maybeSingle(),
-    supabase.from("profiles").select("display_name,professional_title,profile_photo_path,account_type").eq("id", user.id).maybeSingle(),
+    supabase.from("profiles").select("display_name,professional_title,profile_photo_path,account_type,updated_at").eq("id", user.id).maybeSingle(),
     getCustomerPortalDestinations(supabase),
   ]);
 
@@ -81,7 +81,9 @@ export async function resolvePostAuthDestination(
   const customerDestinations = portalResult.data ?? [];
   const role = membership?.role as OrganizationRole | undefined;
   const displayName = profile?.display_name?.trim() || "Notandi";
-  const resolvedProfilePhotoUrl = profile?.profile_photo_path ? profilePhotoUrl(user.id) : null;
+  const resolvedProfilePhotoUrl = profile?.profile_photo_path
+    ? profilePhotoUrl(user.id, { version: profile.updated_at })
+    : null;
   const internalIdentity = membership && role
     ? {
         userId: user.id,

@@ -1,6 +1,7 @@
 "use client";
 
 import { Camera } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState, type ChangeEvent } from "react";
 import { Avatar } from "@/app/components/ui/Avatar";
 import { Button } from "@/app/components/ui/Button";
@@ -79,8 +80,13 @@ function ProfilePhotoControl({ name, currentPhotoUrl, currentEditorUrl, disabled
 }
 
 export function SettingsForm({ values, canEditOrganization }: { values: Values; canEditOrganization: boolean }) {
+  const router = useRouter();
   const [organizationState, organizationAction, organizationPending] = useActionState(saveSettings, { error: null, success: null } satisfies SettingsState);
   const [profileState, profileAction, profilePending] = useActionState(saveProfile, { error: null, success: null } satisfies SettingsState);
+
+  useEffect(() => {
+    if (profileState.success) router.refresh();
+  }, [profileState.success, router]);
 
   return <div className="mt-6 max-w-4xl space-y-6">
     <Panel><form action={organizationAction} className="space-y-8">

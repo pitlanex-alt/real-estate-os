@@ -16,7 +16,7 @@ type RawTransaction = {
     postal_code: string;
     municipality: string;
   }>;
-  agent: Relation<{ id: string; display_name: string; profile_photo_path: string | null }>;
+  agent: Relation<{ id: string; display_name: string; profile_photo_path: string | null; updated_at: string }>;
   parties: Array<{
     role: string;
     is_primary: boolean;
@@ -71,7 +71,7 @@ export async function getIndexedProperties(organizationId: string): Promise<{
       stage,
       asking_price_isk,
       property:properties!transactions_property_id_fkey(id, slug, address_line, postal_code, municipality),
-      agent:profiles!transactions_assigned_agent_id_fkey(id, display_name, profile_photo_path),
+      agent:profiles!transactions_assigned_agent_id_fkey(id, display_name, profile_photo_path, updated_at),
       parties:transaction_parties!transaction_parties_transaction_id_fkey(
         role,
         is_primary,
@@ -123,7 +123,9 @@ export async function getIndexedProperties(organizationId: string): Promise<{
       nextActionTone: (nextAction && /tilboð|vantar/i.test(nextAction) ? "warning" : "neutral") as IndexedProperty["nextActionTone"],
       agent: agent.display_name,
       agentInitials: initials(agent.display_name),
-      agentPhotoUrl: agent.profile_photo_path ? profilePhotoUrl(agent.id) : null,
+      agentPhotoUrl: agent.profile_photo_path
+        ? profilePhotoUrl(agent.id, { version: agent.updated_at })
+        : null,
       imageVariant: variants[index % variants.length],
       imageUrl: imageMap.get(property.id)?.find((image) => image.isCover)?.thumbnailUrl ?? imageMap.get(property.id)?.[0]?.thumbnailUrl ?? null,
     }];

@@ -14,7 +14,7 @@ export default async function TeamPage() {
   const identity = await requireInternalIdentity(supabase);
   const { data, error } = await supabase
     .from("organization_memberships")
-    .select("user_id,role,is_active,profile:profiles!organization_memberships_user_id_fkey(display_name,email,professional_title,profile_photo_path)")
+    .select("user_id,role,is_active,profile:profiles!organization_memberships_user_id_fkey(display_name,email,professional_title,profile_photo_path,updated_at)")
     .eq("organization_id", identity.organizationId)
     .order("created_at");
   if (error) console.error("Unable to load team", error);
@@ -41,7 +41,9 @@ export default async function TeamPage() {
       active: row.is_active,
       invitePending,
       initials: initials(profile.display_name),
-      photoUrl: profile.profile_photo_path ? profilePhotoUrl(row.user_id) : null,
+      photoUrl: profile.profile_photo_path
+        ? profilePhotoUrl(row.user_id, { version: profile.updated_at })
+        : null,
     };
   }));
 
