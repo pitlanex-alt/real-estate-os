@@ -2,6 +2,7 @@ import { ChevronRight, FileWarning } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Property } from "@/app/data/dashboard";
+import { Avatar } from "@/app/components/ui/Avatar";
 
 const imageStyles: Record<Property["imageVariant"], string> = {
   city: "property-image-city",
@@ -57,9 +58,7 @@ export function PropertyRow({ property }: { property: Property }) {
         </div>
 
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#cde6da] text-[9px] font-bold tracking-wide text-[#3f594c] ring-1 ring-inset ring-black/[0.05]">
-            {property.agent.initials}
-          </span>
+          <Avatar name={property.agent.name} photoUrl={property.agent.photoUrl} />
           <span className="truncate text-[11px] text-[#727972]">{property.agent.name}</span>
         </div>
 

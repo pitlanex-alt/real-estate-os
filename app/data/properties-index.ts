@@ -21,6 +21,7 @@ export type IndexedProperty = {
   nextActionTone?: "warning" | "neutral";
   agent: string;
   agentInitials: string;
+  agentPhotoUrl?: string | null;
   imageVariant: "city" | "coast" | "stone";
   imageUrl?: string | null;
 };

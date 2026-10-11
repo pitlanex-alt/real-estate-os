@@ -1,8 +1,8 @@
 "use client";
 
 import { CheckCircle2, Clock3, MinusCircle } from "lucide-react";
-import Image from "next/image";
 import { useActionState, useState, useTransition } from "react";
+import { Avatar } from "@/app/components/ui/Avatar";
 import { Button } from "@/app/components/ui/Button";
 import { ConfirmDialog } from "@/app/components/ui/ConfirmDialog";
 import { Input } from "@/app/components/ui/Input";
@@ -61,9 +61,7 @@ function MemberRow({ member, canEdit }: { member: TeamMember; canEdit: boolean }
     <>
       <article className="grid gap-3 border-b border-black/[0.06] px-2 py-4 last:border-b-0 lg:grid-cols-[minmax(0,1fr)_190px_112px_196px] lg:items-center lg:gap-5">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="relative grid size-10 shrink-0 overflow-hidden rounded-full bg-[var(--mint)] text-[10px] font-bold text-[#3f594c]">
-            {member.photoUrl ? <Image unoptimized fill sizes="40px" src={member.photoUrl} alt="" className="object-cover" /> : <span className="grid size-full place-items-center">{member.initials}</span>}
-          </span>
+          <Avatar name={member.name} photoUrl={member.photoUrl} size="medium" />
           <div className="min-w-0">
             <p className="truncate text-[13px] font-semibold text-[var(--text-primary)]">{member.name}</p>
             <p className="mt-1 truncate text-[10px] text-[var(--text-secondary)]">{member.email ?? "Netfang ekki skráð"}{member.title ? ` · ${member.title}` : ""}</p>

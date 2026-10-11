@@ -2,6 +2,7 @@ import { AppShell } from "@/app/components/AppShell";
 import { requireInternalIdentity } from "@/lib/auth/post-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { profilePhotoUrl } from "@/lib/profile-images/urls";
 import { TeamManager, type TeamMember } from "./TeamManager";
 
 function initials(name: string) {
@@ -23,12 +24,7 @@ export default async function TeamPage() {
     const profile = Array.isArray(row.profile) ? row.profile[0] : row.profile;
     return profile ? [{ row, profile }] : [];
   }).map(async ({ row, profile }) => {
-    const [photoResult, authResult] = await Promise.all([
-      profile.profile_photo_path
-        ? supabase.storage.from("agency-assets").createSignedUrl(profile.profile_photo_path, 3600)
-        : Promise.resolve({ data: null }),
-      admin.auth.admin.getUserById(row.user_id),
-    ]);
+    const authResult = await admin.auth.admin.getUserById(row.user_id);
     const authUser = authResult.data.user;
     const isKelvoTeamInvite = authUser?.user_metadata.invite_flow === "kelvo_team_v1";
     const invitePending = Boolean(row.is_active && authUser?.invited_at && (
@@ -45,7 +41,7 @@ export default async function TeamPage() {
       active: row.is_active,
       invitePending,
       initials: initials(profile.display_name),
-      photoUrl: photoResult.data?.signedUrl ?? null,
+      photoUrl: profile.profile_photo_path ? profilePhotoUrl(row.user_id) : null,
     };
   }));
 

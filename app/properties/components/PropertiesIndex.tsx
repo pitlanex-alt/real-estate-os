@@ -4,6 +4,7 @@ import { Check, ChevronRight, Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { Avatar } from "@/app/components/ui/Avatar";
 import { Select } from "@/app/components/ui/Select";
 import { SearchInput } from "@/app/components/ui/Input";
 import {
@@ -23,7 +24,7 @@ function PropertyImage({ property, className = "" }: { property: IndexedProperty
 function Agent({ property }: { property: IndexedProperty }) {
   return (
     <span className="flex min-w-0 items-center gap-2.5">
-      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[var(--mint)] text-[8px] font-bold tracking-wide text-[#3f594c] ring-1 ring-inset ring-black/[0.05]">{property.agentInitials}</span>
+      <Avatar name={property.agent} photoUrl={property.agentPhotoUrl} />
       <span className="truncate text-[10px] text-[var(--text-secondary)]">{property.agent}</span>
     </span>
   );

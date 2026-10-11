@@ -30,15 +30,15 @@ export async function saveSettings(_state: SettingsState, formData: FormData): P
 export async function saveProfile(_state: SettingsState, formData: FormData): Promise<SettingsState> {
   const supabase = await createClient();
   const identity = await requireInternalIdentity(supabase);
+  const { data: existingProfile } = await supabase.from("profiles").select("profile_photo_path").eq("id", identity.userId).maybeSingle();
   let profilePhotoPath: string | null = null;
   const photo = formData.get("profilePhoto");
   if (photo instanceof File && photo.size) {
-    if (!["image/jpeg", "image/png", "image/webp"].includes(photo.type) || photo.size > 5 * 1024 * 1024) {
-      return { error: "Prófílmynd verður að vera JPG, PNG eða WebP og mest 5 MB.", success: null };
+    if (photo.type !== "image/webp" || photo.size > 2 * 1024 * 1024) {
+      return { error: "Ekki tókst að staðfesta unnu prófílmyndina.", success: null };
     }
-    const extension = photo.name.split(".").pop()?.replace(/[^a-z0-9]/gi, "") || "jpg";
-    profilePhotoPath = `organizations/${identity.organizationId}/profiles/${identity.userId}/${randomUUID()}/profile.${extension}`;
-    const upload = await supabase.storage.from("agency-assets").upload(profilePhotoPath, photo, { contentType: photo.type });
+    profilePhotoPath = `organizations/${identity.organizationId}/profiles/${identity.userId}/${randomUUID()}/avatar.webp`;
+    const upload = await supabase.storage.from("agency-assets").upload(profilePhotoPath, photo, { contentType: "image/webp", cacheControl: "31536000", upsert: false });
     if (upload.error) return { error: "Ekki tókst að hlaða prófílmyndinni upp.", success: null };
   }
   const profile = await supabase.rpc("update_own_profile", {
@@ -51,6 +51,10 @@ export async function saveProfile(_state: SettingsState, formData: FormData): Pr
   if (profile.error) {
     if (profilePhotoPath) await supabase.storage.from("agency-assets").remove([profilePhotoPath]);
     return { error: "Ekki tókst að vista prófílinn.", success: null };
+  }
+  if (profilePhotoPath && existingProfile?.profile_photo_path && existingProfile.profile_photo_path !== profilePhotoPath) {
+    const removal = await supabase.storage.from("agency-assets").remove([existingProfile.profile_photo_path]);
+    if (removal.error) console.error("Unable to remove previous profile photo", removal.error);
   }
   revalidatePath("/settings"); revalidatePath("/", "layout");
   return { error: null, success: "Prófíll vistaður." };

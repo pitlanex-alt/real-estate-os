@@ -1,6 +1,6 @@
 import { LogOut } from "lucide-react";
-import Image from "next/image";
 import { logoutInternal } from "@/app/login/logout";
+import { Avatar } from "@/app/components/ui/Avatar";
 import type { InternalIdentity } from "@/lib/auth/post-auth";
 import { PropertySearch } from "@/app/components/PropertySearch";
 import type { PropertySearchOption } from "@/lib/properties/search";
@@ -13,9 +13,7 @@ export function Topbar({ identity, searchOptions }: { identity: InternalIdentity
 
         <div className="flex shrink-0 items-center gap-3 sm:gap-5">
           <div className="flex items-center gap-3">
-            <span className="relative grid size-9 overflow-hidden rounded-full bg-[#cde6da] text-[10px] font-bold tracking-wide text-[#33483d] ring-1 ring-inset ring-black/[0.06]">
-              {identity.profilePhotoUrl ? <Image unoptimized fill sizes="32px" src={identity.profilePhotoUrl} alt="" className="object-cover" /> : <span className="grid size-full place-items-center">{identity.initials}</span>}
-            </span>
+            <Avatar name={identity.displayName} photoUrl={identity.profilePhotoUrl} />
             <div className="hidden leading-none sm:block">
               <p className="text-[12px] font-semibold text-[#262a26]">{identity.displayName}</p>
               <p className="mt-1.5 text-[10.5px] text-[#838a82]">{identity.professionalTitle ?? identity.roleLabel}</p>

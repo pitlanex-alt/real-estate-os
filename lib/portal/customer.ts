@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { propertyImageUrl } from "@/lib/property-images/urls";
+import { profilePhotoUrl } from "@/lib/profile-images/urls";
 
 type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -12,7 +13,7 @@ export type CustomerPropertySummary = {
   transactionId: string;
   askingPriceIsk: number;
   property: { address: string; postalCode: string; municipality: string; sizeSqm: number | null; bedroomCount: number | null; yearBuilt: number | null };
-  agent: { name: string; title?: string | null; phone: string | null; email?: string | null };
+  agent: { name: string; title?: string | null; phone: string | null; email?: string | null; photoUrl?: string | null };
   customer: { name: string; phone: string | null; email: string | null };
   stage?: string;
   coverImageUrl?: string | null;
@@ -255,5 +256,6 @@ export async function getCustomerAgentProfile(transactionId: string, supabaseCli
   const { data, error } = await supabase.rpc("customer_agent_profile", { p_transaction_id: transactionId });
   const row = record(data);
   if (error || !row) return null;
-  return { name:String(row.name), title:row.title?String(row.title):null, phone:row.phone?String(row.phone):null, email:row.email?String(row.email):null };
+  const photoUrl = row.id && row.profile_photo_path ? profilePhotoUrl(String(row.id), { transactionId }) : null;
+  return { name:String(row.name), title:row.title?String(row.title):null, phone:row.phone?String(row.phone):null, email:row.email?String(row.email):null, photoUrl };
 }

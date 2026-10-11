@@ -5,6 +5,7 @@ import {
   type CustomerPortalDestination,
 } from "@/lib/portal/customer";
 import { createClient } from "@/lib/supabase/server";
+import { profilePhotoUrl } from "@/lib/profile-images/urls";
 
 type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 type OrganizationRole = "admin" | "agent" | "coordinator" | "viewer";
@@ -80,9 +81,7 @@ export async function resolvePostAuthDestination(
   const customerDestinations = portalResult.data ?? [];
   const role = membership?.role as OrganizationRole | undefined;
   const displayName = profile?.display_name?.trim() || "Notandi";
-  const profilePhotoUrl = profile?.profile_photo_path
-    ? (await supabase.storage.from("agency-assets").createSignedUrl(profile.profile_photo_path, 3600)).data?.signedUrl ?? null
-    : null;
+  const resolvedProfilePhotoUrl = profile?.profile_photo_path ? profilePhotoUrl(user.id) : null;
   const internalIdentity = membership && role
     ? {
         userId: user.id,
@@ -92,7 +91,7 @@ export async function resolvePostAuthDestination(
         role,
         roleLabel: roleLabels[role],
         professionalTitle: profile?.professional_title?.trim() || null,
-        profilePhotoUrl,
+        profilePhotoUrl: resolvedProfilePhotoUrl,
       }
     : null;
 

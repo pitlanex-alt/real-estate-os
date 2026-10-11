@@ -29,6 +29,7 @@ export type Property = {
   agent: {
     name: string;
     initials: string;
+    photoUrl?: string | null;
   };
   imageVariant: "coast" | "city" | "stone";
   imageUrl?: string | null;
