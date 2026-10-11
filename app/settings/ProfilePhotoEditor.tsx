@@ -5,18 +5,30 @@ import { Button } from "@/app/components/ui/Button";
 
 const outputSize = 512;
 
-function clamp(value: number, limit: number) {
-  return Math.max(-limit, Math.min(limit, value));
+export type ProfilePhotoCrop = { x: number; y: number; zoom: number };
+export const defaultProfilePhotoCrop: ProfilePhotoCrop = { x: 0, y: 0, zoom: 1 };
+
+function clamp(value: number, minimum: number, maximum: number) {
+  return Math.max(minimum, Math.min(maximum, value));
 }
 
-export function ProfilePhotoEditor({ source, onCancel, onSave }: { source: string; onCancel: () => void; onSave: (file: File) => void }) {
+function normalizedOffset(value: number, limit: number) {
+  return limit ? clamp(value / limit, -1, 1) : 0;
+}
+
+export function ProfilePhotoEditor({ source, initialCrop = defaultProfilePhotoCrop, onCancel, onSave }: {
+  source: string;
+  initialCrop?: ProfilePhotoCrop;
+  onCancel: () => void;
+  onSave: (result: { file: File; crop: ProfilePhotoCrop }) => void | Promise<void>;
+}) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const dragRef = useRef<{ id: number; x: number; y: number; offsetX: number; offsetY: number } | null>(null);
   const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
   const [viewportSize, setViewportSize] = useState(300);
-  const [zoom, setZoom] = useState(1);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(() => clamp(initialCrop.zoom, 1, 3));
+  const [position, setPosition] = useState({ x: clamp(initialCrop.x, -1, 1), y: clamp(initialCrop.y, -1, 1) });
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -41,26 +53,28 @@ export function ProfilePhotoEditor({ source, onCancel, onSave }: { source: strin
   const renderedHeight = naturalSize.height * baseScale * zoom;
   const maxX = Math.max(0, (renderedWidth - viewportSize) / 2);
   const maxY = Math.max(0, (renderedHeight - viewportSize) / 2);
-  const safeOffset = { x: clamp(offset.x, maxX), y: clamp(offset.y, maxY) };
+  const offset = { x: position.x * maxX, y: position.y * maxY };
 
-  const moveTo = useCallback((x: number, y: number) => setOffset({ x: clamp(x, maxX), y: clamp(y, maxY) }), [maxX, maxY]);
+  const moveToPixels = useCallback((x: number, y: number) => {
+    setPosition({ x: normalizedOffset(x, maxX), y: normalizedOffset(y, maxY) });
+  }, [maxX, maxY]);
 
   function pointerDown(event: PointerEvent<HTMLDivElement>) {
     event.currentTarget.setPointerCapture(event.pointerId);
-    dragRef.current = { id: event.pointerId, x: event.clientX, y: event.clientY, offsetX: safeOffset.x, offsetY: safeOffset.y };
+    dragRef.current = { id: event.pointerId, x: event.clientX, y: event.clientY, offsetX: offset.x, offsetY: offset.y };
   }
 
   function pointerMove(event: PointerEvent<HTMLDivElement>) {
     const drag = dragRef.current;
     if (!drag || drag.id !== event.pointerId) return;
-    moveTo(drag.offsetX + event.clientX - drag.x, drag.offsetY + event.clientY - drag.y);
+    moveToPixels(drag.offsetX + event.clientX - drag.x, drag.offsetY + event.clientY - drag.y);
   }
 
   function keyDown(event: KeyboardEvent<HTMLDivElement>) {
     const amount = event.shiftKey ? 16 : 5;
     if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
     event.preventDefault();
-    moveTo(safeOffset.x + (event.key === "ArrowLeft" ? -amount : event.key === "ArrowRight" ? amount : 0), safeOffset.y + (event.key === "ArrowUp" ? -amount : event.key === "ArrowDown" ? amount : 0));
+    moveToPixels(offset.x + (event.key === "ArrowLeft" ? -amount : event.key === "ArrowRight" ? amount : 0), offset.y + (event.key === "ArrowUp" ? -amount : event.key === "ArrowDown" ? amount : 0));
   }
 
   async function save() {
@@ -75,10 +89,13 @@ export function ProfilePhotoEditor({ source, onCancel, onSave }: { source: strin
       const context = canvas.getContext("2d");
       if (!context) throw new Error("canvas");
       const ratio = outputSize / viewportSize;
-      context.drawImage(image, outputSize / 2 - renderedWidth * ratio / 2 + safeOffset.x * ratio, outputSize / 2 - renderedHeight * ratio / 2 + safeOffset.y * ratio, renderedWidth * ratio, renderedHeight * ratio);
+      context.drawImage(image, outputSize / 2 - renderedWidth * ratio / 2 + offset.x * ratio, outputSize / 2 - renderedHeight * ratio / 2 + offset.y * ratio, renderedWidth * ratio, renderedHeight * ratio);
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.86));
       if (!blob) throw new Error("encode");
-      onSave(new File([blob], "profilmynd.webp", { type: "image/webp", lastModified: Date.now() }));
+      await onSave({
+        file: new File([blob], "profilmynd.webp", { type: "image/webp", lastModified: Date.now() }),
+        crop: { x: position.x, y: position.y, zoom },
+      });
     } catch {
       setError("Ekki tókst að vinna myndina. Prófaðu að velja aðra mynd.");
     } finally {
@@ -95,7 +112,7 @@ export function ProfilePhotoEditor({ source, onCancel, onSave }: { source: strin
           <div ref={viewportRef} tabIndex={0} onKeyDown={keyDown} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={() => { dragRef.current = null; }} onPointerCancel={() => { dragRef.current = null; }} className="relative aspect-square w-[min(76vw,320px)] touch-none cursor-grab overflow-hidden rounded-full bg-[var(--surface-soft)] outline-none ring-4 ring-[var(--surface-accent)] focus-visible:ring-[var(--accent)] active:cursor-grabbing" aria-label="Staðsetning prófílmyndar">
             {/* A plain img is intentional: canvas needs the decoded source element. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img ref={imageRef} src={source} crossOrigin="anonymous" draggable={false} alt="Forskoðun prófílmyndar" onLoad={(event) => setNaturalSize({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} className="pointer-events-none absolute left-1/2 top-1/2 max-w-none select-none" style={{ width: renderedWidth || undefined, height: renderedHeight || undefined, transform: `translate(calc(-50% + ${safeOffset.x}px), calc(-50% + ${safeOffset.y}px))` }} />
+            <img ref={imageRef} src={source} crossOrigin="anonymous" draggable={false} alt="Forskoðun prófílmyndar" onLoad={(event) => setNaturalSize({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} className="pointer-events-none absolute left-1/2 top-1/2 max-w-none select-none" style={{ width: renderedWidth || undefined, height: renderedHeight || undefined, transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))` }} />
           </div>
         </div>
         <label className="mt-7 block text-[11px] font-medium text-[var(--text-secondary)]">Aðdráttur<input type="range" min="1" max="3" step="0.01" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} className="mt-3 h-2 w-full cursor-pointer accent-[#9eb33f]" /></label>

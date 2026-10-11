@@ -18,18 +18,21 @@ function headers(etag: string, length?: number | string | null) {
 export async function GET(request: Request, { params }: { params: Promise<{ userId: string }> }) {
   const { userId } = await params;
   const url = new URL(request.url);
-  const rendition = url.searchParams.get("rendition") === "editor" ? "editor" : "avatar";
+  const requestedRendition = url.searchParams.get("rendition") === "editor" ? "editor" : "avatar";
   const transactionId = url.searchParams.get("transactionId");
-  const settings = renditions[rendition];
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return new Response("Not found", { status: 404 });
+  const rendition = requestedRendition === "editor" && user.id === userId ? "editor" : "avatar";
+  const settings = renditions[rendition];
 
   let profilePhotoPath: string | null = null;
   let version = "current";
-  const profileResult = await supabase.from("profiles").select("id,profile_photo_path,updated_at").eq("id", userId).maybeSingle();
+  const profileResult = await supabase.from("profiles").select("id,profile_photo_path,profile_photo_source_path,updated_at").eq("id", userId).maybeSingle();
   if (profileResult.data?.profile_photo_path) {
-    profilePhotoPath = profileResult.data.profile_photo_path;
+    profilePhotoPath = rendition === "editor"
+      ? profileResult.data.profile_photo_source_path ?? profileResult.data.profile_photo_path
+      : profileResult.data.profile_photo_path;
     version = String(Date.parse(profileResult.data.updated_at));
   } else if (transactionId) {
     const agentResult = await supabase.rpc("customer_agent_profile", { p_transaction_id: transactionId });
