@@ -103,7 +103,7 @@ export default async function ViewingsPage() {
               return (
                 <Link
                   key={viewing.id}
-                  href={`/properties/${property.slug}/viewings/${viewing.id}`}
+                  href={`/properties/${property.slug}/viewings/${viewing.id}?from=viewings`}
                   className="group grid min-h-[84px] items-center gap-3 border-b border-black/[0.06] px-2 py-4 last:border-b-0 sm:grid-cols-[minmax(190px,1.35fr)_minmax(180px,1fr)_auto_auto] sm:gap-6"
                 >
                   <div className="min-w-0">

@@ -70,14 +70,16 @@ function StatusDot({ status }: { status: AttendanceStatus }) {
 
 function ViewingHeader({
   viewing,
-  propertySlug,
+  backHref,
+  backLabel,
   registered,
   attended,
   noShow,
   onAddGuest,
 }: {
   viewing: ViewingDetails;
-  propertySlug: string;
+  backHref: string;
+  backLabel: string;
   registered: number;
   attended: number;
   noShow: number;
@@ -85,9 +87,9 @@ function ViewingHeader({
 }) {
   return (
     <header>
-      <Link href={`/properties/${propertySlug}`} className="mo-button mo-button-text min-h-11 gap-1.5 text-[11px] font-medium">
+      <Link href={backHref} className="mo-button mo-button-text min-h-11 gap-1.5 text-[11px] font-medium">
         <ChevronLeft size={14} strokeWidth={1.7} />
-        {viewing.address}
+        {backLabel}
       </Link>
 
       <div className="kelvo-card mt-3 flex flex-col gap-6 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-6">
@@ -456,10 +458,14 @@ export function ViewingManager({
   initialViewing,
   initialGuests,
   propertySlug,
+  backHref = `/properties/${propertySlug}`,
+  backLabel = initialViewing.address,
 }: {
   initialViewing: ViewingDetails;
   initialGuests: ViewingGuest[];
   propertySlug: string;
+  backHref?: string;
+  backLabel?: string;
 }) {
   const [viewing, setViewing] = useState(initialViewing);
   const [guests, setGuests] = useState(initialGuests);
@@ -518,7 +524,7 @@ export function ViewingManager({
 
   return (
     <>
-      <ViewingHeader viewing={viewing} propertySlug={propertySlug} registered={guests.length} attended={attended} noShow={noShow} onAddGuest={() => setIsAddingGuest(true)} />
+      <ViewingHeader viewing={viewing} backHref={backHref} backLabel={backLabel} registered={guests.length} attended={attended} noShow={noShow} onAddGuest={() => setIsAddingGuest(true)} />
       <StatusStrip guests={guests} />
       {actionError && <p role="alert" className="mt-5 rounded-[14px] border border-[#b75e56]/20 bg-[#f7e7e5] px-4 py-3 text-[11px] text-[#914b45]">{actionError}</p>}
       <GuestList guests={guests} onOpen={setSelectedGuest} onMarkAttended={markAttended} />

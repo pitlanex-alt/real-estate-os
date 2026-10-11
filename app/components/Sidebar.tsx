@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import { KelvoLogo, KelvoMark } from "@/app/components/KelvoBrand";
 
 type NavItem = {
@@ -38,6 +39,16 @@ const secondaryNavigation: NavItem[] = [
   { label: "Teymi", icon: Users, href: "/team" },
   { label: "Stillingar", icon: Settings, href: "/settings" },
 ];
+
+function resolveActiveItem(pathname: string, source: string | null, fallback: string) {
+  const isOfferDetail = /^\/properties\/[^/]+\/offers\/[^/]+\/?$/.test(pathname);
+  if (isOfferDetail) return source === "offers" ? "Tilboð" : "Fasteignir";
+
+  const isViewingDetail = /^\/properties\/[^/]+\/viewings\/[^/]+\/?$/.test(pathname);
+  if (isViewingDetail) return source === "viewings" ? "Skoðanir" : "Fasteignir";
+
+  return fallback;
+}
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return (
@@ -102,11 +113,14 @@ function SidebarContent({ onNavigate, activeItem, compactBrand = false }: { onNa
 
 export function Sidebar({ activeItem = "Yfirlit" }: { activeItem?: string }) {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const resolvedActiveItem = resolveActiveItem(pathname, searchParams.get("from"), activeItem);
 
   return (
     <>
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[248px] border-r border-black/[0.06] bg-[#fafbf8] md:block">
-        <SidebarContent activeItem={activeItem} />
+        <SidebarContent activeItem={resolvedActiveItem} />
       </aside>
 
       <div className="fixed left-4 top-[17px] z-30 md:hidden">
@@ -138,7 +152,7 @@ export function Sidebar({ activeItem = "Yfirlit" }: { activeItem?: string }) {
             >
               <X size={19} />
             </button>
-            <SidebarContent activeItem={activeItem} compactBrand onNavigate={() => setIsOpen(false)} />
+            <SidebarContent activeItem={resolvedActiveItem} compactBrand onNavigate={() => setIsOpen(false)} />
           </aside>
         </div>
       )}
