@@ -1,34 +1,30 @@
 import { Check, ChevronLeft } from "lucide-react";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { CustomerShell } from "@/app/components/CustomerShell";
+import { notFound } from "next/navigation";
 import { PortalAccessDenied } from "@/app/components/PortalAccessDenied";
 import { formatIcelandicDate, formatOfferValidity } from "@/lib/datetime/iceland";
 import { getBuyerOffer } from "@/lib/offers/detail";
 import { customerOfferStatusLabel, formatIsk, offerConditionLabel } from "@/lib/offers/model";
-import { customerInitials, getBuyerPropertySummary, getCustomerDestinationBySlug, getCustomerTransactionOffers } from "@/lib/portal/customer";
-import { createClient } from "@/lib/supabase/server";
+import { getCustomerTransactionOffers } from "@/lib/portal/customer";
+import { getBuyerPortalContext } from "@/lib/portal/context";
 
 export default async function BuyerOfferPage({ params }: { params: Promise<{ propertySlug: string; offerId: string }> }) {
   const { propertySlug, offerId } = await params;
-  const supabase = await createClient();
-  const destination = await getCustomerDestinationBySlug(propertySlug, "buyer", supabase);
-  if (destination.unauthenticated) redirect(`/customer/login?next=/buyer/${propertySlug}/offers/${offerId}`);
-  if (!destination.data) return <PortalAccessDenied />;
+  const context = await getBuyerPortalContext(propertySlug);
+  if (!context) return <PortalAccessDenied />;
 
-  const [summary, offer, availableOffers] = await Promise.all([
-    getBuyerPropertySummary(destination.data.transactionId, supabase),
-    getBuyerOffer(offerId, supabase),
-    getCustomerTransactionOffers(destination.data.transactionId, supabase),
+  const [offer, availableOffers] = await Promise.all([
+    getBuyerOffer(offerId, context.supabase),
+    getCustomerTransactionOffers(context.destination.transactionId, context.supabase),
   ]);
-  if (summary.denied || offer.denied) return <PortalAccessDenied />;
-  if (!summary.data || !offer.data || availableOffers.error || !availableOffers.data.some((item) => item.id === offerId)) notFound();
+  if (offer.denied) return <PortalAccessDenied />;
+  if (!offer.data || availableOffers.error || !availableOffers.data.some((item) => item.id === offerId)) notFound();
 
   const accepted = offer.data.status === "accepted";
   const validity = formatOfferValidity(offer.data.validUntil);
-  return <CustomerShell customerName={summary.data.customer.name} customerInitials={customerInitials(summary.data.customer.name)} customerRole="Kaupandi" homeHref={`/buyer/${propertySlug}`} portalLabel="Kaupendagátt">
+  return <>
     <div className="mx-auto max-w-[920px] px-4 py-8 sm:px-6 sm:py-10">
-      <Link href={`/buyer/${propertySlug}`} className="mo-button mo-button-text inline-flex min-h-11 items-center gap-1 text-[12px]"><ChevronLeft size={14} />{summary.data.property.address}</Link>
+      <Link href={`/buyer/${propertySlug}`} className="mo-button mo-button-text inline-flex min-h-11 items-center gap-1 text-[12px]"><ChevronLeft size={14} />{context.summary.property.address}</Link>
       <section className="kelvo-card mt-4 p-6 sm:p-8">
         <header>
           <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#667d5d]">Tilboð þitt</p>
@@ -44,5 +40,5 @@ export default async function BuyerOfferPage({ params }: { params: Promise<{ pro
         {accepted && <p className="mt-4 text-[11px] leading-5 text-[var(--text-secondary)]">Samþykkt tilboð þýðir ekki að kaupsamningur hafi verið stofnaður eða undirritaður.</p>}
       </section>
     </div>
-  </CustomerShell>;
+  </>;
 }

@@ -113,8 +113,8 @@ function rpcResult<T>(data: unknown, error: { message: string; code?: string } |
   return parsed ? { data: parsed, denied: false, error: null } : { data: null, denied: true, error: null };
 }
 
-export async function getSellerTransactionSummary(transactionId: string) {
-  const supabase = await createClient();
+export async function getSellerTransactionSummary(transactionId: string, supabaseClient?: ServerSupabaseClient) {
+  const supabase = supabaseClient ?? await createClient();
   const { data, error } = await supabase.rpc("seller_transaction_summary", { p_transaction_id: transactionId });
   return rpcResult(data, error, parseSummary);
 }

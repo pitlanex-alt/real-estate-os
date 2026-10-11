@@ -47,6 +47,16 @@ function resolveActiveItem(pathname: string, source: string | null, fallback: st
   const isViewingDetail = /^\/properties\/[^/]+\/viewings\/[^/]+\/?$/.test(pathname);
   if (isViewingDetail) return source === "viewings" ? "Skoðanir" : "Fasteignir";
 
+  if (pathname === "/") return "Yfirlit";
+  if (pathname.startsWith("/properties")) return "Fasteignir";
+  if (pathname.startsWith("/contacts")) return "Viðskiptavinir";
+  if (pathname.startsWith("/viewings")) return "Skoðanir";
+  if (pathname.startsWith("/offers")) return "Tilboð";
+  if (pathname.startsWith("/tasks")) return "Verkefni";
+  if (pathname.startsWith("/documents")) return "Skjöl";
+  if (pathname.startsWith("/team")) return "Teymi";
+  if (pathname.startsWith("/settings")) return "Stillingar";
+
   return fallback;
 }
 
@@ -67,6 +77,7 @@ function Navigation({ onNavigate, activeItem }: { onNavigate?: () => void; activ
         <li key={label}>
           <Link
             href={href}
+            prefetch
             onClick={onNavigate}
             aria-current={isSelected ? "page" : undefined}
             className={`mo-nav-item group flex h-11 items-center gap-3 rounded-[13px] px-3.5 text-[13px] font-medium transition-colors ${
@@ -121,13 +132,13 @@ function SidebarContent({ onNavigate, activeItem, compactBrand = false }: { onNa
   );
 }
 
-export function Sidebar({ activeItem = "Yfirlit" }: { activeItem?: string }) {
+export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[248px] border-r border-black/[0.06] bg-[#fafbf8] md:block">
-        <SidebarContent activeItem={activeItem} />
+        <SidebarContent activeItem="Yfirlit" />
       </aside>
 
       <div className="fixed left-4 top-[17px] z-30 md:hidden">
@@ -159,7 +170,7 @@ export function Sidebar({ activeItem = "Yfirlit" }: { activeItem?: string }) {
             >
               <X size={19} />
             </button>
-            <SidebarContent activeItem={activeItem} compactBrand onNavigate={() => setIsOpen(false)} />
+            <SidebarContent activeItem="Yfirlit" compactBrand onNavigate={() => setIsOpen(false)} />
           </aside>
         </div>
       )}

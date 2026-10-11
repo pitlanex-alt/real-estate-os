@@ -1,10 +1,10 @@
-export function InternalLoadingState({ rows = 4 }: { rows?: number }) {
+export function InternalLoadingState({ rows = 4, title, description }: { rows?: number; title?: string; description?: string }) {
   return (
     <div className="mx-auto w-full max-w-[1336px] px-4 pb-16 pt-8 sm:px-6 lg:px-10 xl:px-12" aria-busy="true" aria-label="Augnablik">
       <div className="flex items-end justify-between gap-6">
         <div>
-          <div className="kelvo-skeleton h-8 w-40 rounded-[10px]" />
-          <div className="kelvo-skeleton mt-3 h-3 w-64 max-w-[70vw] rounded-full" />
+          {title ? <h1 className="text-[28px] font-bold tracking-[-0.04em] text-[var(--text-primary)]">{title}</h1> : <div className="kelvo-skeleton h-8 w-40 rounded-[10px]" />}
+          {description ? <p className="mt-2 text-[13px] text-[var(--text-secondary)]">{description}</p> : <div className="kelvo-skeleton mt-3 h-3 w-64 max-w-[70vw] rounded-full" />}
         </div>
         <div className="kelvo-skeleton hidden h-11 w-28 rounded-[12px] sm:block" />
       </div>

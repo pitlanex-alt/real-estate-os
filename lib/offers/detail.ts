@@ -102,8 +102,8 @@ export async function getBuyerOffer(offerId: string, supabaseClient?: Awaited<Re
   return { data: parseBuyerOffer(data), denied: false, error: null };
 }
 
-export async function getSellerOffer(offerId: string): Promise<{ data: SellerOfferData | null; denied: boolean; error: string | null }> {
-  const supabase = await createClient();
+export async function getSellerOffer(offerId: string, supabaseClient?: Awaited<ReturnType<typeof createClient>>): Promise<{ data: SellerOfferData | null; denied: boolean; error: string | null }> {
+  const supabase = supabaseClient ?? await createClient();
   const { data, error } = await supabase.rpc("seller_offer_summary", { p_offer_id: offerId });
   if (error) return { data: null, denied: error.code === "42501" || error.code === "28000", error: error.message };
   if (!data) return { data: null, denied: true, error: null };
