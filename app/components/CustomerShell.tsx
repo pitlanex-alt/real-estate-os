@@ -53,7 +53,7 @@ export function CustomerShell({
       <footer className="mt-16 border-t border-black/[0.06] bg-white/50">
         <div className="mx-auto flex max-w-[1180px] flex-col gap-2 px-4 py-7 text-[11px] text-[var(--text-muted)] sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <span>Kelvo · {portalLabel}</span>
-          <span>Upplýsingar uppfærðar í dag kl. 12:14</span>
+          <span>Upplýsingar uppfærast sjálfkrafa</span>
         </div>
       </footer>
     </div>

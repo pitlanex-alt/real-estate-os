@@ -3,8 +3,7 @@ import Link from "next/link";
 import { AppShell } from "@/app/components/AppShell";
 import { requireInternalIdentity } from "@/lib/auth/post-auth";
 import {
-  formatIcelandicDateWithYear,
-  formatIcelandicTime,
+  formatOfferValidity,
 } from "@/lib/datetime/iceland";
 import {
   customerOfferStatusLabel,
@@ -70,6 +69,7 @@ export default async function OffersPage() {
 
   if (error) console.error("Unable to load offers", error);
   const offers = (data ?? []) as unknown as OfferRow[];
+  const now = new Date();
 
   return (
     <AppShell activeItem="Tilboð" identity={identity}>
@@ -94,6 +94,7 @@ export default async function OffersPage() {
               const property = one(transaction?.property ?? null);
               const buyer = one(offer.buyer);
               if (!property) return null;
+              const validity = formatOfferValidity(offer.valid_until, now);
 
               return (
                 <Link
@@ -122,8 +123,8 @@ export default async function OffersPage() {
                       {customerOfferStatusLabel(offer.status)}
                     </span>
                     {!['accepted', 'rejected', 'withdrawn', 'expired', 'superseded'].includes(offer.status) && (
-                      <p className="mt-1.5 text-[10px] text-[var(--text-secondary)]">
-                        Gildir til {formatIcelandicDateWithYear(offer.valid_until)} · {formatIcelandicTime(offer.valid_until)}
+                      <p className={`mt-1.5 text-[10px] ${validity.expired ? "text-[#914b45]" : "text-[var(--text-secondary)]"}`}>
+                        {validity.label}
                       </p>
                     )}
                   </div>

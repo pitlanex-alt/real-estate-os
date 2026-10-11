@@ -22,7 +22,7 @@ const taskFilterOptions = [
 ];
 const pageSize = 24;
 
-export function TaskManager({ tasks, transactions, assignees }: { tasks: InternalTask[]; transactions: WorkOption[]; assignees: WorkOption[] }) {
+export function TaskManager({ tasks, transactions, assignees, nowIso }: { tasks: InternalTask[]; transactions: WorkOption[]; assignees: WorkOption[]; nowIso: string }) {
   const [show, setShow] = useState(false);
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +70,7 @@ export function TaskManager({ tasks, transactions, assignees }: { tasks: Interna
       <Select ariaLabel="Sía verkefni eftir stöðu" value={filter} onChange={(value) => { setFilter(value); setVisibleCount(pageSize); }} options={taskFilterOptions} size="compact" />
     </div>
     <div className="kelvo-card mt-3 overflow-hidden px-3 sm:px-4">
-      {visibleTasks.map((task) => <TaskRow key={task.id} task={task} assignees={assignees} pending={pending === task.id} run={(fn) => run(task.id, fn)} />)}
+      {visibleTasks.map((task) => <TaskRow key={task.id} task={task} assignees={assignees} nowIso={nowIso} pending={pending === task.id} run={(fn) => run(task.id, fn)} />)}
       {!filteredTasks.length && <EmptyState>Engin verkefni fundust.</EmptyState>}
       {visibleCount < filteredTasks.length && <div className="flex justify-center py-4"><Button size="compact" onClick={() => setVisibleCount((count) => count + pageSize)}>Sýna fleiri</Button></div>}
     </div>
@@ -92,17 +92,17 @@ function NewTaskForm({ transactions, assignees, pending, run }: { transactions: 
   </form>;
 }
 
-function TaskRow({ task, assignees, pending, run }: { task: InternalTask; assignees: WorkOption[]; pending: boolean; run: (fn: () => Promise<void>) => void }) {
+function TaskRow({ task, assignees, nowIso, pending, run }: { task: InternalTask; assignees: WorkOption[]; nowIso: string; pending: boolean; run: (fn: () => Promise<void>) => void }) {
   const [status, setStatus] = useState(task.status);
   const [due, setDue] = useState(toIcelandDateTimeLocal(task.dueAt));
   const [assigned, setAssigned] = useState(task.assigneeId ?? "");
   const [visibility, setVisibility] = useState(task.visibility);
-  const overdue = task.dueAt && new Date(task.dueAt) < new Date() && !["completed", "cancelled"].includes(task.status);
+  const overdue = Boolean(task.dueAt && Date.parse(task.dueAt) < Date.parse(nowIso) && !["completed", "cancelled"].includes(task.status));
   const subdued = task.status === "completed" || task.status === "cancelled";
 
   return <article className="mo-hover-row grid gap-3 border-b border-black/[0.06] px-2 py-3 last:border-b-0 min-[1180px]:grid-cols-[minmax(140px,1.3fr)_105px_96px_minmax(150px,.95fr)_96px_58px_82px] min-[1180px]:items-center min-[1180px]:gap-1.5">
     <div>
-      <div className="flex flex-wrap items-center gap-2"><h2 className={`text-[12px] font-semibold text-[var(--text-primary)] ${subdued ? "opacity-70" : ""}`}>{task.title}</h2>{subdued && <span className={`${task.status === "completed" ? "kelvo-status-progress" : "kelvo-status-neutral"} rounded-full px-2 py-0.5 text-[8px]`}>{task.status === "completed" ? "Lokið" : "Hætt við"}</span>}</div>
+      <div className="flex flex-wrap items-center gap-2"><h2 className={`text-[12px] font-semibold text-[var(--text-primary)] ${subdued ? "opacity-70" : ""}`}>{task.title}</h2>{subdued && <span className={`${task.status === "completed" ? "kelvo-status-progress" : "kelvo-status-neutral"} rounded-full px-2 py-0.5 text-[8px]`}>{task.status === "completed" ? "Lokið" : "Hætt við"}</span>}{overdue && <span className="kelvo-status-warning rounded-full px-2 py-0.5 text-[8px]">Komið fram yfir</span>}</div>
       <p className={`mt-1 text-[10px] text-[var(--text-secondary)] ${subdued ? "opacity-70" : ""}`}><Link href={`/properties/${task.propertySlug}`} className="mo-button-text">{task.property}</Link> · {visibilityLabels[task.visibility]}</p>
     </div>
     <Select ariaLabel={`Ábyrgðaraðili fyrir ${task.title}`} value={assigned} onChange={setAssigned} options={[{ value: "", label: "Óúthlutað" }, ...assignees.map((item) => ({ value: item.id, label: item.label }))]} size="compact" />

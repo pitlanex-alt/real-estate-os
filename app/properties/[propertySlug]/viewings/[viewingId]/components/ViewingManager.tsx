@@ -76,6 +76,7 @@ function ViewingHeader({
   attended,
   noShow,
   onAddGuest,
+  nowIso,
 }: {
   viewing: ViewingDetails;
   backHref: string;
@@ -84,7 +85,14 @@ function ViewingHeader({
   attended: number;
   noShow: number;
   onAddGuest: () => void;
+  nowIso: string;
 }) {
+  const now = Date.parse(nowIso);
+  const past = Date.parse(viewing.endsAt) < now;
+  const activeNow = Date.parse(viewing.startsAt) <= now && !past;
+  const statusLabel = viewing.status === "completed" || viewing.status === "cancelled"
+    ? viewingStatusLabels[viewing.status]
+    : past ? "Liðin" : activeNow ? "Í gangi" : viewingStatusLabels[viewing.status];
   return (
     <header>
       <Link href={backHref} className="mo-button mo-button-text min-h-11 gap-1.5 text-[11px] font-medium">
@@ -96,7 +104,7 @@ function ViewingHeader({
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-[27px] font-bold tracking-[-0.04em] text-[var(--text-primary)]">{viewing.title}</h1>
-            <span className="kelvo-status-progress rounded-full px-2.5 py-1 text-[10px] font-semibold">{viewingStatusLabels[viewing.status]}</span>
+            <span className={`${past || viewing.status === "completed" ? "kelvo-status-neutral" : "kelvo-status-progress"} rounded-full px-2.5 py-1 text-[10px] font-semibold`}>{statusLabel}</span>
           </div>
           <p className="mt-2 text-[12px] text-[var(--text-secondary)]">{viewing.dateTimeLabel}</p>
           <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-[11px] text-[var(--text-secondary)]">
@@ -439,7 +447,7 @@ function CompleteViewing({
           <div className="mt-7 border-t border-black/[0.06] pt-6">
             <p className="text-[10px] font-medium uppercase tracking-[0.09em] text-[#687069]">Tillögur að eftirfylgni</p>
             <ul className="mt-4 space-y-2.5 text-[11px] text-[var(--text-secondary)]">
-              <li>3 kaupendur þarf að hafa samband við í dag</li>
+              <li>3 kaupendur þarf að hafa samband við</li>
               <li>1 kaupandi vill aðra skoðun</li>
               <li>1 kaupandi vantar staðfestingu á fjármögnun</li>
             </ul>
@@ -458,12 +466,14 @@ export function ViewingManager({
   initialViewing,
   initialGuests,
   propertySlug,
+  nowIso,
   backHref = `/properties/${propertySlug}`,
   backLabel = initialViewing.address,
 }: {
   initialViewing: ViewingDetails;
   initialGuests: ViewingGuest[];
   propertySlug: string;
+  nowIso: string;
   backHref?: string;
   backLabel?: string;
 }) {
@@ -524,7 +534,7 @@ export function ViewingManager({
 
   return (
     <>
-      <ViewingHeader viewing={viewing} backHref={backHref} backLabel={backLabel} registered={guests.length} attended={attended} noShow={noShow} onAddGuest={() => setIsAddingGuest(true)} />
+      <ViewingHeader viewing={viewing} backHref={backHref} backLabel={backLabel} registered={guests.length} attended={attended} noShow={noShow} onAddGuest={() => setIsAddingGuest(true)} nowIso={nowIso} />
       <StatusStrip guests={guests} />
       {actionError && <p role="alert" className="mt-5 rounded-[14px] border border-[#b75e56]/20 bg-[#f7e7e5] px-4 py-3 text-[11px] text-[#914b45]">{actionError}</p>}
       <GuestList guests={guests} onOpen={setSelectedGuest} onMarkAttended={markAttended} />

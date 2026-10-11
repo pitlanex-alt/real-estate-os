@@ -1,5 +1,5 @@
 const ICELANDIC_LOCALE = "is-IS";
-const ICELAND_TIME_ZONE = "Atlantic/Reykjavik";
+export const ICELAND_TIME_ZONE = "Atlantic/Reykjavik";
 
 const icelandicMonths = [
   "janúar",
@@ -26,6 +26,57 @@ function numericPart(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormat
   const value = parts.find((part) => part.type === type)?.value;
   if (!value) throw new RangeError(`Missing ${type} date part`);
   return Number(value);
+}
+
+export function icelandicDateKey(value: string | Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: ICELAND_TIME_ZONE,
+  }).formatToParts(asDate(value));
+  const year = numericPart(parts, "year");
+  const month = numericPart(parts, "month").toString().padStart(2, "0");
+  const day = numericPart(parts, "day").toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function dateKeyAsUtc(value: string | Date) {
+  const [year, month, day] = icelandicDateKey(value).split("-").map(Number);
+  return Date.UTC(year, month - 1, day);
+}
+
+export function compareIcelandicDays(value: string | Date, reference: string | Date) {
+  return Math.round((dateKeyAsUtc(value) - dateKeyAsUtc(reference)) / 86_400_000);
+}
+
+export function isPastInstant(value: string | Date, now: string | Date = new Date()) {
+  return asDate(value).getTime() < asDate(now).getTime();
+}
+
+export function getIcelandicDayRange(now: string | Date = new Date()) {
+  const key = icelandicDateKey(now);
+  // Iceland remains on UTC year-round, while the date key itself is resolved
+  // explicitly in Atlantic/Reykjavik above.
+  return { start: `${key}T00:00:00.000Z`, end: `${key}T23:59:59.999Z` };
+}
+
+export function formatIcelandicRelativeDay(value: string | Date, now: string | Date = new Date()) {
+  const difference = compareIcelandicDays(value, now);
+  if (difference === 0) return "Í dag";
+  if (difference === 1) return "Á morgun";
+  if (difference === -1) return "Í gær";
+  return formatIcelandicDateWithYear(value);
+}
+
+export function formatOfferValidity(value: string | Date, now: string | Date = new Date()) {
+  if (isPastInstant(value, now)) {
+    return { expired: true, label: `Gildistími liðinn · ${formatIcelandicDate(value)} kl. ${formatIcelandicTime(value)}` };
+  }
+  const difference = compareIcelandicDays(value, now);
+  if (difference === 0) return { expired: false, label: `Gildir til í dag kl. ${formatIcelandicTime(value)}` };
+  if (difference === 1) return { expired: false, label: `Gildir til á morgun kl. ${formatIcelandicTime(value)}` };
+  return { expired: false, label: `Gildir til ${formatIcelandicDateWithYear(value)} · ${formatIcelandicTime(value)}` };
 }
 
 export function formatIcelandicDate(value: string | Date) {

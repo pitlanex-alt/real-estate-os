@@ -44,6 +44,19 @@ const statusClasses: Record<ViewingRow["status"], string> = {
   cancelled: "bg-[#f7e7e5] text-[#914b45]",
 };
 
+function displayedStatus(viewing: ViewingRow, now: Date) {
+  if (viewing.status === "completed" || viewing.status === "cancelled") {
+    return { label: statusLabels[viewing.status], className: statusClasses[viewing.status] };
+  }
+  if (new Date(viewing.ends_at).getTime() < now.getTime()) {
+    return { label: "Liðin", className: statusClasses.completed };
+  }
+  if (new Date(viewing.starts_at).getTime() <= now.getTime()) {
+    return { label: "Í gangi", className: statusClasses.active };
+  }
+  return { label: statusLabels[viewing.status], className: statusClasses[viewing.status] };
+}
+
 function one<T>(value: Relation<T>) {
   return Array.isArray(value) ? value[0] ?? null : value;
 }
@@ -73,6 +86,7 @@ export default async function ViewingsPage() {
 
   if (error) console.error("Unable to load viewings", error);
   const viewings = (data ?? []) as unknown as ViewingRow[];
+  const now = new Date();
 
   return (
     <AppShell activeItem="Skoðanir" identity={identity}>
@@ -99,6 +113,7 @@ export default async function ViewingsPage() {
               const guests = viewing.guests ?? [];
               const attended = guests.filter((guest) => guest.attendance === "attended").length;
               const interested = guests.filter((guest) => guest.interest === "very_interested").length;
+              const displayStatus = displayedStatus(viewing, now);
 
               return (
                 <Link
@@ -128,8 +143,8 @@ export default async function ViewingsPage() {
                     <span>{interested} mjög áhugasamir</span>
                   </div>
                   <div className="flex items-center justify-between gap-3 sm:justify-end">
-                    <span className={`${statusClasses[viewing.status]} rounded-full px-2.5 py-1 text-[10px] font-semibold`}>
-                      {statusLabels[viewing.status]}
+                    <span className={`${displayStatus.className} rounded-full px-2.5 py-1 text-[10px] font-semibold`}>
+                      {displayStatus.label}
                     </span>
                     <ChevronRight size={15} className="text-[var(--text-muted)] transition-colors group-hover:text-[var(--text-primary)]" />
                   </div>

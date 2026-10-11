@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/app/components/ui/Button";
 import { ConfirmDialog } from "@/app/components/ui/ConfirmDialog";
-import { formatIcelandicDate, formatIcelandicTime } from "@/lib/datetime/iceland";
+import { formatOfferValidity } from "@/lib/datetime/iceland";
 import { financingStatusLabel, formatIsk, offerConditionLabel, type AgentOfferData, type OfferStatus } from "@/lib/offers/model";
 import { approveOfferForSeller, confirmOfferAccepted, rejectOffer, requestOfferChange, sendOfferToSeller } from "../actions";
 
@@ -18,7 +18,7 @@ function statusStyle(status: OfferStatus) {
   return "kelvo-status-progress";
 }
 
-export function AgentOfferReview({ offer, propertySlug, backHref = `/properties/${propertySlug}`, backLabel = offer.property }: { offer: AgentOfferData; propertySlug: string; backHref?: string; backLabel?: string }) {
+export function AgentOfferReview({ offer, propertySlug, nowIso, backHref = `/properties/${propertySlug}`, backLabel = offer.property }: { offer: AgentOfferData; propertySlug: string; nowIso: string; backHref?: string; backLabel?: string }) {
   const [status, setStatus] = useState(offer.status);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,13 +27,14 @@ export function AgentOfferReview({ offer, propertySlug, backHref = `/properties/
   const financing = offer.conditions.find((condition) => condition.type === "financing");
   const difference = offer.amountIsk - offer.askingPriceIsk;
   const checklist = [["Kaupandi auðkenndur", offer.review?.buyerIdentified], ["Tengiliðaupplýsingar staðfestar", offer.review?.contactConfirmed], ["Gildistími skráður", offer.review?.validityRecorded], ["Afhendingardagur skráður", offer.review?.handoverRecorded]] as const;
+  const validity = formatOfferValidity(offer.validUntil, nowIso);
 
   async function run(action: () => Promise<void>, next: OfferStatus) { setPending(true); setError(null); try { await action(); setStatus(next); } catch (caught) { setError(caught instanceof Error ? caught.message : "Aðgerð mistókst."); } finally { setPending(false); } }
 
   return <>
     <header>
       <Link href={backHref} className="mo-button mo-button-text inline-flex min-h-11 items-center gap-1.5 text-[11px] font-medium"><ChevronLeft size={14} />{backLabel}</Link>
-      <div className="kelvo-card mt-3 p-6 sm:p-7"><p className="text-[9.5px] font-semibold uppercase tracking-[0.14em] text-[#667d5d]">Tilboð {offer.id.slice(0, 8)}</p><div className="mt-3 flex flex-wrap items-center gap-3"><h1 className="text-[34px] font-bold tracking-[-0.045em] text-[var(--text-primary)] sm:text-[40px]">{formatIsk(offer.amountIsk)}</h1><span className={`${statusStyle(status)} rounded-full px-3 py-1.5 text-[10px] font-semibold`}>{statusLabels[status]}</span></div><div className="mt-5 flex flex-wrap gap-5 text-[10.5px] text-[var(--text-secondary)] sm:gap-8"><span>{offer.buyerName}</span><span>{offer.property}</span>{status === "accepted" ? <span className="rounded-full bg-[var(--surface-accent)] px-2.5 py-1 text-[#58704f]">Samningsundirbúningur hafinn</span> : <span className="rounded-full bg-[#f6eddc] px-2.5 py-1 text-[#7b5b29]"><Clock3 size={11} className="mr-1 inline" />{formatIcelandicDate(offer.validUntil)} · {formatIcelandicTime(offer.validUntil)}</span>}</div></div>
+      <div className="kelvo-card mt-3 p-6 sm:p-7"><p className="text-[9.5px] font-semibold uppercase tracking-[0.14em] text-[#667d5d]">Tilboð {offer.id.slice(0, 8)}</p><div className="mt-3 flex flex-wrap items-center gap-3"><h1 className="text-[34px] font-bold tracking-[-0.045em] text-[var(--text-primary)] sm:text-[40px]">{formatIsk(offer.amountIsk)}</h1><span className={`${statusStyle(status)} rounded-full px-3 py-1.5 text-[10px] font-semibold`}>{statusLabels[status]}</span></div><div className="mt-5 flex flex-wrap gap-5 text-[10.5px] text-[var(--text-secondary)] sm:gap-8"><span>{offer.buyerName}</span><span>{offer.property}</span>{status === "accepted" ? <span className="rounded-full bg-[var(--surface-accent)] px-2.5 py-1 text-[#58704f]">Samningsundirbúningur hafinn</span> : <span className={`rounded-full px-2.5 py-1 ${validity.expired ? "bg-[#f7e7e5] text-[#914b45]" : "bg-[#f6eddc] text-[#7b5b29]"}`}><Clock3 size={11} className="mr-1 inline" />{validity.label}</span>}</div></div>
     </header>
 
     <div className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_.85fr]">

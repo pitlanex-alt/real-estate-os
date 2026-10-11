@@ -1,13 +1,16 @@
 import type { ScheduleItem } from "@/app/data/dashboard";
 
 export function ScheduleList({ items }: { items: ScheduleItem[] }) {
+  const countLabel = items.length
+    ? items[0].dayLabel === "Í dag" ? `${items.length} í dag` : "Næsti viðburður"
+    : null;
   return (
     <section aria-labelledby="schedule-heading">
       <div className="mb-5 flex items-center justify-between">
         <h2 id="schedule-heading" className="text-[16px] font-semibold tracking-[-0.015em] text-[#222622]">
           Næstu viðburðir
         </h2>
-        <span className="text-[11px] tabular-nums text-[#858c84]">{items.length} í dag</span>
+        {countLabel && <span className="text-[11px] tabular-nums text-[#858c84]">{countLabel}</span>}
       </div>
       <ol className="border-t border-black/[0.07]">
         {items.map((item) => (
@@ -15,12 +18,12 @@ export function ScheduleList({ items }: { items: ScheduleItem[] }) {
             <time className="pt-0.5 text-[12px] font-semibold tabular-nums text-[#53634f]">{item.time}</time>
             <div className="min-w-0">
               <p className="text-[13px] font-medium text-[#2a2e2a]">{item.address}</p>
-              <p className="mt-1 text-[11px] text-[#7b827a]">{item.type}</p>
+              <p className="mt-1 text-[11px] text-[#7b827a]">{item.type} · {item.dayLabel.toLocaleLowerCase("is-IS")}</p>
             </div>
           </li>
         ))}
       </ol>
-      {!items.length && <p className="border-b border-black/[0.07] py-5 text-[12px] text-[#7b827a]">Engar skoðanir eru skráðar í dag.</p>}
+      {!items.length && <p className="border-b border-black/[0.07] py-5 text-[12px] text-[#7b827a]">Engir fleiri viðburðir í dag.</p>}
     </section>
   );
 }

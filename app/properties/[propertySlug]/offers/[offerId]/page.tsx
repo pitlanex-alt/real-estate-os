@@ -17,5 +17,5 @@ export default async function AgentOfferPage({ params, searchParams }: { params:
     getPropertyWorkspace(supabase, propertySlug, identity.organizationId),
   ]);
   if (!offer || !workspace.data || !workspace.data.offers.some((item) => item.id === offerId)) notFound();
-  return <AppShell activeItem={offersContext ? "Tilboð" : "Fasteignir"} identity={identity}><div className="mx-auto w-full max-w-[1336px] px-4 pb-16 pt-7 sm:px-6 lg:px-10 xl:px-12"><AgentOfferReview offer={offer} propertySlug={propertySlug} backHref={offersContext ? "/offers" : `/properties/${propertySlug}`} backLabel={offersContext ? "Tilboð" : offer.property} /></div></AppShell>;
+  return <AppShell activeItem={offersContext ? "Tilboð" : "Fasteignir"} identity={identity}><div className="mx-auto w-full max-w-[1336px] px-4 pb-16 pt-7 sm:px-6 lg:px-10 xl:px-12"><AgentOfferReview offer={offer} propertySlug={propertySlug} nowIso={new Date().toISOString()} backHref={offersContext ? "/offers" : `/properties/${propertySlug}`} backLabel={offersContext ? "Tilboð" : offer.property} /></div></AppShell>;
 }

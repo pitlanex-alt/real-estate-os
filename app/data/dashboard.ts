@@ -5,6 +5,7 @@ export type Metric = {
 
 export type ScheduleItem = {
   time: string;
+  dayLabel: string;
   type: string;
   address: string;
 };

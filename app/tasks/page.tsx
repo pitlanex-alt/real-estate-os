@@ -29,6 +29,7 @@ export default async function TasksPage() {
               tasks={data.tasks}
               transactions={data.transactions}
               assignees={data.assignees}
+              nowIso={new Date().toISOString()}
             />
           )}
         </div>
