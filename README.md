@@ -15,6 +15,7 @@ Copy `.env.example` to `.env.local` and set:
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+NEXT_PUBLIC_SITE_URL=https://your-kelvo-domain.is
 SUPABASE_SERVICE_ROLE_KEY=your-server-only-service-role-key
 ```
 
@@ -80,6 +81,26 @@ The idempotent seed associates Sara with **Mó Demo Fasteignasala**, grants Anna
 An authenticated internal user without an active membership is routed to `/onboarding`. Creating an organization atomically completes the user's profile and creates the first active admin membership. That admin can then finish `/settings`, invite colleagues from `/team`, and create the first property.
 
 Team invitations call Supabase Auth Admin from a server action, so the deployment must provide the server-only `SUPABASE_SERVICE_ROLE_KEY`. Configure the project's Auth site URL/redirect URLs and SMTP before relying on production email delivery. In local development, invitations appear in the local mail catcher; alternatively create the Auth user in Studio and submit the same email in `/team` to attach the existing user. Passwords are never stored in migrations or application tables.
+
+Set `NEXT_PUBLIC_SITE_URL` to the canonical deployed origin (for example `https://app.kelvo.is`, without a trailing path). Team invitations explicitly use `${NEXT_PUBLIC_SITE_URL}/auth/invite`; local development falls back to `http://localhost:3000/auth/invite`. In Supabase Dashboard → Authentication → URL Configuration, set the production origin as **Site URL** and add both the production and local `/auth/invite` URLs to **Redirect URLs**.
+
+For an SSR-safe invitation session, customize Authentication → Email Templates → **Invite user** so the button uses the token-hash endpoint rather than the default fragment-token URL:
+
+```html
+<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#171a17">
+  <h1 style="font-size:24px;margin:0 0 20px">Velkomin í Kelvo</h1>
+  <p>Sæl/l {{ .Data.display_name }},</p>
+  <p>Þér hefur verið boðið í teymi {{ .Data.organization_name }} á Kelvo.</p>
+  <p style="margin:28px 0">
+    <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=invite" style="background:#d9f65a;border-radius:10px;color:#202614;display:inline-block;font-weight:600;padding:13px 20px;text-decoration:none">
+      Staðfesta boð
+    </a>
+  </p>
+  <p style="color:#6f756e;font-size:13px">Tengillinn er tímabundinn. Ef þú áttir ekki von á boðinu geturðu hunsað þennan tölvupóst.</p>
+</div>
+```
+
+Suggested subject: `Boð í {{ .Data.organization_name }} á Kelvo`. Configure a production SMTP provider and disable click tracking for authentication emails before launch.
 
 To invite a production customer later, create or invite the Auth identity through the application/admin onboarding workflow, then call `grant_portal_access(transaction_id, user_id, contact_id, role)` as an authorized internal user. Revocation uses `revoke_portal_access(grant_id)` and takes effect immediately. V1 does not require production email delivery yet.
 
