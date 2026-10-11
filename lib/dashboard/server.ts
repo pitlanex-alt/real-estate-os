@@ -1,7 +1,6 @@
 import type { AttentionItem, Metric, Property, ScheduleItem } from "@/app/data/dashboard";
 import {
-  compareIcelandicDays,
-  formatIcelandicRelativeDay,
+  formatIcelandicUpcomingDay,
   formatIcelandicTime,
   getIcelandicDayRange,
   isPastInstant,
@@ -29,7 +28,7 @@ export async function getDashboardData(supabase: Client, organizationId: string,
       .eq("status", "scheduled")
       .gte("starts_at", nowIso)
       .order("starts_at")
-      .limit(12),
+      .limit(3),
     supabase
       .from("viewings")
       .select("id", { count: "exact", head: true })
@@ -90,14 +89,13 @@ export async function getDashboardData(supabase: Client, organizationId: string,
   });
 
   const futureRows = (futureViewings.data ?? []).filter((viewing) => !isPastInstant(viewing.starts_at, now));
-  const todayRows = futureRows.filter((viewing) => compareIcelandicDays(viewing.starts_at, now) === 0);
-  const visibleRows = todayRows.length ? todayRows : futureRows.slice(0, 1);
+  const visibleRows = futureRows.slice(0, 3);
   const schedule = visibleRows.flatMap((viewing): ScheduleItem[] => {
     const transaction = one(viewing.transaction as Relation<{ property: Relation<{ address_line: string }> }>);
     const property = one(transaction?.property ?? null);
     return property ? [{
       time: formatIcelandicTime(viewing.starts_at),
-      dayLabel: formatIcelandicRelativeDay(viewing.starts_at, now),
+      dayLabel: formatIcelandicUpcomingDay(viewing.starts_at, now),
       type: viewing.viewing_type === "open_house" ? "Opið hús" : "Skoðun",
       address: property.address_line,
     }] : [];

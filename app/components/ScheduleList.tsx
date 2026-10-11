@@ -1,9 +1,12 @@
 import type { ScheduleItem } from "@/app/data/dashboard";
 
 export function ScheduleList({ items }: { items: ScheduleItem[] }) {
-  const countLabel = items.length
-    ? items[0].dayLabel === "Í dag" ? `${items.length} í dag` : "Næsti viðburður"
-    : null;
+  const todayCount = items.filter((item) => item.dayLabel === "Í dag").length;
+  const countLabel = todayCount
+    ? `${todayCount} í dag`
+    : items[0]?.dayLabel === "Á morgun"
+      ? "Næst á morgun"
+      : items[0] ? `Næst: ${items[0].dayLabel}` : null;
   return (
     <section aria-labelledby="schedule-heading">
       <div className="mb-5 flex items-center justify-between">
@@ -23,7 +26,7 @@ export function ScheduleList({ items }: { items: ScheduleItem[] }) {
           </li>
         ))}
       </ol>
-      {!items.length && <p className="border-b border-black/[0.07] py-5 text-[12px] text-[#7b827a]">Engir fleiri viðburðir í dag.</p>}
+      {!items.length && <p className="border-b border-black/[0.07] py-5 text-[12px] text-[#7b827a]">Engir væntanlegir viðburðir.</p>}
     </section>
   );
 }

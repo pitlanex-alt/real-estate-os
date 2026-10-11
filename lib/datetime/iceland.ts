@@ -69,6 +69,20 @@ export function formatIcelandicRelativeDay(value: string | Date, now: string | D
   return formatIcelandicDateWithYear(value);
 }
 
+export function formatIcelandicUpcomingDay(value: string | Date, now: string | Date = new Date()) {
+  const difference = compareIcelandicDays(value, now);
+  if (difference === 0) return "Í dag";
+  if (difference === 1) return "Á morgun";
+  const date = asDate(value);
+  const weekday = new Intl.DateTimeFormat(ICELANDIC_LOCALE, {
+    weekday: "long",
+    timeZone: ICELAND_TIME_ZONE,
+  }).format(date);
+  const sameYear = icelandicDateKey(value).slice(0, 4) === icelandicDateKey(now).slice(0, 4);
+  const dateLabel = sameYear ? formatIcelandicDate(value) : formatIcelandicDateWithYear(value);
+  return `${weekday[0].toLocaleUpperCase(ICELANDIC_LOCALE)}${weekday.slice(1)} ${dateLabel}`;
+}
+
 export function formatOfferValidity(value: string | Date, now: string | Date = new Date()) {
   if (isPastInstant(value, now)) {
     return { expired: true, label: `Gildistími liðinn · ${formatIcelandicDate(value)} kl. ${formatIcelandicTime(value)}` };
