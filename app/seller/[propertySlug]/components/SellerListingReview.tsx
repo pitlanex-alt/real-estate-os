@@ -32,6 +32,7 @@ export function SellerListingReview({ propertySlug, listing }: { propertySlug: s
   const images = [...listing.images].sort((a, b) => Number(b.isCover) - Number(a.isCover) || a.sortOrder - b.sortOrder);
   const cover = images[0];
   const canRespond = Boolean(listing.title?.trim() && listing.description?.trim());
+  const isApproved = listing.latestResponse?.type === "approved" && listing.checklist.sellerApproved;
   const facts = [
     ["Tegund", listing.property.propertyType ? propertyTypeLabels[listing.property.propertyType] ?? listing.property.propertyType : "—"],
     ["Stærð", displayValue(listing.property.sizeSqm, " m²")],
@@ -82,7 +83,12 @@ export function SellerListingReview({ propertySlug, listing }: { propertySlug: s
       </aside>
     </div>
 
-    <form action={formAction} className="mt-10 rounded-[16px] bg-[var(--surface-soft)] p-5 sm:p-6">
+    {isApproved ? <div className="kelvo-status-success mt-10 rounded-[16px] p-5 sm:p-6">
+      <div className="flex items-start gap-3">
+        <Check size={18} className="mt-0.5 shrink-0" />
+        <div><h3 className="text-[17px] font-semibold">Skráning samþykkt</h3><p className="mt-2 text-[13px] leading-6">Þú hefur samþykkt núverandi skráningu. Engin frekari aðgerð er nauðsynleg.</p>{listing.latestResponse && <p className="mt-2 text-[11px] opacity-75">Samþykkt {formatIcelandicDate(listing.latestResponse.submittedAt)} kl. {formatIcelandicTime(listing.latestResponse.submittedAt)}</p>}</div>
+      </div>
+    </div> : <form action={formAction} className="mt-10 rounded-[16px] bg-[var(--surface-soft)] p-5 sm:p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <div><h3 className="text-[17px] font-semibold">Svar þitt</h3>{listing.latestResponse && <p className="mt-2 text-[11px] text-[#737b75]">Síðast sent {formatIcelandicDate(listing.latestResponse.submittedAt)} kl. {formatIcelandicTime(listing.latestResponse.submittedAt)}</p>}</div>
         <span className={listing.latestResponse?.type === "approved" ? "text-[11px] text-[#9caf9a]" : listing.latestResponse?.type === "changes_requested" ? "text-[11px] text-[#c99a52]" : "text-[11px] text-[#858d87]"}>{listing.latestResponse?.type === "approved" ? "Samþykkt" : listing.latestResponse?.type === "changes_requested" ? "Óskað eftir breytingu" : "Bíður svars"}</span>
@@ -96,6 +102,6 @@ export function SellerListingReview({ propertySlug, listing }: { propertySlug: s
       {!canRespond && <p className="mt-4 text-[12px] text-[#c99a52]">Skráningin er enn í undirbúningi og ekki tilbúin til svars.</p>}
       {state.error && <p role="alert" className="mt-4 text-[12px] text-[#c98279]">{state.error}</p>}
       {state.success && <p className="mt-4 text-[12px] text-[#9caf9a]">{state.success}</p>}
-    </form>
+    </form>}
   </section>;
 }

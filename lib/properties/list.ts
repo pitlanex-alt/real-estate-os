@@ -90,7 +90,11 @@ export async function getIndexedProperties(organizationId: string): Promise<{
   }
 
   const rows = (data ?? []) as unknown as RawTransaction[];
-  const imageMap = await getPropertyImages(supabase, rows.flatMap((transaction) => { const property = one(transaction.property); return property ? [property.id] : []; }));
+  const imageMap = await getPropertyImages(
+    supabase,
+    rows.flatMap((transaction) => { const property = one(transaction.property); return property ? [property.id] : []; }),
+    { coverOnly: true, thumbnailWidth: 320, thumbnailHeight: 240 },
+  );
   const properties = rows.flatMap((transaction, index) => {
     const property = one(transaction.property);
     const agent = one(transaction.agent);
@@ -119,7 +123,7 @@ export async function getIndexedProperties(organizationId: string): Promise<{
       agent: agent.display_name,
       agentInitials: initials(agent.display_name),
       imageVariant: variants[index % variants.length],
-      imageUrl: imageMap.get(property.id)?.find((image) => image.isCover)?.url ?? imageMap.get(property.id)?.[0]?.url ?? null,
+      imageUrl: imageMap.get(property.id)?.find((image) => image.isCover)?.thumbnailUrl ?? imageMap.get(property.id)?.[0]?.thumbnailUrl ?? null,
     }];
   });
 

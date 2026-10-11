@@ -1,4 +1,15 @@
 export type TaskStatus = "not_started" | "in_progress" | "completed" | "cancelled";
+
+const taskStatusLabels: Record<TaskStatus, string> = {
+  not_started: "Ekki hafið",
+  in_progress: "Í vinnslu",
+  completed: "Lokið",
+  cancelled: "Hætt við",
+};
+
+export function taskStatusLabel(status: TaskStatus) {
+  return taskStatusLabels[status];
+}
 export type ActivityVisibility = "internal" | "seller" | "buyer" | "seller_and_buyer";
 export type DocumentVisibility = "internal" | "seller" | "buyer" | "shared";
 

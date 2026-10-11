@@ -8,12 +8,11 @@ import { DateTimePicker, toIcelandDateTimeLocal } from "@/app/components/ui/Date
 import { EmptyState } from "@/app/components/ui/EmptyState";
 import { Input, SearchInput } from "@/app/components/ui/Input";
 import { Select } from "@/app/components/ui/Select";
-import type { InternalTask, WorkOption } from "@/lib/work-items/model";
+import { taskStatusLabel, type InternalTask, type WorkOption } from "@/lib/work-items/model";
 import { cancelTaskAction, completeTaskAction, createTaskAction, updateTaskAction } from "../actions";
 
-const statusLabels = { not_started: "Ekki hafið", in_progress: "Í vinnslu", completed: "Lokið", cancelled: "Hætt við" };
 const visibilityLabels = { internal: "Innri", seller: "Seljandi", buyer: "Kaupandi", seller_and_buyer: "Báðir" };
-const statusOptions = Object.entries(statusLabels).map(([value, label]) => ({ value, label }));
+const statusOptions = (["not_started", "in_progress", "completed", "cancelled"] as const).map((value) => ({ value, label: taskStatusLabel(value) }));
 const visibilityOptions = Object.entries(visibilityLabels).map(([value, label]) => ({ value, label }));
 const taskFilterOptions = [
   { value: "all", label: "Allt" },
