@@ -53,7 +53,7 @@ export type SellerListingReview = {
   images: Array<{ id: string; fileName: string; isCover: boolean; sortOrder: number; url: string | null }>;
 };
 
-export type PortalResult<T> = { data: T | null; denied: boolean; error: string | null };
+export type PortalResult<T> = { data: T | null; denied: boolean; error: string | null; unauthenticated?: boolean };
 export type CustomerPortalDestination = {
   transactionId: string;
   role: "seller" | "co_owner" | "accepted_buyer";
@@ -73,7 +73,12 @@ export async function getCustomerPortalDestinations(
 ): Promise<PortalResult<CustomerPortalDestination[]>> {
   const supabase = supabaseClient ?? await createClient();
   const { data, error } = await supabase.rpc("customer_portal_destinations");
-  if (error) return { data: null, denied: error.code === "42501" || error.code === "28000", error: error.message };
+  if (error) return {
+    data: null,
+    denied: error.code === "42501" || error.code === "28000",
+    error: error.message,
+    unauthenticated: error.code === "28000",
+  };
   const destinations = (Array.isArray(data) ? data : []).map((value) => {
     const row = record(value);
     if (!row) return null;
@@ -113,8 +118,8 @@ export async function getSellerTransactionSummary(transactionId: string) {
   return rpcResult(data, error, parseSummary);
 }
 
-export async function getBuyerPropertySummary(transactionId: string) {
-  const supabase = await createClient();
+export async function getBuyerPropertySummary(transactionId: string, supabaseClient?: ServerSupabaseClient) {
+  const supabase = supabaseClient ?? await createClient();
   const { data, error } = await supabase.rpc("buyer_property_summary", { p_transaction_id: transactionId });
   return rpcResult(data, error, parseSummary);
 }
@@ -129,7 +134,7 @@ export async function getCustomerDestinationBySlug(
   supabaseClient?: ServerSupabaseClient,
 ) {
   const result = await getCustomerPortalDestinations(supabaseClient);
-  if (result.error || !result.data) return { data: null, denied: result.denied, error: result.error };
+  if (result.error || !result.data) return { data: null, denied: result.denied, error: result.error, unauthenticated: result.unauthenticated };
   const destination = result.data.find((item) => {
     const correctAudience = audience === "buyer" ? item.role === "accepted_buyer" : item.role === "seller" || item.role === "co_owner";
     return correctAudience && item.propertySlug === propertySlug;

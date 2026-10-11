@@ -12,15 +12,13 @@ import { createClient } from "@/lib/supabase/server";
 export default async function BuyerOfferPage({ params }: { params: Promise<{ propertySlug: string; offerId: string }> }) {
   const { propertySlug, offerId } = await params;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect(`/customer/login?next=/buyer/${propertySlug}/offers/${offerId}`);
-
   const destination = await getCustomerDestinationBySlug(propertySlug, "buyer", supabase);
+  if (destination.unauthenticated) redirect(`/customer/login?next=/buyer/${propertySlug}/offers/${offerId}`);
   if (!destination.data) return <PortalAccessDenied />;
 
   const [summary, offer, availableOffers] = await Promise.all([
-    getBuyerPropertySummary(destination.data.transactionId),
-    getBuyerOffer(offerId),
+    getBuyerPropertySummary(destination.data.transactionId, supabase),
+    getBuyerOffer(offerId, supabase),
     getCustomerTransactionOffers(destination.data.transactionId, supabase),
   ]);
   if (summary.denied || offer.denied) return <PortalAccessDenied />;

@@ -1,24 +1,30 @@
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { KelvoLogo } from "@/app/components/KelvoBrand";
 
 export default function NotFound() {
   return (
-    <main className="grid min-h-screen place-items-center bg-[#111412] px-5 text-[#f3f1ea]">
-      <section className="w-full max-w-xl border-y border-white/[0.08] py-10">
-        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#819181]">
-          Fannst ekki
-        </p>
-        <h1 className="mt-3 text-[27px] font-semibold tracking-[-0.035em]">
-          Síðan eða færslan fannst ekki.
-        </h1>
-        <p className="mt-3 text-[14px] leading-6 text-[#7f8781]">
-          Hún kann að hafa verið fjarlægð eða þú hefur ekki aðgang að henni.
-        </p>
-        <Link
-          href="/"
-          className="mt-7 inline-flex min-h-11 items-center rounded-[8px] border border-white/[0.1] px-4 text-[13px] text-[#a9b8a7]"
-        >
-          Til baka
-        </Link>
+    <main className="grid min-h-screen place-items-center bg-[var(--background)] px-5 py-10 text-[var(--text-primary)]">
+      <section className="kelvo-card w-full max-w-[520px] p-7 sm:p-10">
+        <KelvoLogo className="w-[108px]" priority />
+        <div className="mt-9 border-t border-black/[0.06] pt-8">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#667d5d]">
+            SÍÐAN FANNST EKKI
+          </p>
+          <h1 className="mt-3 text-[28px] font-bold tracking-[-0.04em] sm:text-[32px]">
+            Síðan fannst ekki
+          </h1>
+          <p className="mt-3 max-w-md text-[14px] leading-6 text-[var(--text-secondary)]">
+            Síðan sem þú ert að leita að er ekki til eða þú hefur ekki aðgang að henni.
+          </p>
+          <Link
+            href="/"
+            className="mo-button mo-button-secondary mt-7 inline-flex min-h-11 items-center gap-2 px-4 text-[13px] font-semibold"
+          >
+            <ArrowLeft size={15} />
+            Til baka
+          </Link>
+        </div>
       </section>
     </main>
   );

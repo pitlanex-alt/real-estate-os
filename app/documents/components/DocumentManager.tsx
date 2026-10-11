@@ -3,14 +3,14 @@
 import { Download, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Button } from "@/app/components/ui/Button";
+import { Button, buttonClassName } from "@/app/components/ui/Button";
 import { Combobox } from "@/app/components/ui/Combobox";
 import { FileUpload } from "@/app/components/ui/FileUpload";
 import { Input, SearchInput } from "@/app/components/ui/Input";
 import { Select } from "@/app/components/ui/Select";
 import { deriveDocumentTitle, detectDocumentMimeType, documentCategoryLabel, documentCategoryOptions, documentFormatLabel } from "@/lib/documents/presentation";
 import type { DocumentVisibility, InternalDocument, WorkOption } from "@/lib/work-items/model";
-import { deleteDocumentAction, getDocumentDownloadUrl, updateDocumentVisibilityAction, uploadDocumentAction } from "../actions";
+import { deleteDocumentAction, updateDocumentVisibilityAction, uploadDocumentAction } from "../actions";
 
 const labels = { internal: "Innri", seller: "Seljandi", buyer: "Kaupandi", shared: "Sameiginlegt" };
 const visibilityOptions = Object.entries(labels).map(([value, label]) => ({ value, label }));
@@ -43,7 +43,6 @@ export function DocumentManager({ documents, transactions }: { documents: Intern
   const visibleDocuments = filteredDocuments.slice(0, visibleCount);
   function resetPage() { setVisibleCount(pageSize); }
   async function run(key: string, fn: () => Promise<void>) { setPending(key); setError(null); try { await fn(); } catch (caught) { setError(caught instanceof Error ? caught.message : "Aðgerð mistókst."); } finally { setPending(null); } }
-  async function download(id: string) { setPending(id); const result = await getDocumentDownloadUrl(id); setPending(null); if (result.url) window.open(result.url, "_blank", "noopener,noreferrer"); else setError(result.error ?? "Skrá fannst ekki í geymslu."); }
   return <>
     <div className="flex justify-end"><Button variant="primary" onClick={() => setShow(!show)} className="min-h-11 px-4 text-[12px] font-semibold"><Plus size={14} />Hlaða upp skjali</Button></div>
     {show && <UploadDocumentForm transactions={transactions} pending={pending === "upload"} run={(data) => run("upload", () => uploadDocumentAction(data))} />}
@@ -55,7 +54,7 @@ export function DocumentManager({ documents, transactions }: { documents: Intern
       <Select ariaLabel="Sía skjöl eftir sýnileika" value={visibilityFilter} onChange={(value) => { setVisibilityFilter(value); resetPage(); }} options={[{ value: "all", label: "Allur sýnileiki" }, ...visibilityOptions]} size="compact" />
     </div>
     <div className="kelvo-card mt-3 overflow-hidden px-3 sm:px-4">
-      {visibleDocuments.map((document) => <DocumentRow key={document.id} document={document} pending={pending === document.id} run={(fn) => run(document.id, fn)} download={() => void download(document.id)} />)}
+      {visibleDocuments.map((document) => <DocumentRow key={document.id} document={document} pending={pending === document.id} run={(fn) => run(document.id, fn)} />)}
       {!filteredDocuments.length && <p className="py-10 text-[13px] text-[var(--text-secondary)]">Engin skjöl fundust.</p>}
       {visibleCount < filteredDocuments.length && <div className="flex justify-center py-4"><Button size="compact" onClick={() => setVisibleCount((count) => count + pageSize)}>Sýna fleiri</Button></div>}
     </div>
@@ -102,7 +101,7 @@ function UploadDocumentForm({ transactions, pending, run }: { transactions: Work
   </form>;
 }
 
-function DocumentRow({ document, pending, run, download }: { document: InternalDocument; pending: boolean; run: (fn: () => Promise<void>) => void; download: () => void }) {
+function DocumentRow({ document, pending, run }: { document: InternalDocument; pending: boolean; run: (fn: () => Promise<void>) => void }) {
   const [visibility, setVisibility] = useState<DocumentVisibility>(document.visibility);
   return <article className="mo-hover-row grid gap-3 border-b border-black/[0.06] px-2 py-3 last:border-b-0 min-[1180px]:grid-cols-[minmax(190px,1.5fr)_minmax(110px,.7fr)_minmax(150px,170px)_124px_82px] min-[1180px]:items-center">
     <div><h2 className="text-[12px] font-semibold text-[var(--text-primary)]">{document.title}</h2><p className="mt-1 text-[10px] text-[var(--text-secondary)]"><Link href={`/properties/${document.propertySlug}`} className="mo-button-text">{document.property}</Link> · {documentCategoryLabel(document.documentType)} · {documentFormatLabel(document.mimeType, document.fileName)}</p></div>
@@ -110,7 +109,7 @@ function DocumentRow({ document, pending, run, download }: { document: InternalD
     <Select ariaLabel={`Sýnileiki fyrir ${document.title}`} value={visibility} onChange={(value) => setVisibility(value as DocumentVisibility)} options={visibilityOptions} size="compact" />
     <Button size="compact" disabled={pending} onClick={() => run(() => updateDocumentVisibilityAction(document.id, visibility))} className="whitespace-nowrap">Vista aðgang</Button>
     <div className="flex justify-end">
-      <Button variant="icon" size="icon" aria-label="Sækja" disabled={pending} onClick={download} className="text-[#5f765a]"><Download size={14} /></Button>
+      <a href={`/api/documents/${document.id}?download=1`} className={buttonClassName("icon", "text-[#5f765a]", "icon")} aria-label={`Sækja ${document.title}`} title="Sækja skjal"><Download size={14} /></a>
       <Button variant="danger" size="icon" aria-label="Eyða" disabled={pending} onClick={() => run(() => deleteDocumentAction(document.id))} className="border-transparent"><Trash2 size={14} /></Button>
     </div>
   </article>;

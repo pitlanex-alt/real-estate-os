@@ -95,8 +95,8 @@ export function parseBuyerOffer(value: unknown): BuyerOfferData | null {
   };
 }
 
-export async function getBuyerOffer(offerId: string) {
-  const supabase = await createClient();
+export async function getBuyerOffer(offerId: string, supabaseClient?: Awaited<ReturnType<typeof createClient>>) {
+  const supabase = supabaseClient ?? await createClient();
   const { data, error } = await supabase.rpc("buyer_offer_status", { p_offer_id: offerId });
   if (error) return { data: null, denied: error.code === "42501" || error.code === "28000", error: error.message };
   return { data: parseBuyerOffer(data), denied: false, error: null };
