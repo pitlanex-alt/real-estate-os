@@ -1,6 +1,5 @@
-import { AppShell } from "@/app/components/AppShell";
-import { InternalLoadingState } from "@/app/components/InternalLoadingState";
+import { InternalRouteLoading } from "@/app/components/InternalRouteLoading";
 
 export default function ContactDetailLoading() {
-  return <AppShell activeItem="Viðskiptavinir"><InternalLoadingState rows={4} /></AppShell>;
+  return <InternalRouteLoading activeItem="Viðskiptavinir" rows={4} />;
 }
