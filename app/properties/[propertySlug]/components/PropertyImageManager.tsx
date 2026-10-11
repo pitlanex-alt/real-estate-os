@@ -7,12 +7,12 @@ import { Button } from "@/app/components/ui/Button";
 import { Checkbox } from "@/app/components/ui/Checkbox";
 import { FileUpload } from "@/app/components/ui/FileUpload";
 import type { PropertyImage } from "@/lib/property-images/server";
+import { propertyImageUrl } from "@/lib/property-images/urls";
 import { createClient } from "@/lib/supabase/client";
 
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
 const maximumImageBytes = 15 * 1024 * 1024;
 const imageExtensions: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/avif": "avif" };
-const thumbnailTransform = { width: 560, height: 420, resize: "cover" as const, quality: 76 };
 
 function validateImage(file: File) {
   if (!allowedImageTypes.has(file.type)) return `${file.name}: aðeins JPG, PNG, WebP og AVIF eru leyfð.`;
@@ -44,12 +44,16 @@ function sameImage(left: PropertyImage, right: PropertyImage) {
     && left.thumbnailUrl === right.thumbnailUrl;
 }
 
-const PropertyThumbnail = memo(function PropertyThumbnail({ image }: { image: PropertyImage }) {
-  const preferredSource = image.thumbnailUrl ?? image.url;
+const PropertyThumbnail = memo(function PropertyThumbnail({ fileName, thumbnailUrl, fallbackUrl, eager }: {
+  fileName: string;
+  thumbnailUrl: string | null;
+  fallbackUrl: string | null;
+  eager: boolean;
+}) {
+  const preferredSource = thumbnailUrl ?? fallbackUrl;
   const [source, setSource] = useState(preferredSource);
   return <div className="relative aspect-[4/3] bg-[var(--surface-soft)]">
-    {source ? <Image unoptimized fill sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 220px" src={source} alt={image.fileName} loading={image.isCover ? "eager" : "lazy"} decoding="async" onError={() => { if (source !== image.url) setSource(image.url); }} className="object-cover" /> : null}
-    {image.isCover && <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[9px] font-medium text-[#3f594c] shadow-sm">Forsíða</span>}
+    {source ? <Image unoptimized fill sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 220px" src={source} alt={fileName} loading={eager ? "eager" : "lazy"} fetchPriority={eager ? "high" : "low"} decoding="async" onError={() => { if (source !== fallbackUrl) setSource(fallbackUrl); }} className="object-cover" /> : null}
   </div>;
 });
 
@@ -64,8 +68,9 @@ const PropertyImageCard = memo(function PropertyImageCard({ image, index, total,
   onCover: (imageId: string) => void;
   onDelete: (imageId: string) => void;
 }) {
-  return <article className="overflow-hidden rounded-[14px] border border-black/[0.07] bg-white shadow-[0_4px_16px_rgba(25,34,24,0.04)]" style={{ contentVisibility: "auto", containIntrinsicSize: "260px" }}>
-    <PropertyThumbnail key={image.thumbnailUrl ?? image.url ?? image.id} image={image} />
+  return <article className="relative overflow-hidden rounded-[14px] border border-black/[0.07] bg-white shadow-[0_4px_16px_rgba(25,34,24,0.04)]" style={{ contentVisibility: "auto", containIntrinsicSize: "260px" }}>
+    <PropertyThumbnail fileName={image.fileName} thumbnailUrl={image.thumbnailUrl} fallbackUrl={image.url} eager={image.isCover} />
+    {image.isCover && <span className="pointer-events-none absolute left-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[9px] font-medium text-[#3f594c] shadow-sm">Forsíða</span>}
     {canEdit && <div className="flex items-center justify-between p-1.5">
       <Button variant="icon" size="icon" title="Færa til vinstri" aria-label="Færa til vinstri" disabled={disabled || pending || index === 0} onClick={() => onMove(image.id, -1)}><ArrowLeft size={14} /></Button>
       <Button variant="icon" size="icon" title="Velja sem forsíðu" aria-label="Velja sem forsíðu" disabled={disabled || pending || image.isCover} onClick={() => onCover(image.id)}><Star size={14} /></Button>
@@ -133,19 +138,16 @@ export function PropertyImageManager({ organizationId, propertyId, images, canEd
       uploaded = false;
 
       const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown>;
-      const [original, thumbnail] = await Promise.all([
-        supabase.storage.from("property-images").createSignedUrl(storagePath, 3600),
-        supabase.storage.from("property-images").createSignedUrl(storagePath, 3600, { transform: thumbnailTransform }),
-      ]);
+      const imageId = String(row.id);
       return { image: {
-        id: String(row.id),
+        id: imageId,
         propertyId: String(row.property_id),
         storagePath,
         fileName: file.name,
         sortOrder: Number(row.sort_order),
         isCover: Boolean(row.is_cover),
-        url: original.data?.signedUrl ?? null,
-        thumbnailUrl: thumbnail.data?.signedUrl ?? original.data?.signedUrl ?? null,
+        url: propertyImageUrl(imageId, "hero"),
+        thumbnailUrl: propertyImageUrl(imageId, "manager"),
       }, error: null };
     } catch {
       const cleanupFailed = uploaded

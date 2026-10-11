@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { propertyImageUrl } from "@/lib/property-images/urls";
 
 type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -151,11 +152,10 @@ export async function getCustomerCoverImage(transactionId: string, supabaseClien
   const supabase = supabaseClient ?? await createClient();
   const { data, error } = await supabase.rpc("customer_property_images", { p_transaction_id: transactionId });
   if (error || !Array.isArray(data)) return null;
-  const images = data.flatMap((value) => { const row = record(value); return row ? [{ path: String(row.storage_path), isCover: Boolean(row.is_cover), sortOrder: Number(row.sort_order) }] : []; });
+  const images = data.flatMap((value) => { const row = record(value); return row ? [{ id: String(row.id), isCover: Boolean(row.is_cover), sortOrder: Number(row.sort_order) }] : []; });
   const cover = images.find((image) => image.isCover) ?? images.sort((a, b) => a.sortOrder - b.sortOrder)[0];
   if (!cover) return null;
-  const signed = await supabase.storage.from("property-images").createSignedUrl(cover.path, 3600);
-  return signed.data?.signedUrl ?? null;
+  return propertyImageUrl(cover.id, "hero");
 }
 
 function parseSellerListingReview(value: unknown): Omit<SellerListingReview, "images"> | null {
@@ -224,16 +224,11 @@ export async function getSellerListingReview(
     const row = record(value);
     return row ? [{
       id: String(row.id),
-      path: String(row.storage_path),
       fileName: String(row.file_name),
       isCover: Boolean(row.is_cover),
       sortOrder: Number(row.sort_order),
     }] : [];
   });
-  const signed = imageRows.length
-    ? await supabase.storage.from("property-images").createSignedUrls(imageRows.map((image) => image.path), 3600)
-    : { data: [], error: null };
-  const urls = new Map((signed.data ?? []).map((item) => [item.path, item.signedUrl]));
   return {
     data: {
       ...parsed,
@@ -242,7 +237,7 @@ export async function getSellerListingReview(
         fileName: image.fileName,
         isCover: image.isCover,
         sortOrder: image.sortOrder,
-        url: urls.get(image.path) ?? null,
+        url: propertyImageUrl(image.id, image.isCover ? "hero" : "gallery"),
       })),
     },
     denied: false,

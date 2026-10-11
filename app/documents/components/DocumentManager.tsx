@@ -8,6 +8,7 @@ import { Combobox } from "@/app/components/ui/Combobox";
 import { FileUpload } from "@/app/components/ui/FileUpload";
 import { Input, SearchInput } from "@/app/components/ui/Input";
 import { Select } from "@/app/components/ui/Select";
+import { deriveDocumentTitle, detectDocumentMimeType, documentCategoryLabel, documentCategoryOptions, documentFormatLabel } from "@/lib/documents/presentation";
 import type { DocumentVisibility, InternalDocument, WorkOption } from "@/lib/work-items/model";
 import { deleteDocumentAction, getDocumentDownloadUrl, updateDocumentVisibilityAction, uploadDocumentAction } from "../actions";
 
@@ -25,8 +26,8 @@ export function DocumentManager({ documents, transactions }: { documents: Intern
   const [visibilityFilter, setVisibilityFilter] = useState("all");
   const [visibleCount, setVisibleCount] = useState(pageSize);
   const documentTypeOptions = useMemo(() => [
-    { value: "all", label: "Allar tegundir" },
-    ...Array.from(new Set(documents.map((document) => document.documentType))).sort((left, right) => left.localeCompare(right, "is-IS")).map((type) => ({ value: type, label: type })),
+    { value: "all", label: "Allir flokkar" },
+    ...Array.from(new Set(documents.map((document) => document.documentType))).sort((left, right) => documentCategoryLabel(left).localeCompare(documentCategoryLabel(right), "is-IS")).map((type) => ({ value: type, label: documentCategoryLabel(type) })),
   ], [documents]);
   const filteredDocuments = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("is-IS");
@@ -50,7 +51,7 @@ export function DocumentManager({ documents, transactions }: { documents: Intern
     <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_minmax(180px,.8fr)_170px_150px]">
       <SearchInput controlSize="compact" value={query} onChange={(event) => { setQuery(event.target.value); resetPage(); }} placeholder="Leita að skjali eða eign..." aria-label="Leita að skjali eða eign" />
       <Combobox ariaLabel="Sía skjöl eftir eign" placeholder="Leita að fasteign..." emptyMessage="Engin fasteign fannst." value={propertyFilter} onChange={(value) => { setPropertyFilter(value); resetPage(); }} options={[{ value: "all", label: "Allar eignir" }, ...transactions.map((item) => ({ value: item.id, label: item.label, description: item.description }))]} size="compact" />
-      <Select ariaLabel="Sía skjöl eftir tegund" value={typeFilter} onChange={(value) => { setTypeFilter(value); resetPage(); }} options={documentTypeOptions} size="compact" />
+      <Select ariaLabel="Sía skjöl eftir flokki" value={typeFilter} onChange={(value) => { setTypeFilter(value); resetPage(); }} options={documentTypeOptions} size="compact" />
       <Select ariaLabel="Sía skjöl eftir sýnileika" value={visibilityFilter} onChange={(value) => { setVisibilityFilter(value); resetPage(); }} options={[{ value: "all", label: "Allur sýnileiki" }, ...visibilityOptions]} size="compact" />
     </div>
     <div className="kelvo-card mt-3 overflow-hidden px-3 sm:px-4">
@@ -64,31 +65,47 @@ export function DocumentManager({ documents, transactions }: { documents: Intern
 function UploadDocumentForm({ transactions, pending, run }: { transactions: WorkOption[]; pending: boolean; run: (data: FormData) => void }) {
   const [transactionId, setTransactionId] = useState(transactions[0]?.id ?? "");
   const [visibility, setVisibility] = useState("internal");
-  return <form action={run} className="kelvo-card mt-5 grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-[1fr_.8fr_1fr_.8fr_1.3fr_auto]">
-    <Input name="title" required placeholder="Heiti skjals" controlSize="compact" />
-    <Input name="documentType" required placeholder="Tegund" controlSize="compact" />
-    <Combobox
-      name="transactionId"
-      ariaLabel="Eign"
-      placeholder="Leita að fasteign..."
-      emptyMessage="Engin fasteign fannst."
-      value={transactionId}
-      onChange={setTransactionId}
-      options={transactions.map((item) => ({ value: item.id, label: item.label, description: item.description }))}
-      disabled={!transactions.length}
-      required
-      size="compact"
-    />
-    <Select name="visibility" ariaLabel="Sýnileiki" value={visibility} onChange={setVisibility} options={visibilityOptions} size="compact" />
-    <FileUpload name="file" required presentation="action" chooseLabel="Velja skrá" />
-    <Button type="submit" variant="primary" size="compact" disabled={pending || !transactions.length} className="font-semibold">Vista</Button>
+  const [category, setCategory] = useState("Annað");
+  const [title, setTitle] = useState("");
+  const [titleEdited, setTitleEdited] = useState(false);
+  const [format, setFormat] = useState<string | null>(null);
+  function filesChanged(files: File[]) {
+    const file = files[0];
+    if (!file) { setFormat(null); return; }
+    setFormat(documentFormatLabel(detectDocumentMimeType(file.name, file.type), file.name));
+    if (!titleEdited) setTitle(deriveDocumentTitle(file.name));
+  }
+  return <form action={run} className="kelvo-card mt-5 p-5 sm:p-6">
+    <div><p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#667d5d]">Nýtt skjal</p><h2 className="mt-2 text-[17px] font-semibold text-[var(--text-primary)]">Hlaða upp skjali</h2></div>
+    <div className="mt-5">
+      <FileUpload name="file" required presentation="dropzone" chooseLabel="Velja skrá" dropLabel="Dragðu skjal hingað eða veldu skrá" onFilesChange={filesChanged} />
+      {format && <p className="mt-2 text-[11px] text-[var(--text-secondary)]">Skráarsnið: <span className="font-semibold text-[var(--text-primary)]">{format}</span></p>}
+    </div>
+    <div className="mt-5 grid gap-4 md:grid-cols-2">
+      <label className="block text-[11px] font-medium text-[var(--text-secondary)]">Heiti skjals<Input name="title" required value={title} onChange={(event) => { setTitle(event.target.value); setTitleEdited(true); }} placeholder="Heiti skjals" className="mt-2" /></label>
+      <label className="block text-[11px] font-medium text-[var(--text-secondary)]">Flokkur<Select name="documentType" ariaLabel="Flokkur skjals" value={category} onChange={setCategory} options={[...documentCategoryOptions]} className="mt-2" /></label>
+      <label className="block text-[11px] font-medium text-[var(--text-secondary)]">Eign<Combobox
+        name="transactionId"
+        ariaLabel="Eign"
+        placeholder="Leita að fasteign..."
+        emptyMessage="Engin fasteign fannst."
+        value={transactionId}
+        onChange={setTransactionId}
+        options={transactions.map((item) => ({ value: item.id, label: item.label, description: item.description }))}
+        disabled={!transactions.length}
+        required
+        className="mt-2"
+      /></label>
+      <label className="block text-[11px] font-medium text-[var(--text-secondary)]">Sýnileiki<Select name="visibility" ariaLabel="Sýnileiki" value={visibility} onChange={setVisibility} options={visibilityOptions} className="mt-2" /></label>
+    </div>
+    <div className="mt-6 flex justify-end"><Button type="submit" variant="primary" disabled={pending || !transactions.length} className="font-semibold">{pending ? "Vista…" : "Vista skjal"}</Button></div>
   </form>;
 }
 
 function DocumentRow({ document, pending, run, download }: { document: InternalDocument; pending: boolean; run: (fn: () => Promise<void>) => void; download: () => void }) {
   const [visibility, setVisibility] = useState<DocumentVisibility>(document.visibility);
   return <article className="mo-hover-row grid gap-3 border-b border-black/[0.06] px-2 py-3 last:border-b-0 min-[1180px]:grid-cols-[minmax(190px,1.5fr)_minmax(110px,.7fr)_minmax(150px,170px)_124px_82px] min-[1180px]:items-center">
-    <div><h2 className="text-[12px] font-semibold text-[var(--text-primary)]">{document.title}</h2><p className="mt-1 text-[10px] text-[var(--text-secondary)]"><Link href={`/properties/${document.propertySlug}`} className="mo-button-text">{document.property}</Link> · {document.documentType}</p></div>
+    <div><h2 className="text-[12px] font-semibold text-[var(--text-primary)]">{document.title}</h2><p className="mt-1 text-[10px] text-[var(--text-secondary)]"><Link href={`/properties/${document.propertySlug}`} className="mo-button-text">{document.property}</Link> · {documentCategoryLabel(document.documentType)} · {documentFormatLabel(document.mimeType, document.fileName)}</p></div>
     <p className="text-[10px] text-[var(--text-secondary)]">{document.uploadedBy}</p>
     <Select ariaLabel={`Sýnileiki fyrir ${document.title}`} value={visibility} onChange={(value) => setVisibility(value as DocumentVisibility)} options={visibilityOptions} size="compact" />
     <Button size="compact" disabled={pending} onClick={() => run(() => updateDocumentVisibilityAction(document.id, visibility))} className="whitespace-nowrap">Vista aðgang</Button>

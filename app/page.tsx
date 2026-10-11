@@ -1,4 +1,5 @@
 import { ArrowRight } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { AttentionList } from "@/app/components/AttentionList";
 import { MetricItem } from "@/app/components/MetricItem";
@@ -97,7 +98,7 @@ export default async function Home() {
                       aria-label={`Mynd af ${property.address}`}
                       className={`property-image property-image-${property.imageVariant} h-16 w-[76px] rounded-[12px] border border-black/[0.07]`}
                     >
-                      <span className="property-building" />
+                      {property.imageUrl ? <Image unoptimized src={property.imageUrl} alt="" width={152} height={128} loading="lazy" decoding="async" className="size-full object-cover" /> : <span className="property-building" />}
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">

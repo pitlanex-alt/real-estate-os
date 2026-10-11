@@ -31,4 +31,5 @@ export type Property = {
     initials: string;
   };
   imageVariant: "coast" | "city" | "stone";
+  imageUrl?: string | null;
 };

@@ -58,11 +58,11 @@ export function SellerListingReview({ propertySlug, listing }: { propertySlug: s
     </div>
 
     {cover?.url && <div className="relative mt-8 aspect-[16/7] min-h-[220px] overflow-hidden rounded-[18px] border border-black/[0.07]">
-      <Image unoptimized fill sizes="(max-width: 1180px) 100vw, 1120px" src={cover.url} alt={listing.title ?? listing.property.address} className="object-cover" />
+      <Image unoptimized fill sizes="(max-width: 1180px) 100vw, 1120px" src={cover.url} alt={listing.title ?? listing.property.address} loading="lazy" decoding="async" className="object-cover" />
     </div>}
     {images.length > 1 && <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
       {images.slice(1, 5).map((image) => <div key={image.id} className="relative aspect-[4/3] overflow-hidden rounded-[12px] border border-black/[0.07] bg-[var(--surface-soft)]">
-        {image.url ? <Image unoptimized fill sizes="240px" src={image.url} alt={image.fileName} className="object-cover" /> : <span className="flex h-full items-center justify-center text-[11px] text-[var(--text-secondary)]">Mynd ekki tiltæk</span>}
+        {image.url ? <Image unoptimized fill sizes="240px" src={image.url} alt={image.fileName} loading="lazy" decoding="async" className="object-cover" /> : <span className="flex h-full items-center justify-center text-[11px] text-[var(--text-secondary)]">Mynd ekki tiltæk</span>}
       </div>)}
     </div>}
 

@@ -1,4 +1,5 @@
 import { ChevronRight, FileWarning } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import type { Property } from "@/app/data/dashboard";
 
@@ -29,7 +30,7 @@ export function PropertyRow({ property }: { property: Property }) {
           aria-label={`Mynd af ${property.address}`}
           className={`property-image h-16 w-20 overflow-hidden rounded-[13px] border border-black/[0.07] xl:h-[72px] xl:w-[84px] ${imageStyles[property.imageVariant]}`}
         >
-          <span className="property-building" />
+          {property.imageUrl ? <Image unoptimized src={property.imageUrl} alt="" width={168} height={144} loading="lazy" decoding="async" className="size-full object-cover" /> : <span className="property-building" />}
         </div>
 
         <div className="min-w-0">

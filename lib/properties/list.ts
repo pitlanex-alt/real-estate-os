@@ -93,7 +93,7 @@ export async function getIndexedProperties(organizationId: string): Promise<{
   const imageMap = await getPropertyImages(
     supabase,
     rows.flatMap((transaction) => { const property = one(transaction.property); return property ? [property.id] : []; }),
-    { coverOnly: true, thumbnailWidth: 320, thumbnailHeight: 240 },
+    { coverOnly: true, rendition: "card" },
   );
   const properties = rows.flatMap((transaction, index) => {
     const property = one(transaction.property);
