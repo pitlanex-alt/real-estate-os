@@ -28,8 +28,8 @@ const mainNavigation: NavItem[] = [
   { label: "Yfirlit", icon: LayoutDashboard, href: "/" },
   { label: "Fasteignir", icon: Building2, href: "/properties" },
   { label: "Viðskiptavinir", icon: UserRound, href: "/contacts" },
-  { label: "Skoðanir", icon: CalendarDays, href: "#" },
-  { label: "Tilboð", icon: Handshake, href: "#" },
+  { label: "Skoðanir", icon: CalendarDays, href: "/viewings" },
+  { label: "Tilboð", icon: Handshake, href: "/offers" },
   { label: "Verkefni", icon: CheckSquare2, href: "/tasks" },
   { label: "Skjöl", icon: FileText, href: "/documents" },
 ];

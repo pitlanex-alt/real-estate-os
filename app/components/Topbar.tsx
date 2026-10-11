@@ -1,4 +1,4 @@
-import { Bell, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import Image from "next/image";
 import { logoutInternal } from "@/app/login/logout";
 import type { InternalIdentity } from "@/lib/auth/post-auth";
@@ -12,15 +12,6 @@ export function Topbar({ identity, searchOptions }: { identity: InternalIdentity
         <PropertySearch options={searchOptions} />
 
         <div className="flex shrink-0 items-center gap-3 sm:gap-5">
-          <button
-            type="button"
-            aria-label="Tilkynningar"
-            className="mo-button mo-button-icon relative grid size-9 place-items-center"
-          >
-            <Bell size={18} strokeWidth={1.65} />
-            <span className="absolute right-[7px] top-[7px] size-1.5 rounded-full bg-[#b98a3f] ring-2 ring-white" />
-          </button>
-          <div className="h-7 w-px bg-black/[0.07]" />
           <div className="flex items-center gap-3">
             <span className="relative grid size-9 overflow-hidden rounded-full bg-[#cde6da] text-[10px] font-bold tracking-wide text-[#33483d] ring-1 ring-inset ring-black/[0.06]">
               {identity.profilePhotoUrl ? <Image unoptimized fill sizes="32px" src={identity.profilePhotoUrl} alt="" className="object-cover" /> : <span className="grid size-full place-items-center">{identity.initials}</span>}
