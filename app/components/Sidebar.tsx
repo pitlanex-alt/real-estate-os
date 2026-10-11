@@ -14,7 +14,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { KelvoLogo, KelvoMark } from "@/app/components/KelvoBrand";
@@ -96,13 +96,23 @@ function Navigation({ onNavigate, activeItem }: { onNavigate?: () => void; activ
   );
 }
 
+function ContextualNavigation({ onNavigate, fallbackActiveItem }: { onNavigate?: () => void; fallbackActiveItem: string }) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeItem = resolveActiveItem(pathname, searchParams.get("from"), fallbackActiveItem);
+
+  return <Navigation onNavigate={onNavigate} activeItem={activeItem} />;
+}
+
 function SidebarContent({ onNavigate, activeItem, compactBrand = false }: { onNavigate?: () => void; activeItem: string; compactBrand?: boolean }) {
   return (
     <div className="flex h-full flex-col px-4 pb-5 pt-6">
       <div className="px-2">
         <Brand compact={compactBrand} />
       </div>
-      <Navigation onNavigate={onNavigate} activeItem={activeItem} />
+      <Suspense fallback={<Navigation onNavigate={onNavigate} activeItem={activeItem} />}>
+        <ContextualNavigation onNavigate={onNavigate} fallbackActiveItem={activeItem} />
+      </Suspense>
       <div className="mx-2 mt-5 flex items-center gap-2.5 text-[11px] text-[#8a9189]">
         <span className="size-1.5 rounded-full bg-[#9eb33f]" />
         Kerfi virkt
@@ -113,14 +123,11 @@ function SidebarContent({ onNavigate, activeItem, compactBrand = false }: { onNa
 
 export function Sidebar({ activeItem = "Yfirlit" }: { activeItem?: string }) {
   const [isOpen, setIsOpen] = useState(false);
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const resolvedActiveItem = resolveActiveItem(pathname, searchParams.get("from"), activeItem);
 
   return (
     <>
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[248px] border-r border-black/[0.06] bg-[#fafbf8] md:block">
-        <SidebarContent activeItem={resolvedActiveItem} />
+        <SidebarContent activeItem={activeItem} />
       </aside>
 
       <div className="fixed left-4 top-[17px] z-30 md:hidden">
@@ -152,7 +159,7 @@ export function Sidebar({ activeItem = "Yfirlit" }: { activeItem?: string }) {
             >
               <X size={19} />
             </button>
-            <SidebarContent activeItem={resolvedActiveItem} compactBrand onNavigate={() => setIsOpen(false)} />
+            <SidebarContent activeItem={activeItem} compactBrand onNavigate={() => setIsOpen(false)} />
           </aside>
         </div>
       )}
