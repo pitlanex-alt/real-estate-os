@@ -16,21 +16,21 @@ export async function requestOfferChange(offerId: string, propertySlug: string, 
   if (!reason.trim()) throw new Error("Ástæða er nauðsynleg.");
   const supabase = await createClient();
   const { error } = await supabase.rpc("request_offer_change", { p_offer_id: offerId, p_reason: reason.trim() });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error("Ekki tókst að senda breytingabeiðnina.");
   refreshOfferViews(propertySlug, offerId);
 }
 
 export async function approveOfferForSeller(offerId: string, propertySlug: string) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("approve_offer_for_seller", { p_offer_id: offerId });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error("Ekki tókst að samþykkja tilboðið til yfirferðar.");
   refreshOfferViews(propertySlug, offerId);
 }
 
 export async function sendOfferToSeller(offerId: string, propertySlug: string) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("send_offer_to_seller", { p_offer_id: offerId });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error("Ekki tókst að senda tilboðið til seljanda.");
   refreshOfferViews(propertySlug, offerId);
 }
 

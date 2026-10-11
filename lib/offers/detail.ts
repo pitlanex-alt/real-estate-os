@@ -120,7 +120,10 @@ export async function getSellerOffer(offerId: string): Promise<{ data: SellerOff
 export async function getAgentOffer(offerId: string): Promise<AgentOfferData | null> {
   const supabase = await createClient();
   const { data: offer, error } = await supabase.from("offers").select("*").eq("id", offerId).maybeSingle();
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("Unable to load agent offer", error);
+    throw new Error("Ekki tókst að sækja tilboðið.");
+  }
   if (!offer) return null;
   const [buyerResult, transactionResult, conditionsResult, reviewResult, historyResult, sellerIntentResult] = await Promise.all([
     supabase.from("contacts").select("full_name,phone,email").eq("id", offer.buyer_contact_id).single(),
@@ -131,10 +134,16 @@ export async function getAgentOffer(offerId: string): Promise<AgentOfferData | n
     supabase.from("seller_offer_responses").select("intent").eq("offer_id", offer.id).order("submitted_at", { ascending: false }).order("id", { ascending: false }).limit(1).maybeSingle(),
   ]);
   const firstError = [buyerResult.error, transactionResult.error, conditionsResult.error, reviewResult.error, historyResult.error, sellerIntentResult.error].find(Boolean);
-  if (firstError) throw new Error(firstError.message);
+  if (firstError) {
+    console.error("Unable to load agent offer relations", firstError);
+    throw new Error("Ekki tókst að sækja upplýsingar um tilboðið.");
+  }
   if (!buyerResult.data || !transactionResult.data) throw new Error("Tilboðsgögn eru ófullnægjandi.");
   const { data: property, error: propertyError } = await supabase.from("properties").select("address_line,postal_code,municipality").eq("id", transactionResult.data.property_id).single();
-  if (propertyError) throw new Error(propertyError.message);
+  if (propertyError) {
+    console.error("Unable to load property for agent offer", propertyError);
+    throw new Error("Ekki tókst að sækja eign tilboðsins.");
+  }
   const review = reviewResult.data;
   return {
     id: offer.id, status: offer.status as OfferStatus, amountIsk: Number(offer.amount_isk), validUntil: offer.valid_until,

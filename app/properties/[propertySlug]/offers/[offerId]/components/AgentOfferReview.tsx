@@ -4,6 +4,7 @@ import { Check, ChevronLeft, Circle, Clock3 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/app/components/ui/Button";
+import { ConfirmDialog } from "@/app/components/ui/ConfirmDialog";
 import { formatIcelandicDate, formatIcelandicTime } from "@/lib/datetime/iceland";
 import { financingStatusLabel, formatIsk, offerConditionLabel, type AgentOfferData, type OfferStatus } from "@/lib/offers/model";
 import { approveOfferForSeller, confirmOfferAccepted, rejectOffer, requestOfferChange, sendOfferToSeller } from "../actions";
@@ -17,11 +18,12 @@ function statusStyle(status: OfferStatus) {
   return "kelvo-status-progress";
 }
 
-export function AgentOfferReview({ offer, propertySlug }: { offer: AgentOfferData; propertySlug: string }) {
+export function AgentOfferReview({ offer, propertySlug, backHref = `/properties/${propertySlug}`, backLabel = offer.property }: { offer: AgentOfferData; propertySlug: string; backHref?: string; backLabel?: string }) {
   const [status, setStatus] = useState(offer.status);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [confirmRejection, setConfirmRejection] = useState(false);
   const financing = offer.conditions.find((condition) => condition.type === "financing");
   const difference = offer.amountIsk - offer.askingPriceIsk;
   const checklist = [["Kaupandi auðkenndur", offer.review?.buyerIdentified], ["Tengiliðaupplýsingar staðfestar", offer.review?.contactConfirmed], ["Gildistími skráður", offer.review?.validityRecorded], ["Afhendingardagur skráður", offer.review?.handoverRecorded]] as const;
@@ -30,7 +32,7 @@ export function AgentOfferReview({ offer, propertySlug }: { offer: AgentOfferDat
 
   return <>
     <header>
-      <Link href={`/properties/${propertySlug}`} className="mo-button mo-button-text inline-flex min-h-11 items-center gap-1.5 text-[11px] font-medium"><ChevronLeft size={14} />{offer.property}</Link>
+      <Link href={backHref} className="mo-button mo-button-text inline-flex min-h-11 items-center gap-1.5 text-[11px] font-medium"><ChevronLeft size={14} />{backLabel}</Link>
       <div className="kelvo-card mt-3 p-6 sm:p-7"><p className="text-[9.5px] font-semibold uppercase tracking-[0.14em] text-[#667d5d]">Tilboð {offer.id.slice(0, 8)}</p><div className="mt-3 flex flex-wrap items-center gap-3"><h1 className="text-[34px] font-bold tracking-[-0.045em] text-[var(--text-primary)] sm:text-[40px]">{formatIsk(offer.amountIsk)}</h1><span className={`${statusStyle(status)} rounded-full px-3 py-1.5 text-[10px] font-semibold`}>{statusLabels[status]}</span></div><div className="mt-5 flex flex-wrap gap-5 text-[10.5px] text-[var(--text-secondary)] sm:gap-8"><span>{offer.buyerName}</span><span>{offer.property}</span>{status === "accepted" ? <span className="rounded-full bg-[var(--surface-accent)] px-2.5 py-1 text-[#58704f]">Samningsundirbúningur hafinn</span> : <span className="rounded-full bg-[#f6eddc] px-2.5 py-1 text-[#7b5b29]"><Clock3 size={11} className="mr-1 inline" />{formatIcelandicDate(offer.validUntil)} · {formatIcelandicTime(offer.validUntil)}</span>}</div></div>
     </header>
 
@@ -45,10 +47,11 @@ export function AgentOfferReview({ offer, propertySlug }: { offer: AgentOfferDat
 
       {status === "seller_intent_recorded" && offer.latestSellerIntent === "accept" && <div className="mt-6 max-w-2xl rounded-[14px] bg-[var(--surface-accent)] p-5"><p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#667d5d]">Seljandi vill samþykkja</p><h3 className="mt-2 text-[16px] font-semibold text-[var(--text-primary)]">Staðfesta samþykkt tilboðs</h3><p className="mt-3 text-[11px] leading-5 text-[var(--text-secondary)]">Þetta skráir samþykkt tilboð í Kelvo og færir innra vinnuflæði í samningsundirbúning. Aðgerðin stofnar ekki og undirritar ekki löglegan kaupsamning.</p><Button variant="primary" disabled={pending} onClick={() => void run(() => confirmOfferAccepted(offer.id, propertySlug), "accepted")} className="mt-5 min-h-11 px-5 text-[12px] font-semibold">Staðfesta samþykkt tilboðs</Button></div>}
       {status === "seller_intent_recorded" && offer.latestSellerIntent !== "accept" && <p className="kelvo-status-warning mt-5 rounded-[12px] px-3 py-2.5 text-[12px]">Nýjasta viljayfirlýsing seljanda: {offer.latestSellerIntent === "reject" ? "hafna" : offer.latestSellerIntent === "counter_offer" ? "ræða móttilboð" : "ekkert svar"}.</p>}
-      {!['accepted', 'rejected', 'withdrawn', 'expired', 'superseded', 'draft'].includes(status) && <div className="mt-7 max-w-2xl border-t border-black/[0.06] pt-6"><label className="block text-[11px] text-[var(--text-secondary)]">Ástæða höfnunar <span className="text-[var(--text-muted)]">(valfrjálst)</span><textarea value={rejectionReason} onChange={(event) => setRejectionReason(event.target.value)} rows={3} maxLength={1000} className="mo-control mt-2 w-full resize-y px-3 py-3 text-base leading-6 outline-none" /></label><Button variant="danger" disabled={pending} onClick={() => void run(() => rejectOffer(offer.id, propertySlug, rejectionReason), "rejected")} className="mt-4 min-h-11 px-4 text-[12px]">Merkja tilboð hafnað</Button></div>}
+      {!['accepted', 'rejected', 'withdrawn', 'expired', 'superseded', 'draft'].includes(status) && <div className="mt-7 max-w-2xl border-t border-black/[0.06] pt-6"><label className="block text-[11px] text-[var(--text-secondary)]">Ástæða höfnunar <span className="text-[var(--text-muted)]">(valfrjálst)</span><textarea value={rejectionReason} onChange={(event) => setRejectionReason(event.target.value)} rows={3} maxLength={1000} className="mo-control mt-2 w-full resize-y px-3 py-3 text-base leading-6 outline-none" /></label><Button variant="danger" disabled={pending} onClick={() => setConfirmRejection(true)} className="mt-4 min-h-11 px-4 text-[12px]">Merkja tilboð hafnað</Button></div>}
       {status === "accepted" && <p className="kelvo-status-success mt-6 rounded-[12px] px-4 py-4 text-[12px]">Tilboðið hefur verið staðfest samþykkt og viðskiptin eru komin í samningsundirbúning.</p>}
       {status === "rejected" && <p className="kelvo-status-danger mt-6 rounded-[12px] px-4 py-4 text-[12px]">Tilboðið hefur verið skráð hafnað.</p>}
       {error && <p role="alert" className="mt-3 text-[11px] text-[#a24f48]">{error}</p>}
     </section>
+    <ConfirmDialog open={confirmRejection} title="Hafna tilboði?" description="Tilboðið verður skráð hafnað í innra vinnuferli Kelvo. Aðgerðin varðveitir stöðuferil og virkni tilboðsins." confirmLabel="Staðfesta höfnun" pending={pending} onClose={() => setConfirmRejection(false)} onConfirm={() => { setConfirmRejection(false); void run(() => rejectOffer(offer.id, propertySlug, rejectionReason), "rejected"); }} />
   </>;
 }

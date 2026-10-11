@@ -98,7 +98,7 @@ export default async function OffersPage() {
               return (
                 <Link
                   key={offer.id}
-                  href={`/properties/${property.slug}/offers/${offer.id}`}
+                  href={`/properties/${property.slug}/offers/${offer.id}?from=offers`}
                   className="group grid min-h-[84px] items-center gap-3 border-b border-black/[0.06] px-2 py-4 last:border-b-0 sm:grid-cols-[minmax(190px,1.35fr)_minmax(150px,.8fr)_minmax(160px,1fr)_auto] sm:gap-6"
                 >
                   <div className="min-w-0">
