@@ -24,6 +24,7 @@ export function DocumentManager({ documents, transactions }: { documents: Intern
   const [propertyFilter, setPropertyFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [visibilityFilter, setVisibilityFilter] = useState("all");
+  const [transactionStatusFilter, setTransactionStatusFilter] = useState("active");
   const [visibleCount, setVisibleCount] = useState(pageSize);
   const documentTypeOptions = useMemo(() => [
     { value: "all", label: "Allir flokkar" },
@@ -37,9 +38,12 @@ export function DocumentManager({ documents, transactions }: { documents: Intern
         && (propertyFilter === "all" || document.transactionId === propertyFilter)
         && (typeFilter === "all" || document.documentType === typeFilter)
         && (visibilityFilter === "all" || document.visibility === visibilityFilter)
+        && (transactionStatusFilter === "all"
+          || (transactionStatusFilter === "completed" && ["completed", "cancelled"].includes(document.transactionStage))
+          || (transactionStatusFilter === "active" && !["completed", "cancelled"].includes(document.transactionStage)))
       ))
       .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
-  }, [documents, propertyFilter, query, typeFilter, visibilityFilter]);
+  }, [documents, propertyFilter, query, transactionStatusFilter, typeFilter, visibilityFilter]);
   const visibleDocuments = filteredDocuments.slice(0, visibleCount);
   function resetPage() { setVisibleCount(pageSize); }
   async function run(key: string, fn: () => Promise<void>) { setPending(key); setError(null); try { await fn(); } catch (caught) { setError(caught instanceof Error ? caught.message : "Aðgerð mistókst."); } finally { setPending(null); } }
@@ -47,11 +51,12 @@ export function DocumentManager({ documents, transactions }: { documents: Intern
     <div className="flex justify-end"><Button variant="primary" onClick={() => setShow(!show)} className="min-h-11 px-4 text-[12px] font-semibold"><Plus size={14} />Hlaða upp skjali</Button></div>
     {show && <UploadDocumentForm transactions={transactions} pending={pending === "upload"} run={(data) => run("upload", () => uploadDocumentAction(data))} />}
     {error && <p role="alert" className="mt-3 text-[12px] text-[#a24f48]">{error}</p>}
-    <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_minmax(180px,.8fr)_170px_150px]">
+    <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_minmax(170px,.8fr)_150px_150px_150px]">
       <SearchInput controlSize="compact" value={query} onChange={(event) => { setQuery(event.target.value); resetPage(); }} placeholder="Leita að skjali eða eign..." aria-label="Leita að skjali eða eign" />
       <Combobox ariaLabel="Sía skjöl eftir eign" placeholder="Leita að fasteign..." emptyMessage="Engin fasteign fannst." value={propertyFilter} onChange={(value) => { setPropertyFilter(value); resetPage(); }} options={[{ value: "all", label: "Allar eignir" }, ...transactions.map((item) => ({ value: item.id, label: item.label, description: item.description }))]} size="compact" />
       <Select ariaLabel="Sía skjöl eftir flokki" value={typeFilter} onChange={(value) => { setTypeFilter(value); resetPage(); }} options={documentTypeOptions} size="compact" />
       <Select ariaLabel="Sía skjöl eftir sýnileika" value={visibilityFilter} onChange={(value) => { setVisibilityFilter(value); resetPage(); }} options={[{ value: "all", label: "Allur sýnileiki" }, ...visibilityOptions]} size="compact" />
+      <Select ariaLabel="Sía skjöl eftir stöðu viðskipta" value={transactionStatusFilter} onChange={(value) => { setTransactionStatusFilter(value); resetPage(); }} options={[{ value: "active", label: "Virkar eignir" }, { value: "completed", label: "Lokið" }, { value: "all", label: "Allar" }]} size="compact" />
     </div>
     <div className="kelvo-card mt-3 overflow-hidden px-3 sm:px-4">
       {visibleDocuments.map((document) => <DocumentRow key={document.id} document={document} pending={pending === document.id} run={(fn) => run(document.id, fn)} />)}

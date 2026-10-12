@@ -1,15 +1,7 @@
-import { ChevronRight } from "lucide-react";
-import Link from "next/link";
 import { requireInternalIdentity } from "@/lib/auth/post-auth";
-import {
-  formatOfferValidity,
-} from "@/lib/datetime/iceland";
-import {
-  customerOfferStatusLabel,
-  formatIsk,
-  type OfferStatus,
-} from "@/lib/offers/model";
+import type { OfferStatus } from "@/lib/offers/model";
 import { createClient } from "@/lib/supabase/server";
+import { OffersList, type OfferListItem } from "./OffersList";
 
 type Relation<T> = T | T[] | null;
 
@@ -21,6 +13,7 @@ type OfferRow = {
   created_at: string;
   buyer: Relation<{ full_name: string }>;
   transaction: Relation<{
+    stage: string;
     property: Relation<{
       slug: string;
       address_line: string;
@@ -32,19 +25,6 @@ type OfferRow = {
 
 function one<T>(value: Relation<T>) {
   return Array.isArray(value) ? value[0] ?? null : value;
-}
-
-function statusClass(status: OfferStatus) {
-  if (["accepted", "agent_approved", "sent_to_seller"].includes(status)) {
-    return "bg-[#e8f0e3] text-[#526747]";
-  }
-  if (["rejected", "withdrawn", "expired"].includes(status)) {
-    return "bg-[#f7e7e5] text-[#914b45]";
-  }
-  if (["submitted", "change_requested", "seller_intent_recorded"].includes(status)) {
-    return "bg-[#f6eddc] text-[#7b5b29]";
-  }
-  return "bg-[#f0f2ef] text-[#747b73]";
 }
 
 export default async function OffersPage() {
@@ -60,6 +40,7 @@ export default async function OffersPage() {
       created_at,
       buyer:contacts!offers_buyer_contact_id_fkey(full_name),
       transaction:transactions!offers_transaction_id_fkey(
+        stage,
         property:properties!transactions_property_id_fkey(slug, address_line, postal_code, municipality)
       )
     `)
@@ -68,7 +49,12 @@ export default async function OffersPage() {
 
   if (error) console.error("Unable to load offers", error);
   const offers = (data ?? []) as unknown as OfferRow[];
-  const now = new Date();
+  const items = offers.flatMap((offer): OfferListItem[] => {
+    const transaction = one(offer.transaction);
+    const property = one(transaction?.property ?? null);
+    if (!transaction || !property) return [];
+    return [{ id: offer.id, amountIsk: Number(offer.amount_isk), validUntil: offer.valid_until, status: offer.status, buyerName: one(offer.buyer)?.full_name ?? "Kaupandi", transactionStage: transaction.stage, property: { slug: property.slug, address: property.address_line, postalCode: property.postal_code, municipality: property.municipality } }];
+  });
 
   return (
     <>
@@ -86,58 +72,7 @@ export default async function OffersPage() {
           <p className="mt-6 rounded-[14px] border border-[#b75e56]/20 bg-[#f7e7e5] px-4 py-3 text-[#914b45]">
             Ekki tókst að sækja tilboð.
           </p>
-        ) : (
-          <section className="kelvo-card mt-6 overflow-hidden px-3 sm:px-4">
-            {offers.map((offer) => {
-              const transaction = one(offer.transaction);
-              const property = one(transaction?.property ?? null);
-              const buyer = one(offer.buyer);
-              if (!property) return null;
-              const validity = formatOfferValidity(offer.valid_until, now);
-
-              return (
-                <Link
-                  key={offer.id}
-                  href={`/properties/${property.slug}/offers/${offer.id}?from=offers`}
-                  className="group grid min-h-[84px] items-center gap-3 border-b border-black/[0.06] px-2 py-4 last:border-b-0 sm:grid-cols-[minmax(190px,1.35fr)_minmax(150px,.8fr)_minmax(160px,1fr)_auto] sm:gap-6"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-[13px] font-semibold text-[var(--text-primary)]">
-                      {property.address_line}
-                    </p>
-                    <p className="mt-1 text-[10.5px] text-[var(--text-secondary)]">
-                      {property.postal_code} {property.municipality}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[14px] font-semibold text-[var(--text-primary)]">
-                      {formatIsk(Number(offer.amount_isk))}
-                    </p>
-                    <p className="mt-1 text-[10.5px] text-[var(--text-secondary)]">
-                      {buyer?.full_name ?? "Kaupandi"}
-                    </p>
-                  </div>
-                  <div>
-                    <span className={`${statusClass(offer.status)} inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold`}>
-                      {customerOfferStatusLabel(offer.status)}
-                    </span>
-                    {!['accepted', 'rejected', 'withdrawn', 'expired', 'superseded'].includes(offer.status) && (
-                      <p className={`mt-1.5 text-[10px] ${validity.expired ? "text-[#914b45]" : "text-[var(--text-secondary)]"}`}>
-                        {validity.label}
-                      </p>
-                    )}
-                  </div>
-                  <ChevronRight size={15} className="justify-self-end text-[var(--text-muted)] transition-colors group-hover:text-[var(--text-primary)]" />
-                </Link>
-              );
-            })}
-            {!offers.length && (
-              <p className="py-12 text-center text-[12px] text-[var(--text-secondary)]">
-                Engin tilboð hafa borist.
-              </p>
-            )}
-          </section>
-        )}
+        ) : <OffersList offers={items} nowIso={new Date().toISOString()} />}
       </div>
     </>
   );

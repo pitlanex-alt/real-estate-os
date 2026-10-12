@@ -152,6 +152,7 @@ export async function getInternalWorkItems(
     (row) => ({
       id: row.id,
       transactionId: row.transaction_id,
+      transactionStage: stageByTransaction.get(row.transaction_id) ?? "",
       title: row.title,
       documentType: row.document_type,
       visibility: row.visibility,

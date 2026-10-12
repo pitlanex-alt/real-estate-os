@@ -62,6 +62,7 @@ export type CustomerPortalDestination = {
   address: string;
   postalCode: string;
   municipality: string;
+  stage: string;
 };
 
 export function customerPortalPath(destination: CustomerPortalDestination) {
@@ -90,6 +91,7 @@ export async function getCustomerPortalDestinations(
       address: String(row.address),
       postalCode: String(row.postal_code),
       municipality: String(row.municipality),
+      stage: String(row.transaction_stage),
     };
   }).filter((value): value is CustomerPortalDestination => value !== null);
   return { data: destinations, denied: false, error: null };
