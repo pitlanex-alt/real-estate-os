@@ -38,7 +38,7 @@ export async function getDashboardData(supabase: Client, organizationId: string,
       .neq("status", "cancelled"),
     supabase
       .from("tasks")
-      .select("id,title,status,due_at,transaction:transactions!tasks_transaction_id_fkey(property:properties!transactions_property_id_fkey(address_line))")
+      .select("id,title,status,due_at,transaction:transactions!tasks_transaction_id_fkey(stage,property:properties!transactions_property_id_fkey(address_line))")
       .eq("organization_id", organizationId)
       .in("status", ["not_started", "in_progress"])
       .order("due_at", { ascending: true, nullsFirst: false }),
@@ -69,7 +69,8 @@ export async function getDashboardData(supabase: Client, organizationId: string,
     counts.set(transactionId, value);
   }
 
-  const dashboardProperties = propertiesResult.properties.slice(0, 3).map((property, index): Property => {
+  const activeProperties = propertiesResult.properties.filter((property) => property.stage !== "Lokið");
+  const dashboardProperties = activeProperties.slice(0, 3).map((property, index): Property => {
     const count = counts.get(property.id);
     return {
       id: property.id,
@@ -102,8 +103,12 @@ export async function getDashboardData(supabase: Client, organizationId: string,
   });
 
   const attention: AttentionItem[] = [];
-  for (const task of (tasks.data ?? []).slice(0, 3)) {
-    const transaction = one(task.transaction as Relation<{ property: Relation<{ address_line: string }> }>);
+  const activeTasks = (tasks.data ?? []).filter((task) => {
+    const transaction = one(task.transaction as Relation<{ stage: string; property: Relation<{ address_line: string }> }>);
+    return transaction && !["completed", "cancelled"].includes(transaction.stage);
+  });
+  for (const task of activeTasks.slice(0, 3)) {
+    const transaction = one(task.transaction as Relation<{ stage: string; property: Relation<{ address_line: string }> }>);
     const property = one(transaction?.property ?? null);
     const overdue = Boolean(task.due_at && isPastInstant(task.due_at, now));
     attention.push({
@@ -124,9 +129,9 @@ export async function getDashboardData(supabase: Client, organizationId: string,
   }
   const metrics: Metric[] = [
     { value: String(todayViewings.count ?? 0), label: "Skoðanir í dag" },
-    { value: String(tasks.data?.length ?? 0), label: "Verkefni í bið" },
+    { value: String(activeTasks.length), label: "Verkefni í bið" },
     { value: String(offers.data?.length ?? 0), label: "Virk tilboð" },
-    { value: String(propertiesResult.properties.filter((property) => property.stage !== "Lokið").length), label: "Virkar fasteignir" },
+    { value: String(activeProperties.length), label: "Virkar fasteignir" },
   ];
   return { metrics, schedule, attention, properties: dashboardProperties, error: null };
 }

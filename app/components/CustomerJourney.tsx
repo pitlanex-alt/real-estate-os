@@ -66,6 +66,7 @@ export function CustomerJourney({ stages, currentStage }: { stages: JourneyStage
         <ol className="sr-only" aria-label="Framvinda ferlis">{stages.map((stage, index) => <li key={stage.value} aria-current={journeyState(index, currentIndex, isCompleted) === "current" ? "step" : undefined}>{stage.label}</li>)}</ol>
         {(previousStage || nextStage) && <div className="mt-3 grid grid-cols-2 gap-4 text-[10px] text-[var(--text-muted)]"><p>{previousStage ? `Fyrri: ${previousStage.label}` : ""}</p><p className="text-right">{nextStage ? `Næst: ${nextStage.label}` : ""}</p></div>}
       </div>
+      {isCompleted && <div className="mt-4 flex items-center justify-center gap-2 rounded-[11px] bg-[var(--surface-accent)] px-3 py-2 text-[12px] font-semibold text-[#47604d]" role="status"><span className="size-2 rounded-full bg-[#829f89]" aria-hidden="true" />Viðskiptum lokið</div>}
     </div>
   );
 }

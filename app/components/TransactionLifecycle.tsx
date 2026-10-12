@@ -89,6 +89,7 @@ export function TransactionLifecycle({ currentStage }: { currentStage: string })
           </div>
         )}
       </div>
+      {isCompleted && <div className="mt-4 flex items-center justify-center gap-2 rounded-[11px] bg-[var(--surface-accent)] px-3 py-2 text-[11px] font-semibold text-[#47604d]" role="status"><span className="size-2 rounded-full bg-[#829f89]" aria-hidden="true" />Viðskiptum lokið</div>}
     </section>
   );
 }

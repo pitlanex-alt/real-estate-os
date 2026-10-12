@@ -27,6 +27,7 @@ export type IndexedProperty = {
 };
 
 export const propertyStatusFilters = [
+  "Virkar",
   "Allar",
   "Verðmat",
   "Undirbúningur",

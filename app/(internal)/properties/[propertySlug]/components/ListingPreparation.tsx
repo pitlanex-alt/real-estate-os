@@ -5,6 +5,7 @@ import { useActionState, useState } from "react";
 import { Button } from "@/app/components/ui/Button";
 import { Checkbox } from "@/app/components/ui/Checkbox";
 import { Select } from "@/app/components/ui/Select";
+import { formatIcelandicDate, formatIcelandicTime } from "@/lib/datetime/iceland";
 import type { PropertyWorkspaceData } from "@/lib/properties/workspace";
 import {
   markListingReadyForPublish,
@@ -114,10 +115,13 @@ export function ListingPreparation({ property, canEdit }: { property: PropertyWo
         <div className="flex items-baseline justify-between gap-4"><h2 className="text-[16px] font-semibold">Tilbúið til skráningar</h2><span className={readiness === "ready" ? "text-[10px] text-[#9caf9a]" : "text-[10px] text-[#bd985f]"}>{readinessLabel}</span></div>
         <div className="mt-5 border-y border-black/[0.06] py-4">
           <p className="text-[10px] uppercase tracking-[0.12em] text-[#687069]">Svar seljanda</p>
-          <p className={listing.sellerResponse?.type === "approved" && listing.sellerResponse.isCurrent ? "mt-2 text-[12px] text-[#9caf9a]" : listing.sellerResponse?.type === "changes_requested" && listing.sellerResponse.isCurrent ? "mt-2 text-[12px] text-[#c99a52]" : "mt-2 text-[12px] text-[#858d87]"}>
-            {!listing.sellerResponse ? "Bíður yfirferðar seljanda" : !listing.sellerResponse.isCurrent ? "Bíður nýrrar yfirferðar seljanda" : listing.sellerResponse.type === "approved" ? "Samþykkt" : "Óskað eftir breytingu"}
-          </p>
-          {listing.sellerResponse?.type === "changes_requested" && listing.sellerResponse.feedback && <p className="mt-3 whitespace-pre-wrap text-[12px] leading-5 text-[#b9bdb6]">{listing.sellerResponse.feedback}</p>}
+          {!listing.sellerResponse ? <p className="mt-2 text-[12px] text-[#858d87]">Bíður yfirferðar seljanda</p> : <div className="mt-3">
+            <p className="text-[12px] font-semibold text-[var(--text-primary)]">{listing.sellerResponse.sellerName}</p>
+            <p className={listing.sellerResponse.type === "approved" && listing.sellerResponse.isCurrent ? "mt-1 text-[11px] text-[#69805f]" : listing.sellerResponse.type === "changes_requested" && listing.sellerResponse.isCurrent ? "mt-1 text-[11px] text-[#9b6f2d]" : "mt-1 text-[11px] text-[#858d87]"}>
+              {!listing.sellerResponse.isCurrent ? "Eldra svar" : listing.sellerResponse.type === "approved" ? "Samþykkt" : "Óskað eftir breytingu"} · {formatIcelandicDate(listing.sellerResponse.submittedAt)} kl. {formatIcelandicTime(listing.sellerResponse.submittedAt)}
+            </p>
+            {listing.sellerResponse.feedback && <blockquote className="mt-3 whitespace-pre-wrap border-l-2 border-[#afcfbe] pl-3 text-[12px] leading-5 text-[#59615b]">„{listing.sellerResponse.feedback}“</blockquote>}
+          </div>}
         </div>
         <div className="mt-5 border-t border-black/[0.06]">{checks.map((item) => <div key={item.label} className="flex min-h-12 items-center gap-3 border-b border-black/[0.06]"><span className={item.complete ? "text-[#69805f]" : "text-[#b4bab3]"}>{item.complete ? <Check size={15} /> : <Circle size={13} />}</span><span className={item.complete ? "text-[11px] text-[#4f5d4e]" : "text-[11px] text-[var(--text-secondary)]"}>{item.label}</span></div>)}</div>
         <p className="mt-4 text-[10px] text-[#687069]">{completed} af {checks.length} atriðum lokið</p>

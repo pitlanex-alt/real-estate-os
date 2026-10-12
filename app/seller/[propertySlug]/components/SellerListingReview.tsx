@@ -86,7 +86,7 @@ export function SellerListingReview({ propertySlug, listing }: { propertySlug: s
     {isApproved ? <div className="kelvo-status-success mt-10 rounded-[16px] p-5 sm:p-6">
       <div className="flex items-start gap-3">
         <Check size={18} className="mt-0.5 shrink-0" />
-        <div><h3 className="text-[17px] font-semibold">Skráning samþykkt</h3><p className="mt-2 text-[13px] leading-6">Þú hefur samþykkt núverandi skráningu. Engin frekari aðgerð er nauðsynleg.</p>{listing.latestResponse && <p className="mt-2 text-[11px] opacity-75">Samþykkt {formatIcelandicDate(listing.latestResponse.submittedAt)} kl. {formatIcelandicTime(listing.latestResponse.submittedAt)}</p>}</div>
+        <div><h3 className="text-[17px] font-semibold">Skráning samþykkt</h3><p className="mt-2 text-[13px] leading-6">Þú hefur samþykkt núverandi skráningu. Engin frekari aðgerð er nauðsynleg.</p>{listing.latestResponse && <p className="mt-2 text-[11px] opacity-75">Samþykkt {formatIcelandicDate(listing.latestResponse.submittedAt)} kl. {formatIcelandicTime(listing.latestResponse.submittedAt)}</p>}{listing.latestResponse?.feedback && <p className="mt-4 whitespace-pre-wrap border-l-2 border-[#8faa95] pl-4 text-[13px] leading-6">{listing.latestResponse.feedback}</p>}</div>
       </div>
     </div> : <form action={formAction} className="mt-10 rounded-[16px] bg-[var(--surface-soft)] p-5 sm:p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -94,7 +94,7 @@ export function SellerListingReview({ propertySlug, listing }: { propertySlug: s
         <span className={listing.latestResponse?.type === "approved" ? "text-[11px] text-[#9caf9a]" : listing.latestResponse?.type === "changes_requested" ? "text-[11px] text-[#c99a52]" : "text-[11px] text-[#858d87]"}>{listing.latestResponse?.type === "approved" ? "Samþykkt" : listing.latestResponse?.type === "changes_requested" ? "Óskað eftir breytingu" : "Bíður svars"}</span>
       </div>
       {listing.latestResponse?.feedback && <p className="mt-4 max-w-3xl whitespace-pre-wrap border-l-2 border-[#b98a3f] pl-4 text-[13px] leading-6 text-[#4f5650]">{listing.latestResponse.feedback}</p>}
-      <label className="mt-6 block max-w-3xl text-[12px] text-[#8b938d]">Athugasemd ef óskað er breytinga<textarea name="feedback" maxLength={4000} rows={4} className="mo-control mt-2 w-full resize-y px-3 py-3 text-base leading-6 outline-none" placeholder="Lýstu því sem þú vilt að fasteignasalinn breyti…" /></label>
+      <label className="mt-6 block max-w-3xl text-[12px] text-[#8b938d]">Athugasemd til fasteignasala (valfrjálst)<textarea name="feedback" maxLength={4000} rows={4} className="mo-control mt-2 w-full resize-y px-3 py-3 text-base leading-6 outline-none" placeholder="Skrifaðu skilaboð með svarinu ef þörf er á…" /></label>
       <div className="mt-5 flex flex-col gap-3 sm:flex-row">
         <Button type="submit" name="responseType" value="approved" variant="primary" disabled={pending || !canRespond} className="min-h-11 px-5 text-base font-semibold">Samþykkja skráningu</Button>
         <Button type="submit" name="responseType" value="changes_requested" variant="secondary" disabled={pending || !canRespond} className="min-h-11 px-5 text-base font-semibold">Óska eftir breytingu</Button>

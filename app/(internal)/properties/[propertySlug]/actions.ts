@@ -214,6 +214,43 @@ export async function confirmReadyForHandover(propertySlug: string, transactionI
   revalidatePath(`/seller/${propertySlug}`);
 }
 
+export async function completeTransaction(propertySlug: string, transactionId: string) {
+  const supabase = await createClient();
+  const identity = await requireInternalIdentity(supabase);
+  const { data: transaction } = await supabase
+    .from("transactions")
+    .select("id,property:properties!transactions_property_id_fkey(slug)")
+    .eq("id", transactionId)
+    .eq("organization_id", identity.organizationId)
+    .maybeSingle();
+  const relatedProperty = Array.isArray(transaction?.property)
+    ? transaction.property[0]
+    : transaction?.property;
+  if (!transaction || relatedProperty?.slug !== propertySlug) {
+    throw new Error("Viðskipti fundust ekki.");
+  }
+
+  const { error } = await supabase.rpc("confirm_transaction_completion", {
+    p_transaction_id: transactionId,
+  });
+  if (error) {
+    if (error.code === "42501") {
+      throw new Error("Þú hefur ekki heimild til að ljúka viðskiptunum.");
+    }
+    if (error.code === "23514") {
+      throw new Error("Ekki er hægt að ljúka viðskiptunum fyrr en öllum afhendingarverkefnum er lokið.");
+    }
+    throw new Error("Ekki tókst að ljúka viðskiptunum.");
+  }
+
+  revalidatePath(`/properties/${propertySlug}`);
+  revalidatePath("/");
+  revalidatePath("/properties");
+  revalidatePath("/tasks");
+  revalidatePath(`/buyer/${propertySlug}`);
+  revalidatePath(`/seller/${propertySlug}`);
+}
+
 export async function setPropertyCover(propertySlug: string, imageId: string) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("set_property_image_cover", { p_image_id: imageId });

@@ -126,12 +126,16 @@ export async function getInternalWorkItems(
   const slugByTransaction = new Map(
     transactionRows.map((transaction) => [transaction.id, relation(transaction.property)?.slug ?? "eign"]),
   );
+  const stageByTransaction = new Map(
+    transactionRows.map((transaction) => [transaction.id, transaction.stage]),
+  );
   const profileById = new Map(
     (profilesResult.data ?? []).map((profile) => [profile.id, profile.display_name]),
   );
   const tasks: InternalTask[] = (tasksResult.data ?? []).map((row) => ({
     id: row.id,
     transactionId: row.transaction_id,
+    transactionStage: stageByTransaction.get(row.transaction_id) ?? "",
     title: row.title,
     description: row.description,
     status: row.status,

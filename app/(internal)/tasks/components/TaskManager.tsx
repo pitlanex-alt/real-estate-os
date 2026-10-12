@@ -34,7 +34,7 @@ export function TaskManager({ tasks, transactions, assignees, nowIso }: { tasks:
       .filter((task) => {
         const matchesQuery = !normalizedQuery || `${task.title} ${task.property}`.toLocaleLowerCase("is-IS").includes(normalizedQuery);
         const matchesStatus = filter === "all"
-          || (filter === "active" && !["completed", "cancelled"].includes(task.status))
+          || (filter === "active" && !["completed", "cancelled"].includes(task.status) && !["completed", "cancelled"].includes(task.transactionStage))
           || task.status === filter;
         return matchesQuery && matchesStatus;
       })

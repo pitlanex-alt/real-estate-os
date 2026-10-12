@@ -34,7 +34,7 @@ export async function submitSellerListingResponse(
   const { error } = await supabase.rpc("record_seller_listing_response", {
     p_transaction_id: transactionId,
     p_response_type: responseType,
-    p_feedback: responseType === "changes_requested" ? feedback || null : null,
+    p_feedback: feedback || null,
   });
   if (error) {
     return {

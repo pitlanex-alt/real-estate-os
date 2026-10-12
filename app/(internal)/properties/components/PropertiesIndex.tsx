@@ -74,13 +74,15 @@ export function PropertiesIndex({
   loadError?: string | null;
 }) {
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<(typeof propertyStatusFilters)[number]>("Allar");
+  const [status, setStatus] = useState<(typeof propertyStatusFilters)[number]>("Virkar");
 
   const filteredProperties = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("is");
     return properties.filter((property) => {
       const matchesQuery = !normalizedQuery || `${property.address} ${property.seller}`.toLocaleLowerCase("is").includes(normalizedQuery);
-      const matchesStatus = status === "Allar" || property.stage === status;
+      const matchesStatus = status === "Allar"
+        || (status === "Virkar" && property.stage !== "Lokið")
+        || property.stage === status;
       return matchesQuery && matchesStatus;
     });
   }, [properties, query, status]);
@@ -116,7 +118,7 @@ export function PropertiesIndex({
       </section>
 
       <section className="kelvo-card mt-7 overflow-hidden px-3 py-4 sm:px-5" aria-labelledby="property-list-heading">
-        <div className="mb-3 flex items-baseline justify-between px-2"><h2 id="property-list-heading" className="text-[14px] font-semibold text-[var(--text-primary)]">Allar eignir</h2><span className="text-[10px] text-[var(--text-muted)]">{filteredProperties.length} eignir</span></div>
+        <div className="mb-3 flex items-baseline justify-between px-2"><h2 id="property-list-heading" className="text-[14px] font-semibold text-[var(--text-primary)]">{status === "Virkar" ? "Virkar eignir" : status === "Allar" ? "Allar eignir" : status}</h2><span className="text-[10px] text-[var(--text-muted)]">{filteredProperties.length} eignir</span></div>
         <div className="hidden grid-cols-[88px_minmax(150px,1.25fr)_minmax(120px,.85fr)_105px_95px_minmax(135px,1fr)_130px_16px] gap-3 border-y border-black/[0.06] px-2 py-2.5 text-[8px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] xl:grid">
           <span /><span>Eign</span><span>Seljandi</span><span>Ásett verð</span><span>Staða</span><span>Næsta skref</span><span>Umsjón</span><span />
         </div>
@@ -126,7 +128,7 @@ export function PropertiesIndex({
             <ul className="divide-y divide-black/[0.06] border-t border-black/[0.06] xl:hidden">{filteredProperties.map((property) => <CompactPropertyRow key={property.id} property={property} />)}</ul>
           </>
         ) : (
-          <div className="border-y border-black/[0.06] py-12 text-center"><p className="text-[13px] text-[var(--text-secondary)]">Engar eignir fundust.</p><button type="button" onClick={() => { setQuery(""); setStatus("Allar"); }} className="mo-button mo-button-text mt-3 min-h-11 px-4 text-[12px] font-medium">Hreinsa síur</button></div>
+          <div className="border-y border-black/[0.06] py-12 text-center"><p className="text-[13px] text-[var(--text-secondary)]">Engar eignir fundust.</p><button type="button" onClick={() => { setQuery(""); setStatus("Virkar"); }} className="mo-button mo-button-text mt-3 min-h-11 px-4 text-[12px] font-medium">Hreinsa síur</button></div>
         )}
       </section>
     </>

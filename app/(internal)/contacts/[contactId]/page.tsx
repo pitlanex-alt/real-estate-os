@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireInternalIdentity } from "@/lib/auth/post-auth";
+import { localizedActivitySummary } from "@/lib/activity/presentation";
 import { formatIcelandicDate } from "@/lib/datetime/iceland";
 import { customerOfferStatusLabel, formatIsk } from "@/lib/offers/model";
 import { createClient } from "@/lib/supabase/server";
@@ -94,7 +95,7 @@ export default async function ContactPage({ params }: { params: Promise<{ contac
   }
 
   const activityResult = transactionIds.size
-    ? await supabase.from("activity_events").select("id,summary,created_at").eq("organization_id", identity.organizationId).in("transaction_id", [...transactionIds]).order("created_at", { ascending: false }).limit(8)
+    ? await supabase.from("activity_events").select("id,event_type,summary,metadata,created_at").eq("organization_id", identity.organizationId).in("transaction_id", [...transactionIds]).order("created_at", { ascending: false }).limit(8)
     : { data: [], error: null };
   if (activityResult.error) console.error("Unable to load contact activity", activityResult.error);
 
@@ -106,7 +107,7 @@ export default async function ContactPage({ params }: { params: Promise<{ contac
       <section className="kelvo-card p-5"><h2 className="text-[15px] font-semibold">Viðskipti</h2><div className="mt-4 border-t border-black/[0.06]">{parties.map((row) => { const transaction = one(row.transaction); const property = one(transaction?.property ?? null); return property ? <Link key={`${transaction?.id}-${row.role}`} href={`/properties/${property.slug}`} className="block rounded-[10px] border-b border-black/[0.06] px-2 py-4"><p className="text-[12px] font-semibold">{property.address_line}</p><p className="mt-1 text-[10px] text-[var(--text-secondary)]">{row.role} · {transaction?.stage}</p></Link> : null; })}</div></section>
       <section className="kelvo-card p-5"><h2 className="text-[15px] font-semibold">Skoðanir</h2><div className="mt-4 border-t border-black/[0.06]">{guests.map((row) => { const viewing = one(row.viewing); const transaction = one(viewing?.transaction ?? null); const property = one(transaction?.property ?? null); return <div key={row.id} className="border-b border-black/[0.06] py-4 text-[11px]"><p>{property?.address_line ?? "Eign"}</p><p className="mt-1 text-[var(--text-secondary)]">{viewing ? formatIcelandicDate(viewing.starts_at) : "—"} · {row.attendance} · {row.interest}</p></div>; })}</div></section>
       <section className="kelvo-card p-5"><h2 className="text-[15px] font-semibold">Tilboð</h2><div className="mt-4 border-t border-black/[0.06]">{offers.map((row) => { const transaction = one(row.transaction); const property = one(transaction?.property ?? null); return <Link key={row.id} href={property ? `/properties/${property.slug}/offers/${row.id}` : "#"} className="block rounded-[10px] border-b border-black/[0.06] px-2 py-4"><p className="text-[12px] font-semibold">{formatIsk(Number(row.amount_isk))}</p><p className="mt-1 text-[10px] text-[var(--text-secondary)]">{property?.address_line ?? "Eign"} · {customerOfferStatusLabel(row.status)}</p></Link>; })}</div></section>
-      <section className="kelvo-card p-5"><h2 className="text-[15px] font-semibold">Nýleg virkni</h2><div className="mt-4 border-t border-black/[0.06]">{(activityResult.data ?? []).map((event) => <div key={event.id} className="border-b border-black/[0.06] py-4"><p className="text-[11px] text-[#474e47]">{event.summary}</p><p className="mt-1 text-[10px] text-[var(--text-secondary)]">{formatIcelandicDate(event.created_at)}</p></div>)}{!activityResult.data?.length && <p className="border-b border-black/[0.06] py-4 text-[11px] text-[var(--text-secondary)]">Engin nýleg virkni.</p>}</div></section>
+      <section className="kelvo-card p-5"><h2 className="text-[15px] font-semibold">Nýleg virkni</h2><div className="mt-4 border-t border-black/[0.06]">{(activityResult.data ?? []).map((event) => <div key={event.id} className="border-b border-black/[0.06] py-4"><p className="text-[11px] text-[#474e47]">{localizedActivitySummary(event.summary, event.event_type, event.metadata)}</p><p className="mt-1 text-[10px] text-[var(--text-secondary)]">{formatIcelandicDate(event.created_at)}</p></div>)}{!activityResult.data?.length && <p className="border-b border-black/[0.06] py-4 text-[11px] text-[var(--text-secondary)]">Engin nýleg virkni.</p>}</div></section>
     </div>
   </div></>;
 }

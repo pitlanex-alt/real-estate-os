@@ -1,6 +1,7 @@
 import { getPropertyImages, type PropertyImage } from "@/lib/property-images/server";
 import { createClient } from "@/lib/supabase/server";
 import { getInternalWorkItems } from "@/lib/work-items/server";
+import { activityFeedback, localizedActivitySummary } from "@/lib/activity/presentation";
 
 type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 type Relation<T> = T | T[] | null;
@@ -37,6 +38,7 @@ export type PropertyWorkspaceData = {
       feedback: string | null;
       submittedAt: string;
       isCurrent: boolean;
+      sellerName: string;
     } | null;
     requiredDocumentsReady: boolean;
     readiness: "not_started" | "in_progress" | "ready";
@@ -67,7 +69,7 @@ export type PropertyWorkspaceData = {
   }>;
   tasks: Awaited<ReturnType<typeof getInternalWorkItems>>["tasks"];
   documents: Awaited<ReturnType<typeof getInternalWorkItems>>["documents"];
-  activities: Array<{ id: string; summary: string; eventType: string; createdAt: string }>;
+  activities: Array<{ id: string; summary: string; eventType: string; createdAt: string; feedback: string | null }>;
 };
 
 type TransactionCandidate = {
@@ -102,7 +104,7 @@ type TransactionCandidate = {
   agent: Relation<{ display_name: string; professional_title: string | null; phone: string | null; email: string | null }>;
   parties: Array<{
     role: string;
-    contact: Relation<{ full_name: string }>;
+    contact: Relation<{ id: string; full_name: string }>;
   }> | null;
 };
 
@@ -137,7 +139,7 @@ export async function getPropertyWorkspace(
       ),
       agent:profiles!transactions_assigned_agent_id_fkey(display_name,professional_title,phone,email),
       parties:transaction_parties!transaction_parties_transaction_id_fkey(
-        role, contact:contacts!transaction_parties_contact_id_fkey(full_name)
+        role, contact:contacts!transaction_parties_contact_id_fkey(id,full_name)
       )
     `)
     .eq("property_id", resolvedProperty.id)
@@ -174,13 +176,13 @@ export async function getPropertyWorkspace(
       .order("created_at", { ascending: false }),
     supabase
       .from("activity_events")
-      .select("id,event_type,summary,created_at")
+      .select("id,event_type,summary,metadata,created_at")
       .eq("transaction_id", transaction.id)
       .order("created_at", { ascending: false })
       .limit(12),
     supabase
       .from("seller_listing_responses")
-      .select("response_type,feedback,submitted_at,listing_revision")
+      .select("response_type,feedback,submitted_at,listing_revision,seller_contact_id")
       .eq("transaction_id", transaction.id)
       .order("submitted_at", { ascending: false })
       .order("id", { ascending: false })
@@ -202,6 +204,12 @@ export async function getPropertyWorkspace(
       const contact = one(party.contact);
       return contact ? [contact.full_name] : [];
     });
+  const partyContactById = new Map(
+    (transaction.parties ?? []).flatMap((party) => {
+      const contact = one(party.contact);
+      return contact ? [[contact.id, contact.full_name] as const] : [];
+    }),
+  );
   const images = imageMap.get(property.id) ?? [];
   const factsComplete = Boolean(
     property.property_type?.trim()
@@ -266,6 +274,7 @@ export async function getPropertyWorkspace(
           feedback: sellerResponseResult.data.feedback,
           submittedAt: sellerResponseResult.data.submitted_at,
           isCurrent: sellerResponseCurrent,
+          sellerName: partyContactById.get(sellerResponseResult.data.seller_contact_id) ?? "Seljandi",
         } : null,
         requiredDocumentsReady: transaction.listing_documents_ready,
         readiness: transaction.listing_readiness,
@@ -308,9 +317,10 @@ export async function getPropertyWorkspace(
       documents: workItems.documents,
       activities: (activityResult.data ?? []).map((activity) => ({
         id: activity.id,
-        summary: activity.summary,
+        summary: localizedActivitySummary(activity.summary, activity.event_type, activity.metadata),
         eventType: activity.event_type,
         createdAt: activity.created_at,
+        feedback: activityFeedback(activity.metadata),
       })),
     },
     error: null,
