@@ -58,10 +58,10 @@ function TransactionChecklist({
     : "Frágangi lokið";
   const completionText = milestone === "contract_signing"
     ? "Öllum undirbúningsverkefnum er lokið. Næsta skref er að staðfesta undirritun kaupsamnings."
-    : "Öllum verkefnum í frágangi er lokið. Næsta skref er að staðfesta að eignin sé tilbúin til afhendingar.";
+    : "Öllum verkefnum í frágangi er lokið. Næsta skref er að staðfesta afhendingu eignarinnar.";
   const actionLabel = milestone === "contract_signing"
     ? "Staðfesta undirritun"
-    : "Staðfesta tilbúið til afhendingar";
+    : "Staðfesta afhendingu";
 
   async function handleConfirm() {
     setPending(true);
@@ -121,9 +121,9 @@ function TransactionChecklist({
       </div>
       <ConfirmDialog
         open={confirmOpen}
-        title={milestone === "handover_readiness" ? "Staðfesta að eign sé tilbúin til afhendingar?" : "Staðfesta undirritun kaupsamnings?"}
+        title={milestone === "handover_readiness" ? "Staðfesta afhendingu?" : "Staðfesta undirritun kaupsamnings?"}
         description={milestone === "handover_readiness" ? "Viðskiptin færast í Afhending og afhendingarverkefni verða stofnuð." : "Viðskiptin færast í Frágang og næstu verkefni verða stofnuð."}
-        confirmLabel="Staðfesta"
+        confirmLabel={milestone === "handover_readiness" ? "Staðfesta afhendingu" : "Staðfesta"}
         confirmVariant="primary"
         pending={pending}
         onClose={() => setConfirmOpen(false)}
