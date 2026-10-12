@@ -8,6 +8,7 @@ type ConfirmDialogProps = {
   title: string;
   description: string;
   confirmLabel: string;
+  confirmVariant?: "primary" | "danger";
   pending?: boolean;
   onClose: () => void;
   onConfirm: () => void;
@@ -18,6 +19,7 @@ export function ConfirmDialog({
   title,
   description,
   confirmLabel,
+  confirmVariant = "danger",
   pending = false,
   onClose,
   onConfirm,
@@ -44,7 +46,7 @@ export function ConfirmDialog({
         <p className="mt-3 text-[13px] leading-6 text-[var(--text-secondary)]">{description}</p>
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button ref={cancelRef} variant="secondary" disabled={pending} onClick={onClose}>Hætta við</Button>
-          <Button variant="danger" disabled={pending} onClick={onConfirm}>{pending ? "Augnablik…" : confirmLabel}</Button>
+          <Button variant={confirmVariant} disabled={pending} onClick={onConfirm}>{pending ? "Augnablik…" : confirmLabel}</Button>
         </div>
       </section>
     </div>

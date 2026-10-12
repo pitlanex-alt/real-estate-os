@@ -142,6 +142,42 @@ export async function markListingReadyForPublish(
   return { error: null, success: "Skráningin er tilbúin til birtingar." };
 }
 
+export async function confirmContractSigning(propertySlug: string, transactionId: string) {
+  const supabase = await createClient();
+  const identity = await requireInternalIdentity(supabase);
+  const { data: transaction } = await supabase
+    .from("transactions")
+    .select("id,property:properties!transactions_property_id_fkey(slug)")
+    .eq("id", transactionId)
+    .eq("organization_id", identity.organizationId)
+    .maybeSingle();
+  const relatedProperty = Array.isArray(transaction?.property)
+    ? transaction.property[0]
+    : transaction?.property;
+  if (!transaction || relatedProperty?.slug !== propertySlug) {
+    throw new Error("Viðskipti fundust ekki.");
+  }
+
+  const { error } = await supabase.rpc("confirm_contract_signing", {
+    p_transaction_id: transactionId,
+  });
+  if (error) {
+    if (error.code === "42501") {
+      throw new Error("Þú hefur ekki heimild til að staðfesta undirritun.");
+    }
+    if (error.code === "23514") {
+      throw new Error("Ekki er hægt að staðfesta undirritun fyrr en öllum undirbúningsverkefnum er lokið.");
+    }
+    throw new Error("Ekki tókst að staðfesta undirritun kaupsamnings.");
+  }
+
+  revalidatePath(`/properties/${propertySlug}`);
+  revalidatePath("/");
+  revalidatePath("/tasks");
+  revalidatePath(`/buyer/${propertySlug}`);
+  revalidatePath(`/seller/${propertySlug}`);
+}
+
 export async function setPropertyCover(propertySlug: string, imageId: string) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("set_property_image_cover", { p_image_id: imageId });

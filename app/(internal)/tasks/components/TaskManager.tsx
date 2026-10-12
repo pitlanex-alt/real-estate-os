@@ -15,9 +15,8 @@ const visibilityLabels = { internal: "Innri", seller: "Seljandi", buyer: "Kaupan
 const statusOptions = (["not_started", "in_progress", "completed", "cancelled"] as const).map((value) => ({ value, label: taskStatusLabel(value) }));
 const visibilityOptions = Object.entries(visibilityLabels).map(([value, label]) => ({ value, label }));
 const taskFilterOptions = [
-  { value: "all", label: "Allt" },
-  { value: "open", label: "Opið" },
-  { value: "in_progress", label: "Í vinnslu" },
+  { value: "active", label: "Virkt" },
+  { value: "all", label: "Öll" },
   { value: "completed", label: "Lokið" },
 ];
 const pageSize = 24;
@@ -27,7 +26,7 @@ export function TaskManager({ tasks, transactions, assignees, nowIso }: { tasks:
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState("active");
   const [visibleCount, setVisibleCount] = useState(pageSize);
   const filteredTasks = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("is-IS");
@@ -35,7 +34,7 @@ export function TaskManager({ tasks, transactions, assignees, nowIso }: { tasks:
       .filter((task) => {
         const matchesQuery = !normalizedQuery || `${task.title} ${task.property}`.toLocaleLowerCase("is-IS").includes(normalizedQuery);
         const matchesStatus = filter === "all"
-          || (filter === "open" && !["completed", "cancelled"].includes(task.status))
+          || (filter === "active" && !["completed", "cancelled"].includes(task.status))
           || task.status === filter;
         return matchesQuery && matchesStatus;
       })
