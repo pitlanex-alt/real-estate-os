@@ -2,11 +2,12 @@ import { requireInternalIdentity } from "@/lib/auth/post-auth";
 import { profilePhotoUrl } from "@/lib/profile-images/urls";
 import { createClient } from "@/lib/supabase/server";
 import { SettingsForm } from "./SettingsForm";
+import { MfaSecurity } from "./MfaSecurity";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
   const identity = await requireInternalIdentity(supabase);
-  const [org, profile] = await Promise.all([
+  const [org, profile, factorResult] = await Promise.all([
     supabase
       .from("organizations")
       .select("name,public_email,phone,website,address,default_contact_name,default_contact_email,default_contact_phone")
@@ -17,6 +18,7 @@ export default async function SettingsPage() {
       .select("display_name,professional_title,phone,email,profile_photo_path,profile_photo_crop_x,profile_photo_crop_y,profile_photo_crop_zoom,updated_at")
       .eq("id", identity.userId)
       .single(),
+    supabase.auth.mfa.listFactors(),
   ]);
   const values = {
     name: org.data?.name ?? "",
@@ -53,6 +55,7 @@ export default async function SettingsPage() {
           organizationId={identity.organizationId}
           userId={identity.userId}
         />
+        <div className="mt-6 max-w-4xl"><MfaSecurity factors={(factorResult.data?.totp ?? []).filter((factor) => factor.status === "verified").map((factor) => ({ id: factor.id, name: factor.friendly_name || "Auðkenningarforrit", createdAt: factor.created_at }))} /></div>
       </div>
     </>
   );

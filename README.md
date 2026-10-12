@@ -102,6 +102,33 @@ For an SSR-safe invitation session, customize Authentication → Email Templates
 
 Suggested subject: `Boð í {{ .Data.organization_name }} á Kelvo`. Configure a production SMTP provider and disable click tracking for authentication emails before launch.
 
+## Internal password recovery and MFA
+
+Kelvo requires every active internal team member to reach Supabase Auth `aal2` with a verified TOTP authenticator before internal pages or server actions are available. After password authentication, users without a factor are routed to `/auth/mfa/enroll`; enrolled users at `aal1` are routed to `/auth/mfa/challenge`. Customer portal authentication is not changed by this policy.
+
+In Supabase Dashboard:
+
+1. Under **Authentication → Multi-Factor Authentication**, keep TOTP enrollment and verification enabled. Kelvo does not use SMS MFA.
+2. Under **Authentication → URL Configuration**, keep the production origin as **Site URL** and add these exact redirect URLs:
+   - `https://YOUR-KELVO-DOMAIN/auth/reset-password/confirm`
+   - `http://localhost:3000/auth/reset-password/confirm`
+3. Under **Authentication → Email Templates → Reset password**, use a token-hash link compatible with the SSR confirmation endpoint:
+
+```html
+<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#171a17">
+  <h1 style="font-size:24px;margin:0 0 20px">Endurstilla lykilorð í Kelvo</h1>
+  <p>Beiðni barst um að velja nýtt lykilorð fyrir Kelvo-aðganginn þinn.</p>
+  <p style="margin:28px 0">
+    <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=recovery" style="background:#d9f65a;border-radius:10px;color:#202614;display:inline-block;font-weight:600;padding:13px 20px;text-decoration:none">
+      Velja nýtt lykilorð
+    </a>
+  </p>
+  <p style="color:#6f756e;font-size:13px">Tengillinn er tímabundinn. Ef þú baðst ekki um nýtt lykilorð geturðu hunsað þennan tölvupóst.</p>
+</div>
+```
+
+Suggested subject: `Endurstilla lykilorð í Kelvo`. Production password recovery also requires a configured SMTP provider. `NEXT_PUBLIC_SITE_URL` controls the canonical recovery redirect; local development falls back to `http://localhost:3000`.
+
 To invite a production customer later, create or invite the Auth identity through the application/admin onboarding workflow, then call `grant_portal_access(transaction_id, user_id, contact_id, role)` as an authorized internal user. Revocation uses `revoke_portal_access(grant_id)` and takes effect immediately. V1 does not require production email delivery yet.
 
 ## Security model

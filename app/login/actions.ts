@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { resolvePostAuthDestination } from "@/lib/auth/post-auth";
+import { getInternalMfaGate, resolvePostAuthDestination } from "@/lib/auth/post-auth";
 
 export type LoginState = { error: string | null };
 
@@ -21,9 +21,13 @@ export async function login(
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return { error: "Innskráning mistókst. Athugaðu netfang og lykilorð." };
+    return { error: "Netfang eða lykilorð er rangt." };
   }
 
   const resolution = await resolvePostAuthDestination(supabase, "internal");
+  if (resolution.internalIdentity) {
+    const mfaGate = await getInternalMfaGate(supabase);
+    if (mfaGate) redirect(mfaGate);
+  }
   redirect(resolution.destination ?? "/customer/access-denied");
 }

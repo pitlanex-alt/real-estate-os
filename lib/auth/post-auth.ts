@@ -23,6 +23,14 @@ export type InternalIdentity = {
 
 export type PostAuthPreference = "internal" | "customer";
 
+export async function getInternalMfaGate(supabase: ServerSupabaseClient) {
+  const { data: aal, error: aalError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (!aalError && aal.currentLevel === "aal2") return null;
+  const { data: factors } = await supabase.auth.mfa.listFactors();
+  const hasVerifiedTotp = Boolean(factors?.totp.some((factor) => factor.status === "verified"));
+  return hasVerifiedTotp ? "/auth/mfa/challenge" : "/auth/mfa/enroll";
+}
+
 const roleLabels: Record<OrganizationRole, string> = {
   admin: "Stjórnandi",
   agent: "Fasteignasali",
@@ -122,6 +130,9 @@ export async function requireInternalIdentity(
   if (!resolution.internalIdentity) {
     redirect(resolution.destination ?? "/customer/access-denied");
   }
+
+  const mfaGate = await getInternalMfaGate(supabase);
+  if (mfaGate) redirect(mfaGate);
 
   return resolution.internalIdentity;
 }
