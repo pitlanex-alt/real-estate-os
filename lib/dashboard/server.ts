@@ -127,10 +127,11 @@ export async function getDashboardData(supabase: Client, organizationId: string,
       tone: expired || new Date(offer.valid_until).getTime() < now.getTime() + 4 * 60 * 60 * 1000 ? "warning" : "neutral",
     });
   }
+  const liveOfferCount = (offers.data ?? []).filter((offer) => !isPastInstant(offer.valid_until, now)).length;
   const metrics: Metric[] = [
     { value: String(todayViewings.count ?? 0), label: "Skoðanir í dag" },
     { value: String(activeTasks.length), label: "Verkefni í bið" },
-    { value: String(offers.data?.length ?? 0), label: "Virk tilboð" },
+    { value: String(liveOfferCount), label: "Virk tilboð" },
     { value: String(activeProperties.length), label: "Virkar fasteignir" },
   ];
   return { metrics, schedule, attention, properties: dashboardProperties, error: null };

@@ -5,6 +5,17 @@ export type BuyerOfferData = { id: string; status: OfferStatus; amountIsk: numbe
 export type AgentOfferData = BuyerOfferData & { askingPriceIsk: number; property: string; location: string; receivedAt: string; agentApprovedAt: string | null; sentToSellerAt: string | null; latestSellerIntent: "accept" | "reject" | "counter_offer" | null; review: { buyerIdentified: boolean; contactConfirmed: boolean; financingNeedsConfirmation: boolean; validityRecorded: boolean; handoverRecorded: boolean; internalNotes: string; changeRequest: string | null } | null };
 export type SellerOfferData = { id: string; status: OfferStatus; amountIsk: number; askingPriceIsk: number; validUntil: string; requestedHandoverDate: string; property: string; location: string; agent: string; conditions: OfferConditionData[]; latestIntent: "accept" | "reject" | "counter_offer" | null };
 
+const validityDependentStatuses: OfferStatus[] = ["draft", "submitted", "change_requested", "agent_approved", "sent_to_seller", "seller_intent_recorded"];
+
+export function effectiveOfferStatus(status: OfferStatus, validUntil: string, now: Date | string = new Date()): OfferStatus {
+  const nowMs = typeof now === "string" ? new Date(now).getTime() : now.getTime();
+  return validityDependentStatuses.includes(status) && new Date(validUntil).getTime() <= nowMs ? "expired" : status;
+}
+
+export function isOfferExpiryError(error: { code?: string; message?: string } | null | undefined) {
+  return error?.code === "23514" && error.message?.includes("Offer validity has expired");
+}
+
 export function formatIsk(value: number) { return `${Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} kr.`; }
 export function offerConditionLabel(type: string) { return ({ financing: "Háð fjármögnun", "property-sale": "Háð sölu annarrar eignar", inspection: "Háð skoðun / nánari yfirferð", none: "Engin sérstök skilyrði" } as Record<string, string>)[type] ?? type; }
 export function financingStatusLabel(status: string | null) { return ({ approved: "Samþykkt", in_progress: "Í vinnslu", "in-progress": "Í vinnslu", not_started: "Ekki hafin", "not-started": "Ekki hafin" } as Record<string, string>)[status ?? ""] ?? "—"; }

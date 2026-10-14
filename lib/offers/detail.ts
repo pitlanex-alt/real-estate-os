@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { effectiveOfferStatus } from "@/lib/offers/model";
 
 export type OfferStatus =
   | "draft"
@@ -146,7 +147,7 @@ export async function getAgentOffer(offerId: string): Promise<AgentOfferData | n
   }
   const review = reviewResult.data;
   return {
-    id: offer.id, status: offer.status as OfferStatus, amountIsk: Number(offer.amount_isk), validUntil: offer.valid_until,
+    id: offer.id, status: effectiveOfferStatus(offer.status as OfferStatus, offer.valid_until), amountIsk: Number(offer.amount_isk), validUntil: offer.valid_until,
     requestedHandoverDate: offer.requested_handover_date, submittedAt: offer.submitted_at,
     buyerName: buyerResult.data.full_name, buyerPhone: buyerResult.data.phone, buyerEmail: buyerResult.data.email,
     askingPriceIsk: Number(transactionResult.data.asking_price_isk), property: property.address_line,

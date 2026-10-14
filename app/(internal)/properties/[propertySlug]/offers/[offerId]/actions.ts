@@ -1,7 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { isOfferExpiryError } from "@/lib/offers/model";
 import { createClient } from "@/lib/supabase/server";
+
+function offerActionError(error: { code?: string; message?: string }, fallback: string) {
+  return isOfferExpiryError(error) ? "Tilboðið er útrunnið og ekki er hægt að halda vinnslu þess áfram." : fallback;
+}
 
 function refreshOfferViews(propertySlug: string, offerId: string) {
   revalidatePath(`/properties/${propertySlug}/offers/${offerId}`);
@@ -16,21 +21,21 @@ export async function requestOfferChange(offerId: string, propertySlug: string, 
   if (!reason.trim()) throw new Error("Ástæða er nauðsynleg.");
   const supabase = await createClient();
   const { error } = await supabase.rpc("request_offer_change", { p_offer_id: offerId, p_reason: reason.trim() });
-  if (error) throw new Error("Ekki tókst að senda breytingabeiðnina.");
+  if (error) throw new Error(offerActionError(error, "Ekki tókst að senda breytingabeiðnina."));
   refreshOfferViews(propertySlug, offerId);
 }
 
 export async function approveOfferForSeller(offerId: string, propertySlug: string) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("approve_offer_for_seller", { p_offer_id: offerId });
-  if (error) throw new Error("Ekki tókst að samþykkja tilboðið til yfirferðar.");
+  if (error) throw new Error(offerActionError(error, "Ekki tókst að samþykkja tilboðið til yfirferðar."));
   refreshOfferViews(propertySlug, offerId);
 }
 
 export async function sendOfferToSeller(offerId: string, propertySlug: string) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("send_offer_to_seller", { p_offer_id: offerId });
-  if (error) throw new Error("Ekki tókst að senda tilboðið til seljanda.");
+  if (error) throw new Error(offerActionError(error, "Ekki tókst að senda tilboðið til seljanda."));
   refreshOfferViews(propertySlug, offerId);
 }
 
@@ -42,7 +47,9 @@ export async function confirmOfferAccepted(offerId: string, propertySlug: string
     p_reason: "Seller acceptance intent confirmed by responsible agent",
   });
   if (error) {
-    throw new Error(error.code === "42501"
+    throw new Error(isOfferExpiryError(error)
+      ? "Tilboðið er útrunnið og ekki er hægt að staðfesta það."
+      : error.code === "42501"
       ? "Þú hefur ekki heimild til að staðfesta tilboðið."
       : error.code === "23514"
         ? "Tilboðið er ekki tilbúið til staðfestingar."
@@ -59,7 +66,9 @@ export async function rejectOffer(offerId: string, propertySlug: string, reason?
     p_reason: reason?.trim() || null,
   });
   if (error) {
-    throw new Error(error.code === "42501"
+    throw new Error(isOfferExpiryError(error)
+      ? "Tilboðið er útrunnið og ekki er hægt að breyta niðurstöðu þess."
+      : error.code === "42501"
       ? "Þú hefur ekki heimild til að hafna tilboðinu."
       : error.code === "23514"
         ? "Ekki er hægt að hafna tilboðinu í núverandi stöðu."

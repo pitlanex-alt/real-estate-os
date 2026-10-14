@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import { SearchInput } from "@/app/components/ui/Input";
 import { Select } from "@/app/components/ui/Select";
 import { formatOfferValidity } from "@/lib/datetime/iceland";
-import { customerOfferStatusLabel, formatIsk, type OfferStatus } from "@/lib/offers/model";
+import { customerOfferStatusLabel, effectiveOfferStatus, formatIsk, type OfferStatus } from "@/lib/offers/model";
 
 export type OfferListItem = {
   id: string;
@@ -44,7 +44,8 @@ export function OffersList({ offers, nowIso }: { offers: OfferListItem[]; nowIso
     const normalized = query.trim().toLocaleLowerCase("is-IS");
     return offers.filter((offer) => {
       const completedTransaction = ["completed", "cancelled"].includes(offer.transactionStage);
-      const expired = offer.status === "expired" || (!terminalStatuses.includes(offer.status) && new Date(offer.validUntil).getTime() < now.getTime());
+      const displayStatus = effectiveOfferStatus(offer.status, offer.validUntil, now);
+      const expired = displayStatus === "expired";
       const matchesFilter = filter === "all"
         || (filter === "completed" && completedTransaction)
         || (!completedTransaction && filter === "accepted" && offer.status === "accepted")
@@ -64,10 +65,11 @@ export function OffersList({ offers, nowIso }: { offers: OfferListItem[]; nowIso
     <section className="kelvo-card mt-3 overflow-hidden px-3 sm:px-4">
       {filtered.map((offer) => {
         const validity = formatOfferValidity(offer.validUntil, now);
+        const displayStatus = effectiveOfferStatus(offer.status, offer.validUntil, now);
         return <Link key={offer.id} href={`/properties/${offer.property.slug}/offers/${offer.id}?from=offers`} className="group grid min-h-[84px] items-center gap-3 border-b border-black/[0.06] px-2 py-4 last:border-b-0 sm:grid-cols-[minmax(190px,1.35fr)_minmax(150px,.8fr)_minmax(160px,1fr)_auto] sm:gap-6">
           <div className="min-w-0"><p className="truncate text-[13px] font-semibold text-[var(--text-primary)]">{offer.property.address}</p><p className="mt-1 text-[10.5px] text-[var(--text-secondary)]">{offer.property.postalCode} {offer.property.municipality}</p></div>
           <div><p className="text-[14px] font-semibold text-[var(--text-primary)]">{formatIsk(offer.amountIsk)}</p><p className="mt-1 text-[10.5px] text-[var(--text-secondary)]">{offer.buyerName}</p></div>
-          <div><span className={`${statusClass(offer.status)} inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold`}>{customerOfferStatusLabel(offer.status)}</span>{!terminalStatuses.includes(offer.status) && <p className={`mt-1.5 text-[10px] ${validity.expired ? "text-[#914b45]" : "text-[var(--text-secondary)]"}`}>{validity.label}</p>}</div>
+          <div><span className={`${statusClass(displayStatus)} inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold`}>{customerOfferStatusLabel(displayStatus)}</span>{!terminalStatuses.includes(displayStatus) && <p className={`mt-1.5 text-[10px] ${validity.expired ? "text-[#914b45]" : "text-[var(--text-secondary)]"}`}>{validity.label}</p>}</div>
           <ChevronRight size={15} className="justify-self-end text-[var(--text-muted)] transition-colors group-hover:text-[var(--text-primary)]" />
         </Link>;
       })}
