@@ -15,6 +15,13 @@ export type PublishReadinessState = {
   success: string | null;
 };
 
+export type ViewingCreateState = {
+  error: string | null;
+  success: string | null;
+};
+
+type EarlyStageActionResult = { ok: true } | { ok: false; error: string };
+
 function formText(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
@@ -28,6 +35,119 @@ function optionalInteger(value: string, allowNegative = false) {
   if (!normalized || normalized === "-") return null;
   const parsed = Number(normalized);
   return Number.isSafeInteger(parsed) ? parsed : null;
+}
+
+async function resolveScopedTransaction(propertySlug: string, transactionId: string) {
+  const supabase = await createClient();
+  const identity = await requireInternalIdentity(supabase);
+  const { data: transaction } = await supabase
+    .from("transactions")
+    .select("id,property:properties!transactions_property_id_fkey(slug)")
+    .eq("id", transactionId)
+    .eq("organization_id", identity.organizationId)
+    .maybeSingle();
+  const relatedProperty = Array.isArray(transaction?.property)
+    ? transaction.property[0]
+    : transaction?.property;
+  return {
+    supabase,
+    valid: Boolean(transaction && relatedProperty?.slug === propertySlug),
+  };
+}
+
+function revalidateEarlyLifecycle(propertySlug: string) {
+  revalidatePath(`/properties/${propertySlug}`);
+  revalidatePath("/properties");
+  revalidatePath("/viewings");
+  revalidatePath("/offers");
+  revalidatePath("/");
+}
+
+export async function startListingPreparation(
+  propertySlug: string,
+  transactionId: string,
+): Promise<EarlyStageActionResult> {
+  const { supabase, valid } = await resolveScopedTransaction(propertySlug, transactionId);
+  if (!valid) return { ok: false, error: "Viðskipti fundust ekki." };
+  const { error } = await supabase.rpc("start_listing_preparation", {
+    p_transaction_id: transactionId,
+  });
+  if (error) {
+    return {
+      ok: false,
+      error: error.code === "42501"
+        ? "Þú hefur ekki heimild til að hefja undirbúning."
+        : "Ekki tókst að hefja undirbúning skráningar.",
+    };
+  }
+  revalidateEarlyLifecycle(propertySlug);
+  return { ok: true };
+}
+
+export async function activatePropertyListing(
+  propertySlug: string,
+  transactionId: string,
+): Promise<EarlyStageActionResult> {
+  const { supabase, valid } = await resolveScopedTransaction(propertySlug, transactionId);
+  if (!valid) return { ok: false, error: "Viðskipti fundust ekki." };
+  const { error } = await supabase.rpc("activate_property_listing", {
+    p_transaction_id: transactionId,
+  });
+  if (error) {
+    return {
+      ok: false,
+      error: error.code === "42501"
+        ? "Þú hefur ekki heimild til að setja eignina á sölu."
+        : error.code === "23514"
+          ? "Skráningin þarf að vera yfirfarin og tilbúin áður en eignin fer á sölu."
+          : "Ekki tókst að setja eignina á sölu.",
+    };
+  }
+  revalidateEarlyLifecycle(propertySlug);
+  return { ok: true };
+}
+
+function icelandLocalDateTime(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}:00Z`);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+export async function createPropertyViewing(
+  propertySlug: string,
+  transactionId: string,
+  _state: ViewingCreateState,
+  formData: FormData,
+): Promise<ViewingCreateState> {
+  const { supabase, valid } = await resolveScopedTransaction(propertySlug, transactionId);
+  if (!valid) return { error: "Viðskipti fundust ekki.", success: null };
+  const startsAt = icelandLocalDateTime(formText(formData, "startsAt"));
+  const endsAt = icelandLocalDateTime(formText(formData, "endsAt"));
+  const viewingType = formText(formData, "viewingType");
+  if (!startsAt || !endsAt || !viewingType) {
+    return { error: "Veldu tegund, dagsetningu og gildan upphafs- og lokatíma.", success: null };
+  }
+  if (Date.parse(endsAt) <= Date.parse(startsAt)) {
+    return { error: "Lokatími þarf að vera síðar en upphafstími.", success: null };
+  }
+  const { error } = await supabase.rpc("create_viewing", {
+    p_transaction_id: transactionId,
+    p_viewing_type: viewingType,
+    p_starts_at: startsAt,
+    p_ends_at: endsAt,
+  });
+  if (error) {
+    return {
+      error: error.code === "42501"
+        ? "Þú hefur ekki heimild til að skrá skoðun."
+        : error.code === "23514"
+          ? "Ekki er hægt að skrá þessa skoðun miðað við núverandi stöðu."
+          : "Ekki tókst að skrá skoðunina.",
+      success: null,
+    };
+  }
+  revalidateEarlyLifecycle(propertySlug);
+  return { error: null, success: "Skoðunin hefur verið skráð." };
 }
 
 export async function saveListingPreparation(

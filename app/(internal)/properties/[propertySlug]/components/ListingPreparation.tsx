@@ -1,13 +1,14 @@
 "use client";
 
 import { Check, Circle } from "lucide-react";
-import { useActionState, useState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import { Button } from "@/app/components/ui/Button";
 import { Checkbox } from "@/app/components/ui/Checkbox";
 import { Select } from "@/app/components/ui/Select";
 import { formatIcelandicDate, formatIcelandicTime } from "@/lib/datetime/iceland";
 import type { PropertyWorkspaceData } from "@/lib/properties/workspace";
 import {
+  activatePropertyListing,
   markListingReadyForPublish,
   saveListingPreparation,
   type ListingPreparationState,
@@ -46,6 +47,8 @@ export function ListingPreparation({ property, canEdit }: { property: PropertyWo
     error: null,
     success: null,
   } satisfies PublishReadinessState);
+  const [activationPending, startActivation] = useTransition();
+  const [activationError, setActivationError] = useState<string | null>(null);
 
   const factsComplete = Boolean(propertyType && property.sizeSqm !== null && property.roomCount !== null && property.yearBuilt !== null);
   const descriptionComplete = Boolean(title.trim() && description.trim());
@@ -66,6 +69,14 @@ export function ListingPreparation({ property, canEdit }: { property: PropertyWo
       : "Ekki tilbúið";
   const missingRequirements = listing.publishing.requirements.filter((requirement) => !requirement.complete);
   const canMarkReady = missingRequirements.length === 0 && listing.publishing.state !== "ready_to_publish";
+
+  function activateListing() {
+    setActivationError(null);
+    startActivation(async () => {
+      const result = await activatePropertyListing(property.slug, property.transactionId);
+      if (!result.ok) setActivationError(result.error);
+    });
+  }
 
   return <section className="py-6">
     <div className="grid gap-5 lg:grid-cols-[1.25fr_.75fr]">
@@ -108,7 +119,16 @@ export function ListingPreparation({ property, canEdit }: { property: PropertyWo
           {canEdit && <form action={publishFormAction} className="mt-5"><Button type="submit" variant="primary" disabled={!canMarkReady || publishPending} className="min-h-11 w-full px-4 text-[12px] font-semibold">{publishPending ? "Staðfesti…" : listing.publishing.state === "ready_to_publish" ? "Tilbúið til birtingar" : "Merkja tilbúið til birtingar"}</Button></form>}
           {publishState.error && <p role="alert" className="mt-3 text-[11px] text-[#c98279]">{publishState.error}</p>}
           {publishState.success && <p className="mt-3 text-[11px] text-[#9caf9a]">{publishState.success}</p>}
-          <p className="mt-4 text-[10px] leading-4 text-[#626a64]">Þessi staðfesting birtir eignina ekki á ytri vefjum.</p>
+          {canEdit && property.stage === "preparation" && listing.publishing.state === "ready_to_publish" && (
+            <div className="mt-5 border-t border-black/[0.06] pt-5">
+              <Button type="button" variant="primary" disabled={activationPending} onClick={activateListing} className="min-h-11 w-full px-4 text-[12px] font-semibold">
+                {activationPending ? "Set eign á sölu…" : "Setja eign á sölu"}
+              </Button>
+              <p className="mt-3 text-[10px] leading-4 text-[#626a64]">Eignin verður merkt virk á sölu í Kelvo. Þetta birtir hana ekki sjálfkrafa á ytri fasteignavefjum.</p>
+            </div>
+          )}
+          {activationError && <p role="alert" className="mt-3 text-[11px] text-[#c98279]">{activationError}</p>}
+          {listing.publishing.state !== "ready_to_publish" && <p className="mt-4 text-[10px] leading-4 text-[#626a64]">Þessi staðfesting birtir eignina ekki á ytri vefjum.</p>}
         </div>
 
         <div className="mt-8">

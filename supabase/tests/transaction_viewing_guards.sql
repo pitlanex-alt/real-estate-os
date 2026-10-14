@@ -113,12 +113,12 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 select set_config('request.jwt.claim.sub', 'f1400000-0000-4000-8000-000000000001', true);
 
 select lives_ok(
-  $$select public.advance_transaction_stage('f1400000-0000-4000-8000-000000000030', 'preparation', null)$$,
+  $$select public.start_listing_preparation('f1400000-0000-4000-8000-000000000030')$$,
   'Supported forward transaction progression still works'
 );
 select throws_ok(
   $$select public.advance_transaction_stage('f1400000-0000-4000-8000-000000000030', 'valuation', null)$$,
-  '23514', 'Ekki er heimilt að færa viðskiptin aftur á fyrra stig',
+  '23514', 'Þessi stöðubreyting krefst sérstaks vinnuferlis í Kelvo',
   'Unsupported backward progression is rejected'
 );
 select throws_ok(
