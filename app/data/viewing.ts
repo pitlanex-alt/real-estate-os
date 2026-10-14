@@ -25,6 +25,7 @@ export type ViewingDetails = {
   dateTimeLabel: string;
   status: "scheduled" | "active" | "completed" | "cancelled";
   completedAt: string | null;
+  transactionStage: string;
 };
 
 export const attendanceOptions: Array<{ value: AttendanceStatus; label: string }> = [

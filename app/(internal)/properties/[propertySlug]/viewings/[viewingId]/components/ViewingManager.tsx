@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Button } from "@/app/components/ui/Button";
+import { ConfirmDialog } from "@/app/components/ui/ConfirmDialog";
 import { Select } from "@/app/components/ui/Select";
 import {
   attendanceOptions,
@@ -17,6 +18,7 @@ import {
 } from "@/app/data/viewing";
 import {
   addWalkInGuestAction,
+  cancelViewingAction,
   completeViewingAction,
   updateViewingGuestAction,
 } from "../actions";
@@ -76,6 +78,7 @@ function ViewingHeader({
   attended,
   noShow,
   onAddGuest,
+  canEdit,
   nowIso,
 }: {
   viewing: ViewingDetails;
@@ -85,6 +88,7 @@ function ViewingHeader({
   attended: number;
   noShow: number;
   onAddGuest: () => void;
+  canEdit: boolean;
   nowIso: string;
 }) {
   const now = Date.parse(nowIso);
@@ -104,7 +108,7 @@ function ViewingHeader({
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-[27px] font-bold tracking-[-0.04em] text-[var(--text-primary)]">{viewing.title}</h1>
-            <span className={`${past || viewing.status === "completed" ? "kelvo-status-neutral" : "kelvo-status-progress"} rounded-full px-2.5 py-1 text-[10px] font-semibold`}>{statusLabel}</span>
+            <span className={`${viewing.status === "cancelled" ? "kelvo-status-danger" : past || viewing.status === "completed" ? "kelvo-status-neutral" : "kelvo-status-progress"} rounded-full px-2.5 py-1 text-[10px] font-semibold`}>{statusLabel}</span>
           </div>
           <p className="mt-2 text-[12px] text-[var(--text-secondary)]">{viewing.dateTimeLabel}</p>
           <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-[11px] text-[var(--text-secondary)]">
@@ -113,14 +117,16 @@ function ViewingHeader({
             <span><strong className="font-bold text-[var(--text-primary)]">{noShow}</strong> mættu ekki</span>
           </div>
         </div>
-        <Button
-          variant="primary"
-          onClick={onAddGuest}
-          className="min-h-11 px-4 text-[13px] font-semibold"
-        >
-          <Plus size={15} strokeWidth={2} />
-          Skrá gest
-        </Button>
+        {canEdit && (
+          <Button
+            variant="primary"
+            onClick={onAddGuest}
+            className="min-h-11 px-4 text-[13px] font-semibold"
+          >
+            <Plus size={15} strokeWidth={2} />
+            Skrá gest
+          </Button>
+        )}
       </div>
     </header>
   );
@@ -153,10 +159,12 @@ function GuestRow({
   guest,
   onOpen,
   onMarkAttended,
+  editable,
 }: {
   guest: ViewingGuest;
   onOpen: (guest: ViewingGuest) => void;
   onMarkAttended: (id: string) => void;
+  editable: boolean;
 }) {
   const attendanceLabel = guest.attendanceLabel ?? attendanceLabels[guest.attendance];
   const interestLabel = guest.interestLabel ?? interestLabels[guest.interest];
@@ -165,7 +173,8 @@ function GuestRow({
     <li className="grid gap-3 border-b border-black/[0.06] px-2 py-3 last:border-b-0 md:grid-cols-[minmax(0,1fr)_154px] md:items-center md:gap-5">
       <button
         type="button"
-        onClick={() => onOpen(guest)}
+        onClick={() => editable && onOpen(guest)}
+        disabled={!editable}
           className="mo-hover-row group grid min-h-14 min-w-0 gap-3 rounded-[10px] px-2 text-left md:grid-cols-[1.1fr_0.72fr_0.82fr_1.3fr] md:items-center md:gap-5"
       >
         <span className="min-w-0">
@@ -191,14 +200,14 @@ function GuestRow({
           <Check size={13} strokeWidth={2} />
           Mæting skráð
         </span>
-      ) : (
+      ) : editable ? (
         <Button
           onClick={() => onMarkAttended(guest.id)}
           className="min-h-11 px-3 text-[12px] font-medium"
         >
           Merkja mættan
         </Button>
-      )}
+      ) : <span className="text-[10px] text-[var(--text-muted)]">Skráð saga</span>}
     </li>
   );
 }
@@ -207,10 +216,12 @@ function GuestList({
   guests,
   onOpen,
   onMarkAttended,
+  editable,
 }: {
   guests: ViewingGuest[];
   onOpen: (guest: ViewingGuest) => void;
   onMarkAttended: (id: string) => void;
+  editable: boolean;
 }) {
   return (
     <section className="kelvo-card mt-5 overflow-hidden p-4 sm:p-5" aria-labelledby="guest-list-heading">
@@ -229,7 +240,7 @@ function GuestList({
       </div>
       <ul className="border-t border-black/[0.06] md:border-t-0">
         {guests.map((guest) => (
-          <GuestRow key={guest.id} guest={guest} onOpen={onOpen} onMarkAttended={onMarkAttended} />
+          <GuestRow key={guest.id} guest={guest} onOpen={onOpen} onMarkAttended={onMarkAttended} editable={editable} />
         ))}
       </ul>
     </section>
@@ -387,12 +398,18 @@ function AddGuestModal({
 
 function CompleteViewing({
   guests,
-  completed,
+  status,
+  editable,
+  canComplete,
   onComplete,
+  onRequestCancel,
 }: {
   guests: ViewingGuest[];
-  completed: boolean;
+  status: ViewingDetails["status"];
+  editable: boolean;
+  canComplete: boolean;
   onComplete: () => Promise<void>;
+  onRequestCancel: () => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
@@ -404,7 +421,7 @@ function CompleteViewing({
     notInterested: guests.filter((guest) => guest.interest === "not-interested").length,
   }), [guests]);
 
-  if (completed) {
+  if (status === "completed") {
     return (
       <section className="kelvo-card mt-6 border-[#afcfbe]/60 bg-[var(--surface-accent)] p-6" aria-live="polite">
         <div className="flex items-start gap-3">
@@ -418,6 +435,24 @@ function CompleteViewing({
     );
   }
 
+  if (status === "cancelled") {
+    return (
+      <section className="kelvo-card mt-6 border-[#b75e56]/20 bg-[#f7e7e5] p-6" aria-live="polite">
+        <h2 className="text-[15px] font-semibold text-[#7b4540]">Skoðun felld niður</h2>
+        <p className="mt-2 text-[11px] leading-5 text-[#805f5b]">Gestalisti og skráð saga skoðunarinnar eru varðveitt.</p>
+      </section>
+    );
+  }
+
+  if (!editable) {
+    return (
+      <section className="kelvo-card mt-6 p-6">
+        <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">Skoðun varðveitt</h2>
+        <p className="mt-2 text-[11px] leading-5 text-[var(--text-secondary)]">Viðskiptunum hefur verið lokað og skoðunin er aðeins til lestrar.</p>
+      </section>
+    );
+  }
+
   return (
     <section className="kelvo-card mt-6 p-5 sm:p-6" aria-labelledby="complete-heading">
       <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
@@ -425,7 +460,7 @@ function CompleteViewing({
           <h2 id="complete-heading" className="text-[16px] font-semibold text-[var(--text-primary)]">Ljúka skoðun</h2>
           <p className="mt-2 text-[10.5px] text-[#6f7771]">Farðu yfir mætingu og næstu aðgerðir áður en skoðun er lokað.</p>
         </div>
-        {!isOpen && <Button onClick={() => setIsOpen(true)} className="min-h-11 px-4 text-[13px] font-medium">Ljúka skoðun</Button>}
+        {!isOpen && <div className="flex flex-wrap gap-2"><Button variant="danger" onClick={onRequestCancel} className="min-h-11 px-4 text-[13px]">Fella niður</Button><Button disabled={!canComplete} title={!canComplete ? "Hægt er að ljúka skoðun þegar skráðum tíma hennar lýkur." : undefined} onClick={() => setIsOpen(true)} className="min-h-11 px-4 text-[13px] font-medium">Ljúka skoðun</Button></div>}
       </div>
 
       {isOpen && (
@@ -481,7 +516,13 @@ export function ViewingManager({
   const [guests, setGuests] = useState(initialGuests);
   const [selectedGuest, setSelectedGuest] = useState<ViewingGuest | null>(null);
   const [isAddingGuest, setIsAddingGuest] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  const transactionTerminal = ["completed", "cancelled"].includes(viewing.transactionStage);
+  const editable = !transactionTerminal && ["scheduled", "active"].includes(viewing.status);
+  const canComplete = editable && Date.parse(nowIso) >= Date.parse(viewing.endsAt);
 
   const attended = guests.filter((guest) => guest.attendance === "attended").length;
   const noShow = guests.filter((guest) => guest.attendance === "absent").length;
@@ -532,16 +573,42 @@ export function ViewingManager({
     setViewing((current) => ({ ...current, status: "completed", completedAt: result.data.completedAt }));
   }
 
+  async function cancelViewing() {
+    setIsCancelling(true);
+    setActionError(null);
+    const result = await cancelViewingAction(viewing.id, `/properties/${propertySlug}/viewings/${viewing.id}`);
+    if (!result.ok) {
+      setActionError(result.error);
+      setIsCancelling(false);
+      return;
+    }
+    setViewing((current) => ({ ...current, status: "cancelled", completedAt: null }));
+    setSelectedGuest(null);
+    setIsAddingGuest(false);
+    setCancelConfirmOpen(false);
+    setIsCancelling(false);
+  }
+
   return (
     <>
-      <ViewingHeader viewing={viewing} backHref={backHref} backLabel={backLabel} registered={guests.length} attended={attended} noShow={noShow} onAddGuest={() => setIsAddingGuest(true)} nowIso={nowIso} />
+      <ViewingHeader viewing={viewing} backHref={backHref} backLabel={backLabel} registered={guests.length} attended={attended} noShow={noShow} onAddGuest={() => setIsAddingGuest(true)} canEdit={editable} nowIso={nowIso} />
       <StatusStrip guests={guests} />
       {actionError && <p role="alert" className="mt-5 rounded-[14px] border border-[#b75e56]/20 bg-[#f7e7e5] px-4 py-3 text-[11px] text-[#914b45]">{actionError}</p>}
-      <GuestList guests={guests} onOpen={setSelectedGuest} onMarkAttended={markAttended} />
-      <CompleteViewing guests={guests} completed={viewing.status === "completed"} onComplete={completeViewing} />
+      <GuestList guests={guests} onOpen={setSelectedGuest} onMarkAttended={markAttended} editable={editable} />
+      <CompleteViewing guests={guests} status={viewing.status} editable={!transactionTerminal} canComplete={canComplete} onComplete={completeViewing} onRequestCancel={() => setCancelConfirmOpen(true)} />
 
       {selectedGuest && <GuestDetailPanel key={selectedGuest.id} guest={selectedGuest} onClose={() => setSelectedGuest(null)} onSave={saveGuest} />}
       {isAddingGuest && <AddGuestModal onClose={() => setIsAddingGuest(false)} onAdd={addWalkIn} />}
+      <ConfirmDialog
+        open={cancelConfirmOpen}
+        title="Fella niður skoðun?"
+        description="Skoðunin verður merkt sem niðurfelld. Gestalisti og skráð saga varðveitast."
+        confirmLabel="Fella niður"
+        confirmVariant="danger"
+        pending={isCancelling}
+        onClose={() => setCancelConfirmOpen(false)}
+        onConfirm={() => void cancelViewing()}
+      />
     </>
   );
 }

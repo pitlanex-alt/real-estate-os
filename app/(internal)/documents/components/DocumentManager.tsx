@@ -45,11 +45,12 @@ export function DocumentManager({ documents, transactions }: { documents: Intern
       .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
   }, [documents, propertyFilter, query, transactionStatusFilter, typeFilter, visibilityFilter]);
   const visibleDocuments = filteredDocuments.slice(0, visibleCount);
+  const activeTransactions = transactions.filter((transaction) => !["completed", "cancelled"].includes(transaction.transactionStage ?? ""));
   function resetPage() { setVisibleCount(pageSize); }
   async function run(key: string, fn: () => Promise<void>) { setPending(key); setError(null); try { await fn(); } catch (caught) { setError(caught instanceof Error ? caught.message : "Aðgerð mistókst."); } finally { setPending(null); } }
   return <>
-    <div className="flex justify-end"><Button variant="primary" onClick={() => setShow(!show)} className="min-h-11 px-4 text-[12px] font-semibold"><Plus size={14} />Hlaða upp skjali</Button></div>
-    {show && <UploadDocumentForm transactions={transactions} pending={pending === "upload"} run={(data) => run("upload", () => uploadDocumentAction(data))} />}
+    <div className="flex justify-end"><Button variant="primary" disabled={!activeTransactions.length} onClick={() => setShow(!show)} className="min-h-11 px-4 text-[12px] font-semibold"><Plus size={14} />Hlaða upp skjali</Button></div>
+    {show && <UploadDocumentForm transactions={activeTransactions} pending={pending === "upload"} run={(data) => run("upload", () => uploadDocumentAction(data))} />}
     {error && <p role="alert" className="mt-3 text-[12px] text-[#a24f48]">{error}</p>}
     <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_minmax(170px,.8fr)_150px_150px_150px]">
       <SearchInput controlSize="compact" value={query} onChange={(event) => { setQuery(event.target.value); resetPage(); }} placeholder="Leita að skjali eða eign..." aria-label="Leita að skjali eða eign" />
@@ -108,14 +109,15 @@ function UploadDocumentForm({ transactions, pending, run }: { transactions: Work
 
 function DocumentRow({ document, pending, run }: { document: InternalDocument; pending: boolean; run: (fn: () => Promise<void>) => void }) {
   const [visibility, setVisibility] = useState<DocumentVisibility>(document.visibility);
+  const readOnly = ["completed", "cancelled"].includes(document.transactionStage);
   return <article className="mo-hover-row grid gap-3 border-b border-black/[0.06] px-2 py-3 last:border-b-0 min-[1180px]:grid-cols-[minmax(190px,1.5fr)_minmax(110px,.7fr)_minmax(150px,170px)_124px_82px] min-[1180px]:items-center">
     <div><h2 className="text-[12px] font-semibold text-[var(--text-primary)]">{document.title}</h2><p className="mt-1 text-[10px] text-[var(--text-secondary)]"><Link href={`/properties/${document.propertySlug}`} className="mo-button-text">{document.property}</Link> · {documentCategoryLabel(document.documentType)} · {documentFormatLabel(document.mimeType, document.fileName)}</p></div>
     <p className="text-[10px] text-[var(--text-secondary)]">{document.uploadedBy}</p>
-    <Select ariaLabel={`Sýnileiki fyrir ${document.title}`} value={visibility} onChange={(value) => setVisibility(value as DocumentVisibility)} options={visibilityOptions} size="compact" />
-    <Button size="compact" disabled={pending} onClick={() => run(() => updateDocumentVisibilityAction(document.id, visibility))} className="whitespace-nowrap">Vista aðgang</Button>
+    <Select ariaLabel={`Sýnileiki fyrir ${document.title}`} value={visibility} onChange={(value) => setVisibility(value as DocumentVisibility)} options={visibilityOptions} size="compact" disabled={readOnly} />
+    <Button size="compact" disabled={pending || readOnly} onClick={() => run(() => updateDocumentVisibilityAction(document.id, visibility))} className="whitespace-nowrap">Vista aðgang</Button>
     <div className="flex justify-end">
       <a href={`/api/documents/${document.id}?download=1`} className={buttonClassName("icon", "text-[#5f765a]", "icon")} aria-label={`Sækja ${document.title}`} title="Sækja skjal"><Download size={14} /></a>
-      <Button variant="danger" size="icon" aria-label="Eyða" disabled={pending} onClick={() => run(() => deleteDocumentAction(document.id))} className="border-transparent"><Trash2 size={14} /></Button>
+      <Button variant="danger" size="icon" aria-label="Eyða" disabled={pending || readOnly} onClick={() => run(() => deleteDocumentAction(document.id))} className="border-transparent"><Trash2 size={14} /></Button>
     </div>
   </article>;
 }

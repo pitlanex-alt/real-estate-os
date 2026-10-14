@@ -49,6 +49,7 @@ export function TaskManager({ tasks, transactions, assignees, nowIso }: { tasks:
       });
   }, [filter, query, tasks]);
   const visibleTasks = filteredTasks.slice(0, visibleCount);
+  const activeTransactions = transactions.filter((transaction) => !["completed", "cancelled"].includes(transaction.transactionStage ?? ""));
 
   async function run(key: string, fn: () => Promise<void>) {
     setPending(key);
@@ -60,9 +61,9 @@ export function TaskManager({ tasks, transactions, assignees, nowIso }: { tasks:
 
   return <>
     <div className="flex justify-end">
-      <Button variant="primary" onClick={() => setShow(!show)} className="min-h-11 px-4 text-[12px] font-semibold"><Plus size={14} />Nýtt verkefni</Button>
+      <Button variant="primary" disabled={!activeTransactions.length} onClick={() => setShow(!show)} className="min-h-11 px-4 text-[12px] font-semibold"><Plus size={14} />Nýtt verkefni</Button>
     </div>
-    {show && <NewTaskForm transactions={transactions} assignees={assignees} pending={pending === "create"} run={(data) => run("create", () => createTaskAction(data))} />}
+    {show && <NewTaskForm transactions={activeTransactions} assignees={assignees} pending={pending === "create"} run={(data) => run("create", () => createTaskAction(data))} />}
     {error && <p role="alert" className="mt-3 text-[12px] text-[#a24f48]">{error}</p>}
     <div className="mt-5 grid gap-3 sm:grid-cols-[minmax(240px,1fr)_180px]">
       <SearchInput controlSize="compact" value={query} onChange={(event) => { setQuery(event.target.value); setVisibleCount(pageSize); }} placeholder="Leita að verkefni eða eign..." aria-label="Leita að verkefni eða eign" />
@@ -98,20 +99,21 @@ function TaskRow({ task, assignees, nowIso, pending, run }: { task: InternalTask
   const [visibility, setVisibility] = useState(task.visibility);
   const overdue = Boolean(task.dueAt && Date.parse(task.dueAt) < Date.parse(nowIso) && !["completed", "cancelled"].includes(task.status));
   const subdued = task.status === "completed" || task.status === "cancelled";
+  const readOnly = ["completed", "cancelled"].includes(task.transactionStage);
 
   return <article className="mo-hover-row grid gap-3 border-b border-black/[0.06] px-2 py-3 last:border-b-0 min-[1180px]:grid-cols-[minmax(140px,1.3fr)_105px_96px_minmax(150px,.95fr)_96px_58px_82px] min-[1180px]:items-center min-[1180px]:gap-1.5">
     <div>
       <div className="flex flex-wrap items-center gap-2"><h2 className={`text-[12px] font-semibold text-[var(--text-primary)] ${subdued ? "opacity-70" : ""}`}>{task.title}</h2>{subdued && <span className={`${task.status === "completed" ? "kelvo-status-progress" : "kelvo-status-neutral"} rounded-full px-2 py-0.5 text-[8px]`}>{task.status === "completed" ? "Lokið" : "Hætt við"}</span>}{overdue && <span className="kelvo-status-warning rounded-full px-2 py-0.5 text-[8px]">Komið fram yfir</span>}</div>
       <p className={`mt-1 text-[10px] text-[var(--text-secondary)] ${subdued ? "opacity-70" : ""}`}><Link href={`/properties/${task.propertySlug}`} className="mo-button-text">{task.property}</Link> · {visibilityLabels[task.visibility]}</p>
     </div>
-    <Select ariaLabel={`Ábyrgðaraðili fyrir ${task.title}`} value={assigned} onChange={setAssigned} options={[{ value: "", label: "Óúthlutað" }, ...assignees.map((item) => ({ value: item.id, label: item.label }))]} size="compact" />
-    <Select ariaLabel={`Staða fyrir ${task.title}`} value={status} onChange={(value) => setStatus(value as InternalTask["status"])} options={statusOptions} size="compact" />
-    <DateTimePicker ariaLabel={`Skiladagur fyrir ${task.title}`} value={due} onChange={setDue} error={Boolean(overdue)} size="compact" />
-    <Select ariaLabel={`Sýnileiki fyrir ${task.title}`} value={visibility} onChange={(value) => setVisibility(value as InternalTask["visibility"])} options={visibilityOptions} size="compact" />
-    <Button size="compact" disabled={pending} onClick={() => run(() => updateTaskAction(task.id, status, due, assigned, visibility))}>Vista</Button>
+    <Select ariaLabel={`Ábyrgðaraðili fyrir ${task.title}`} value={assigned} onChange={setAssigned} options={[{ value: "", label: "Óúthlutað" }, ...assignees.map((item) => ({ value: item.id, label: item.label }))]} size="compact" disabled={readOnly} />
+    <Select ariaLabel={`Staða fyrir ${task.title}`} value={status} onChange={(value) => setStatus(value as InternalTask["status"])} options={statusOptions} size="compact" disabled={readOnly} />
+    <DateTimePicker ariaLabel={`Skiladagur fyrir ${task.title}`} value={due} onChange={setDue} error={Boolean(overdue)} size="compact" disabled={readOnly} />
+    <Select ariaLabel={`Sýnileiki fyrir ${task.title}`} value={visibility} onChange={(value) => setVisibility(value as InternalTask["visibility"])} options={visibilityOptions} size="compact" disabled={readOnly} />
+    <Button size="compact" disabled={pending || readOnly} onClick={() => run(() => updateTaskAction(task.id, status, due, assigned, visibility))}>Vista</Button>
     <div className="flex justify-end gap-0.5">
-      <Button variant="positive" size="icon" aria-label="Ljúka" disabled={pending || task.status === "completed"} onClick={() => run(() => completeTaskAction(task.id))}><Check size={14} /></Button>
-      <Button variant="danger" size="icon" aria-label="Hætta við" disabled={pending || task.status === "cancelled"} onClick={() => run(() => cancelTaskAction(task.id))}><X size={14} /></Button>
+      <Button variant="positive" size="icon" aria-label="Ljúka" disabled={pending || readOnly || task.status === "completed"} onClick={() => run(() => completeTaskAction(task.id))}><Check size={14} /></Button>
+      <Button variant="danger" size="icon" aria-label="Hætta við" disabled={pending || readOnly || task.status === "cancelled"} onClick={() => run(() => cancelTaskAction(task.id))}><X size={14} /></Button>
     </div>
   </article>;
 }

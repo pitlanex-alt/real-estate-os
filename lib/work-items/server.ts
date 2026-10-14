@@ -171,6 +171,7 @@ export async function getInternalWorkItems(
     id: transaction.id,
     label: propertyByTransaction.get(transaction.id) ?? "Óþekkt eign",
     description: transactionStageLabels[transaction.stage] ?? transaction.stage,
+    transactionStage: transaction.stage,
   }));
   const assignees: WorkOption[] = (profilesResult.data ?? []).map((profile) => ({
     id: profile.id,

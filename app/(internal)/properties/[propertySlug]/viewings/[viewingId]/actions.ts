@@ -137,3 +137,28 @@ export async function completeViewingAction(
   revalidatePath(routePath);
   return { ok: true, data: { completedAt: row?.completed_at ?? null } };
 }
+
+export async function cancelViewingAction(
+  viewingId: string,
+  routePath: string,
+): Promise<ActionResult> {
+  const { supabase, authenticated } = await authenticatedClient();
+  if (!authenticated) return { ok: false, error: "Innskráning rann út." };
+
+  const { error } = await supabase.rpc("cancel_viewing", {
+    p_viewing_id: viewingId,
+    p_reason: null,
+  });
+  if (error) {
+    console.error("Unable to cancel viewing", error);
+    return {
+      ok: false,
+      error: error.code === "42501"
+        ? "Þú hefur ekki heimild til að fella niður skoðunina."
+        : "Ekki er hægt að fella niður skoðunina miðað við núverandi stöðu.",
+    };
+  }
+
+  revalidatePath(routePath);
+  return { ok: true, data: undefined };
+}

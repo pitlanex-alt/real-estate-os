@@ -18,6 +18,7 @@ type ViewingRow = {
   status: ViewingDetails["status"];
   completed_at: string | null;
   transaction: Relation<{
+    stage: string;
     property: Relation<{ address_line: string }>;
   }>;
 };
@@ -93,6 +94,7 @@ export async function getViewingDetail(viewingId: string): Promise<{
         status,
         completed_at,
         transaction:transactions!viewings_transaction_id_fkey(
+          stage,
           property:properties!transactions_property_id_fkey(address_line)
         )
       `)
@@ -133,6 +135,7 @@ export async function getViewingDetail(viewingId: string): Promise<{
     dateTimeLabel: formatViewingDateTimeRange(row.starts_at, row.ends_at),
     status: row.status,
     completedAt: row.completed_at,
+    transactionStage: transaction?.stage ?? "",
   };
   const guests = ((guestsResult.data ?? []) as unknown as GuestRow[])
     .map(mapGuestRow)

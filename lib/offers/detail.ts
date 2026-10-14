@@ -32,6 +32,7 @@ export type BuyerOfferData = {
 };
 
 export type AgentOfferData = BuyerOfferData & {
+  transactionStage: string;
   askingPriceIsk: number;
   property: string;
   location: string;
@@ -128,7 +129,7 @@ export async function getAgentOffer(offerId: string): Promise<AgentOfferData | n
   if (!offer) return null;
   const [buyerResult, transactionResult, conditionsResult, reviewResult, historyResult, sellerIntentResult] = await Promise.all([
     supabase.from("contacts").select("full_name,phone,email").eq("id", offer.buyer_contact_id).single(),
-    supabase.from("transactions").select("asking_price_isk,property_id").eq("id", offer.transaction_id).single(),
+    supabase.from("transactions").select("asking_price_isk,property_id,stage").eq("id", offer.transaction_id).single(),
     supabase.from("offer_conditions").select("condition_type,status,details").eq("offer_id", offer.id).order("created_at"),
     supabase.from("offer_reviews").select("*").eq("offer_id", offer.id).maybeSingle(),
     supabase.from("offer_status_history").select("to_status,created_at").eq("offer_id", offer.id).order("created_at"),
@@ -150,7 +151,7 @@ export async function getAgentOffer(offerId: string): Promise<AgentOfferData | n
     id: offer.id, status: effectiveOfferStatus(offer.status as OfferStatus, offer.valid_until), amountIsk: Number(offer.amount_isk), validUntil: offer.valid_until,
     requestedHandoverDate: offer.requested_handover_date, submittedAt: offer.submitted_at,
     buyerName: buyerResult.data.full_name, buyerPhone: buyerResult.data.phone, buyerEmail: buyerResult.data.email,
-    askingPriceIsk: Number(transactionResult.data.asking_price_isk), property: property.address_line,
+    transactionStage: transactionResult.data.stage, askingPriceIsk: Number(transactionResult.data.asking_price_isk), property: property.address_line,
     location: `${property.postal_code} ${property.municipality}`, receivedAt: offer.submitted_at ?? offer.created_at,
     agentApprovedAt: offer.agent_approved_at, sentToSellerAt: offer.sent_to_seller_at,
     latestSellerIntent: sellerIntentResult.data?.intent as AgentOfferData["latestSellerIntent"] ?? null,
