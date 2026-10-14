@@ -540,35 +540,29 @@ begin
   where transaction_id = '40000000-0000-4000-8000-000000000001'
     and (
       id = 'a1000000-0000-4000-8000-000000000005'
-      or title in (
-        'Staðfesta fjármögnun',
-        'Yfirfara skilyrði tilboðs',
-        'Staðfesta afhendingardag',
-        'Safna nauðsynlegum skjölum',
-        'Undirbúa kaupsamning',
-        'Bóka undirritun'
-      )
+      or workflow_key like 'contract\_%' escape '\'
     );
 
   insert into public.tasks (
-    id, organization_id, transaction_id, assigned_to, title, description,
+    id, organization_id, transaction_id, assigned_to, title, workflow_key, description,
     status, due_at, visibility, created_by, completed_at
   ) values
-    ('a1000000-0000-4000-8000-000000000001', v_org_id, '40000000-0000-4000-8000-000000000001', v_sara_id, 'Söluyfirlit', 'Söluyfirlit yfirfarið og samþykkt.', 'completed', null, 'seller_and_buyer', v_sara_id, v_day_start - interval '12 days'),
-    ('a1000000-0000-4000-8000-000000000002', v_org_id, '40000000-0000-4000-8000-000000000001', v_sara_id, 'Eignaskrá', 'Upplýsingar úr eignaskrá yfirfarnar.', 'completed', null, 'seller_and_buyer', v_sara_id, v_day_start - interval '12 days'),
-    ('a1000000-0000-4000-8000-000000000003', v_org_id, '40000000-0000-4000-8000-000000000001', v_sara_id, 'Ljósmyndir', 'Ljósmyndun eignarinnar lokið.', 'completed', null, 'seller', v_sara_id, v_day_start - interval '10 days'),
-    ('a1000000-0000-4000-8000-000000000004', v_org_id, '40000000-0000-4000-8000-000000000001', v_sara_id, 'Samþykki seljanda', 'Seljandi samþykkti skráningu eignarinnar.', 'completed', null, 'seller', v_sara_id, v_day_start - interval '8 days'),
-    ('a1100000-0000-4000-8000-000000000001', v_org_id, '40000000-0000-4000-8000-000000000001', v_sara_id, 'Staðfesta fjármögnun', 'Fá endanlega staðfestingu á fjármögnun kaupanda.', 'in_progress', v_day_start + interval '1 day 14 hours', 'internal', v_sara_id, null),
-    ('a1100000-0000-4000-8000-000000000002', v_org_id, '40000000-0000-4000-8000-000000000001', v_sara_id, 'Yfirfara skilyrði tilboðs', 'Yfirfara fjármögnunarskilyrði með kaupanda.', 'completed', null, 'internal', v_sara_id, v_day_start + interval '11 hours'),
-    ('a1100000-0000-4000-8000-000000000003', v_org_id, '40000000-0000-4000-8000-000000000001', v_sara_id, 'Staðfesta afhendingardag', 'Staðfesta afhendingardag við báða aðila.', 'completed', null, 'internal', v_sara_id, v_day_start + interval '11 hours 15 minutes'),
-    ('a1100000-0000-4000-8000-000000000004', v_org_id, '40000000-0000-4000-8000-000000000001', v_sara_id, 'Safna nauðsynlegum skjölum', 'Safna fylgiskjölum fyrir gerð kaupsamnings.', 'in_progress', v_day_start + interval '2 days 15 hours', 'internal', v_sara_id, null),
-    ('a1100000-0000-4000-8000-000000000005', v_org_id, '40000000-0000-4000-8000-000000000001', v_sara_id, 'Undirbúa kaupsamning', 'Undirbúa drög að kaupsamningi til yfirferðar.', 'not_started', v_day_start + interval '4 days 13 hours', 'internal', v_sara_id, null),
-    ('a1100000-0000-4000-8000-000000000006', v_org_id, '40000000-0000-4000-8000-000000000001', v_sara_id, 'Bóka undirritun', 'Finna tíma sem hentar kaupanda og seljanda.', 'not_started', v_day_start + interval '6 days 14 hours', 'internal', v_sara_id, null)
+    ('a1000000-0000-4000-8000-000000000001', v_org_id, '40000000-0000-4000-8000-000000000001', v_sara_id, 'Söluyfirlit', null, 'Söluyfirlit yfirfarið og samþykkt.', 'completed', null, 'seller_and_buyer', v_sara_id, v_day_start - interval '12 days'),
+    ('a1000000-0000-4000-8000-000000000002', v_org_id, '40000000-0000-4000-8000-000000000001', v_sara_id, 'Eignaskrá', null, 'Upplýsingar úr eignaskrá yfirfarnar.', 'completed', null, 'seller_and_buyer', v_sara_id, v_day_start - interval '12 days'),
+    ('a1000000-0000-4000-8000-000000000003', v_org_id, '40000000-0000-4000-8000-000000000001', v_sara_id, 'Ljósmyndir', null, 'Ljósmyndun eignarinnar lokið.', 'completed', null, 'seller', v_sara_id, v_day_start - interval '10 days'),
+    ('a1000000-0000-4000-8000-000000000004', v_org_id, '40000000-0000-4000-8000-000000000001', v_sara_id, 'Samþykki seljanda', null, 'Seljandi samþykkti skráningu eignarinnar.', 'completed', null, 'seller', v_sara_id, v_day_start - interval '8 days'),
+    ('a1100000-0000-4000-8000-000000000001', v_org_id, '40000000-0000-4000-8000-000000000001', v_sara_id, 'Staðfesta fjármögnun', 'contract_confirm_financing', 'Fá endanlega staðfestingu á fjármögnun kaupanda.', 'in_progress', v_day_start + interval '1 day 14 hours', 'internal', v_sara_id, null),
+    ('a1100000-0000-4000-8000-000000000002', v_org_id, '40000000-0000-4000-8000-000000000001', v_sara_id, 'Yfirfara skilyrði tilboðs', 'contract_review_offer_conditions', 'Yfirfara fjármögnunarskilyrði með kaupanda.', 'completed', null, 'internal', v_sara_id, v_day_start + interval '11 hours'),
+    ('a1100000-0000-4000-8000-000000000003', v_org_id, '40000000-0000-4000-8000-000000000001', v_sara_id, 'Staðfesta afhendingardag', 'contract_confirm_handover_date', 'Staðfesta afhendingardag við báða aðila.', 'completed', null, 'internal', v_sara_id, v_day_start + interval '11 hours 15 minutes'),
+    ('a1100000-0000-4000-8000-000000000004', v_org_id, '40000000-0000-4000-8000-000000000001', v_sara_id, 'Safna nauðsynlegum skjölum', 'contract_collect_documents', 'Safna fylgiskjölum fyrir gerð kaupsamnings.', 'in_progress', v_day_start + interval '2 days 15 hours', 'internal', v_sara_id, null),
+    ('a1100000-0000-4000-8000-000000000005', v_org_id, '40000000-0000-4000-8000-000000000001', v_sara_id, 'Undirbúa kaupsamning', 'contract_prepare_purchase_agreement', 'Undirbúa drög að kaupsamningi til yfirferðar.', 'not_started', v_day_start + interval '4 days 13 hours', 'internal', v_sara_id, null),
+    ('a1100000-0000-4000-8000-000000000006', v_org_id, '40000000-0000-4000-8000-000000000001', v_sara_id, 'Bóka undirritun', 'contract_book_signing', 'Finna tíma sem hentar kaupanda og seljanda.', 'not_started', v_day_start + interval '6 days 14 hours', 'internal', v_sara_id, null)
   on conflict (id) do update set
     organization_id = excluded.organization_id,
     transaction_id = excluded.transaction_id,
     assigned_to = excluded.assigned_to,
     title = excluded.title,
+    workflow_key = excluded.workflow_key,
     description = excluded.description,
     status = excluded.status,
     due_at = excluded.due_at,

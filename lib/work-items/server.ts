@@ -136,6 +136,7 @@ export async function getInternalWorkItems(
     id: row.id,
     transactionId: row.transaction_id,
     transactionStage: stageByTransaction.get(row.transaction_id) ?? "",
+    workflowKey: row.workflow_key ?? null,
     title: row.title,
     description: row.description,
     status: row.status,

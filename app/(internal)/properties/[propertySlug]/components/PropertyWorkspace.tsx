@@ -20,9 +20,28 @@ const stageLabels: Record<string, string> = { valuation: "Verðmat", preparation
 const tabs = ["Yfirlit", "Skráning", "Skoðanir", "Tilboð", "Verkefni", "Skjöl", "Virkni"] as const;
 const tabKeys: Record<(typeof tabs)[number], string> = { Yfirlit: "overview", Skráning: "listing", Skoðanir: "viewings", Tilboð: "offers", Verkefni: "tasks", Skjöl: "documents", Virkni: "activity" };
 const keyTabs = Object.fromEntries(Object.entries(tabKeys).map(([label, key]) => [key, label])) as Record<string, (typeof tabs)[number]>;
-const contractTaskTitles = ["Staðfesta fjármögnun", "Yfirfara skilyrði tilboðs", "Staðfesta afhendingardag", "Safna nauðsynlegum skjölum", "Undirbúa kaupsamning", "Bóka undirritun"];
-const closingTaskTitles = ["Ljúka skilyrðum kaupsamnings", "Staðfesta fjármögnun og greiðslur", "Undirbúa lokaskjöl", "Staðfesta stöðu fyrir afhendingu", "Staðfesta afhendingartíma"];
-const handoverTaskTitles = ["Staðfesta afhendingardag og tíma", "Staðfesta að greiðslur og skilyrði séu frágengin", "Undirbúa afhendingu lykla", "Skrá afhendingu eignar", "Ljúka eftirstandandi gögnum"];
+const contractTasks = [
+  { key: "contract_confirm_financing", title: "Staðfesta fjármögnun" },
+  { key: "contract_review_offer_conditions", title: "Yfirfara skilyrði tilboðs" },
+  { key: "contract_confirm_handover_date", title: "Staðfesta afhendingardag" },
+  { key: "contract_collect_documents", title: "Safna nauðsynlegum skjölum" },
+  { key: "contract_prepare_purchase_agreement", title: "Undirbúa kaupsamning" },
+  { key: "contract_book_signing", title: "Bóka undirritun" },
+];
+const closingTasks = [
+  { key: "closing_complete_contract_conditions", title: "Ljúka skilyrðum kaupsamnings" },
+  { key: "closing_confirm_financing_payments", title: "Staðfesta fjármögnun og greiðslur" },
+  { key: "closing_prepare_final_documents", title: "Undirbúa lokaskjöl" },
+  { key: "closing_confirm_handover_readiness", title: "Staðfesta stöðu fyrir afhendingu" },
+  { key: "closing_confirm_handover_time", title: "Staðfesta afhendingartíma" },
+];
+const handoverTasks = [
+  { key: "handover_confirm_date_time", title: "Staðfesta afhendingardag og tíma" },
+  { key: "handover_confirm_payments_conditions", title: "Staðfesta að greiðslur og skilyrði séu frágengin" },
+  { key: "handover_prepare_keys", title: "Undirbúa afhendingu lykla" },
+  { key: "handover_record_handover", title: "Skrá afhendingu eignar" },
+  { key: "handover_complete_remaining_documents", title: "Ljúka eftirstandandi gögnum" },
+];
 const taskStatusLabels: Record<string, string> = { not_started: "Ekki hafið", in_progress: "Í vinnslu", completed: "Lokið", cancelled: "Hætt við" };
 
 function ListSection({ title, empty, count, children }: { title: string; empty: string; count: number; children: ReactNode }) { return <section className="kelvo-card mt-6 p-5 sm:p-6"><h2 className="text-[16px] font-semibold text-[var(--text-primary)]">{title}</h2><div className="mt-4 border-t border-black/[0.06]">{count ? children : <p className="py-10 text-[12px] text-[var(--text-secondary)]">{empty}</p>}</div></section>; }
@@ -30,7 +49,7 @@ function ListSection({ title, empty, count, children }: { title: string; empty: 
 function TransactionChecklist({
   property,
   acceptedOffer,
-  titles,
+  definitions,
   heading,
   eyebrow,
   milestone,
@@ -38,7 +57,7 @@ function TransactionChecklist({
 }: {
   property: PropertyWorkspaceData;
   acceptedOffer: PropertyWorkspaceData["offers"][number];
-  titles: string[];
+  definitions: Array<{ key: string; title: string }>;
   heading: string;
   eyebrow: string;
   milestone?: "contract_signing" | "handover_readiness" | "transaction_completion";
@@ -47,12 +66,12 @@ function TransactionChecklist({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const tasks = titles.flatMap((title) => {
-    const task = property.tasks.find((item) => item.title === title);
+  const tasks = definitions.flatMap((definition) => {
+    const task = property.tasks.find((item) => item.workflowKey === definition.key);
     return task ? [task] : [];
   });
   const completed = tasks.filter((task) => task.status === "completed").length;
-  const allComplete = tasks.length === titles.length && completed === titles.length;
+  const allComplete = tasks.length === definitions.length && completed === definitions.length;
   const completionTitle = milestone === "contract_signing"
     ? "Undirbúningi kaupsamnings lokið"
     : milestone === "handover_readiness"
@@ -99,7 +118,7 @@ function TransactionChecklist({
           <p className="mt-2 text-[11px] text-[var(--text-secondary)]">
             {milestone && allComplete
               ? completionText
-              : `${completed} af ${titles.length} lokið`}
+              : `${completed} af ${definitions.length} lokið`}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -118,11 +137,11 @@ function TransactionChecklist({
         <div><dt className="text-[10px] text-[var(--text-muted)]">Skilyrði</dt><dd className="mt-2 text-[12px] text-[#343934]">{acceptedOffer.conditions.map((condition) => offerConditionLabel(condition.type)).join(", ") || "Engin"}</dd></div>
       </dl>
       <div className="mt-7">
-        <div className="h-1.5 overflow-hidden rounded-full bg-[#e8ece6]"><div className="h-full bg-[var(--mint-strong)] transition-[width] duration-150" style={{ width: `${(completed / titles.length) * 100}%` }} /></div>
+        <div className="h-1.5 overflow-hidden rounded-full bg-[#e8ece6]"><div className="h-full bg-[var(--mint-strong)] transition-[width] duration-150" style={{ width: `${(completed / definitions.length) * 100}%` }} /></div>
         <div className="mt-4 border-t border-black/[0.06]">
-          {titles.map((title) => {
-            const task = tasks.find((item) => item.title === title);
-            return <div key={title} className="flex min-h-12 items-center justify-between gap-4 border-b border-black/[0.06]"><div className="flex items-center gap-3"><span className={task?.status === "completed" ? "h-2 w-2 rounded-full bg-[#7d9676]" : task?.status === "in_progress" ? "h-2 w-2 rounded-full bg-[#b98a3f]" : "h-2 w-2 rounded-full bg-[#c9cec8]"} /><span className={task?.status === "completed" ? "text-[11px] text-[var(--text-secondary)]" : "text-[11px] text-[#434943]"}>{title}</span></div><span className="text-[10px] text-[var(--text-muted)]">{task ? taskStatusLabels[task.status] ?? task.status : "Bíður stofnunar"}</span></div>;
+          {definitions.map((definition) => {
+            const task = tasks.find((item) => item.workflowKey === definition.key);
+            return <div key={definition.key} className="flex min-h-12 items-center justify-between gap-4 border-b border-black/[0.06]"><div className="flex items-center gap-3"><span className={task?.status === "completed" ? "h-2 w-2 rounded-full bg-[#7d9676]" : task?.status === "in_progress" ? "h-2 w-2 rounded-full bg-[#b98a3f]" : "h-2 w-2 rounded-full bg-[#c9cec8]"} /><span className={task?.status === "completed" ? "text-[11px] text-[var(--text-secondary)]" : "text-[11px] text-[#434943]"}>{task?.title ?? definition.title}</span></div><span className="text-[10px] text-[var(--text-muted)]">{task ? taskStatusLabels[task.status] ?? task.status : "Bíður stofnunar"}</span></div>;
           })}
         </div>
         <p className="mt-3 text-[10px] text-[var(--text-muted)]">Verkefnin eru innri undirbúningur. Kelvo framkvæmir ekki löggerninga eða undirritun.</p>
@@ -163,9 +182,9 @@ export function PropertyWorkspace({ property, organizationId, canEdit, canEditLi
     <TransactionLifecycle currentStage={property.stage} />
     <nav className="mt-5 overflow-x-auto rounded-[14px] border border-black/[0.06] bg-white p-1.5" aria-label="Vinnusvæði eignar"><div className="flex min-w-max gap-1">{tabs.map((item) => <button key={item} onClick={() => selectTab(item)} aria-current={tab === item ? "page" : undefined} className={`mo-tab h-10 rounded-[10px] px-4 text-[10.5px] font-semibold ${tab === item ? "bg-[var(--surface-accent)] text-[#34432f]" : "text-[var(--text-secondary)]"}`}>{item}</button>)}</div></nav>
     {tab === "Yfirlit" && <div className="py-6"><div className="grid gap-5 lg:grid-cols-[1.25fr_.75fr]"><section className="kelvo-card p-5 sm:p-6"><h2 className="text-[16px] font-semibold text-[var(--text-primary)]">Staða viðskipta</h2><dl className="mt-4 grid grid-cols-2 border-t border-black/[0.06] sm:grid-cols-3">{facts.map(([label,value]) => <div key={label} className="border-b border-black/[0.06] py-4"><dt className="text-[9.5px] text-[var(--text-muted)]">{label}</dt><dd className="mt-2 text-[12px] font-semibold text-[#343934]">{value}</dd></div>)}</dl></section><aside className="kelvo-card p-5 sm:p-6"><h2 className="text-[16px] font-semibold text-[var(--text-primary)]">Næstu atriði</h2><div className="mt-4 border-t border-black/[0.06]"><p className="border-b border-black/[0.06] py-4 text-[12px] text-[#4f5650]">{property.stage === "completed" ? "Engin næstu verkefni — viðskiptum lokið" : property.tasks.find((task) => !["completed","cancelled"].includes(task.status))?.title ?? "Engin opin verkefni"}</p><p className="border-b border-black/[0.06] py-4 text-[12px] text-[#4f5650]">{property.stage === "completed" ? "Ferli eignarinnar er varðveitt" : property.viewings.find((viewing) => viewing.status === "scheduled") ? "Næsta skoðun er skráð" : "Engin næsta skoðun skráð"}</p></div></aside></div>
-      {property.stage === "contract" && acceptedOffer && <TransactionChecklist property={property} acceptedOffer={acceptedOffer} titles={contractTaskTitles} heading="Undirbúningur kaupsamnings" eyebrow="Samningsferli" milestone="contract_signing" canConfirmMilestone={canEditListing} />}
-      {property.stage === "closing" && acceptedOffer && <TransactionChecklist property={property} acceptedOffer={acceptedOffer} titles={closingTaskTitles} heading="Frágangur viðskipta" eyebrow="Frágangur" milestone="handover_readiness" canConfirmMilestone={canEditListing} />}
-      {property.stage === "handover" && acceptedOffer && <TransactionChecklist property={property} acceptedOffer={acceptedOffer} titles={handoverTaskTitles} heading="Afhending eignar" eyebrow="AFHENDING" milestone="transaction_completion" canConfirmMilestone={canEditListing} />}
+      {property.stage === "contract" && acceptedOffer && <TransactionChecklist property={property} acceptedOffer={acceptedOffer} definitions={contractTasks} heading="Undirbúningur kaupsamnings" eyebrow="Samningsferli" milestone="contract_signing" canConfirmMilestone={canEditListing} />}
+      {property.stage === "closing" && acceptedOffer && <TransactionChecklist property={property} acceptedOffer={acceptedOffer} definitions={closingTasks} heading="Frágangur viðskipta" eyebrow="Frágangur" milestone="handover_readiness" canConfirmMilestone={canEditListing} />}
+      {property.stage === "handover" && acceptedOffer && <TransactionChecklist property={property} acceptedOffer={acceptedOffer} definitions={handoverTasks} heading="Afhending eignar" eyebrow="AFHENDING" milestone="transaction_completion" canConfirmMilestone={canEditListing} />}
       {property.stage === "completed" && <section className="kelvo-card mt-5 border border-[#afcfbe]/70 bg-[var(--surface-accent)] p-5 sm:p-6"><p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#667d5d]">Lokið</p><h2 className="mt-2 text-[18px] font-semibold text-[var(--text-primary)]">Viðskiptum lokið</h2><p className="mt-2 text-[12px] leading-5 text-[var(--text-secondary)]">Afhendingu er lokið og ferli viðskiptanna hefur verið varðveitt í Kelvo.</p><Link href="/tasks" className="mo-button mo-button-secondary mt-5 min-h-11 px-4 text-[11px]">Opna verkefnasögu</Link></section>}
     </div>}
     {tab === "Skráning" && <ListingPreparation property={property} canEdit={canEditListing} />}
